@@ -5,9 +5,9 @@
  * Codex local skills bootstrap.
  *
  * Purpose:
- * - Generate `.codex/skills/aexos-*` for each core AEXOS agent in
- *   `.aexos-core/development/agents/` (e.g. cyryx-dev, cyryx-pm, cyryx-po).
- * - Generate `.codex/skills/aexos-*` for each squad entry chief discovered
+ * - Reuse `.codex/skills/aexos-*` for each core AEXOS agent in
+ *   `.aexos-core/development/agents/` (e.g. aexos-dev, aexos-pm, aexos-po).
+ * - Generate `.codex/skills/cyryx-*` for each squad entry chief discovered
  *   in `squads/*\/config.yaml` (e.g. cyryx-mega-brain-chief, cyryx-slides-chief).
  * - Heavy source files stay in `.aexos-core/development/agents/` and `squads/`.
  *   Generated SKILL.md files are activator stubs that load the source on demand.
@@ -434,7 +434,7 @@ function resolveSquadAlias(configData, squadName) {
 
 function coreSkillId(agentId) {
   const clean = slug(agentId);
-  return clean.startsWith('cyryx-') ? clean : `cyryx-${clean}`;
+  return clean.startsWith('aexos-') ? clean : `aexos-${clean}`;
 }
 
 function squadSkillId(squadName, entryAgent, squadAlias) {

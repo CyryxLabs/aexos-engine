@@ -101,6 +101,17 @@ squads/*
 !squads/ops/
 !squads/customer-success/
 !squads/business-admin/
+!squads/apex/
+!squads/brand/
+!squads/curator/
+!squads/deep-research/
+!squads/dispatch/
+!squads/education/
+!squads/kaizen/
+!squads/kaizen-v2/
+!squads/legal-analyst/
+!squads/seo/
+!squads/squad-creator/
 keys/
 *.secret
 *.credentials

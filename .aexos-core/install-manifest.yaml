@@ -8,7 +8,7 @@
 # - File types for categorization
 #
 version: 5.3.0
-generated_at: "2026-08-03T15:00:26.178Z"
+generated_at: "2026-08-11T19:32:56.023Z"
 generator: scripts/generate-install-manifest.js
 file_count: 1167
 files:
@@ -1413,9 +1413,9 @@ files:
     type: data
     size: 9269
   - path: data/squad-registry.yaml
-    hash: sha256:e5a710fb4ed3476ee93a9d058625999c26f485e9acc91f46e90dfd86b86dd4bb
+    hash: sha256:cd325a8a5e56d896e7121395f459cf6bab57109824c0860561e8bfbcbd8b2904
     type: data
-    size: 13435
+    size: 36965
   - path: data/tech-presets/_template.md
     hash: sha256:f560c52d37b2b16fc61273cce6b55ca2a06afdd5e2da850b7311ce5363a1c56d
     type: data
@@ -3225,9 +3225,9 @@ files:
     type: script
     size: 40732
   - path: infrastructure/scripts/codex-skills-sync/bootstrap.js
-    hash: sha256:320e5ad191783caf44119aba85fa72d47f790875383b9d1ed71185ca0f3f0fba
+    hash: sha256:46d90cbaf48967eac29006b8a8aaf066f6cceee6f93d548b69846a0a2492bfca
     type: script
-    size: 22888
+    size: 22885
   - path: infrastructure/scripts/codex-skills-sync/index.js
     hash: sha256:0bc62b535a5fb4e3021a0fbec8fa7758bae66f43ea73c2517183886648a00165
     type: script
