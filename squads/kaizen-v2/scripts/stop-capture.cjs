@@ -199,16 +199,16 @@ function serializeYAML(obj, indent = '') {
     } else if (typeof value === 'number') {
       yaml += `${indent}${key}: ${value}\n`;
     } else if (typeof value === 'string') {
-      // Escape strings that need quoting
-      const needsQuote = value.includes(':') || value.includes('#') || value.includes('\n') || value.startsWith(' ');
-      yaml += `${indent}${key}: ${needsQuote ? `"${value.replace(/"/g, '\\"')}"` : value}\n`;
+      // JSON string syntax is valid YAML double-quoted scalar syntax and
+      // escapes quotes, backslashes, control characters, and line breaks.
+      yaml += `${indent}${key}: ${JSON.stringify(value)}\n`;
     } else if (Array.isArray(value)) {
       if (value.length === 0) {
         yaml += `${indent}${key}: []\n`;
       } else if (typeof value[0] === 'string') {
         yaml += `${indent}${key}:\n`;
         value.forEach(item => {
-          yaml += `${indent}  - "${item.replace(/"/g, '\\"')}"\n`;
+          yaml += `${indent}  - ${JSON.stringify(item)}\n`;
         });
       } else {
         yaml += `${indent}${key}:\n`;
@@ -355,4 +355,8 @@ async function main() {
   }
 }
 
-main();
+if (require.main === module) {
+  main();
+}
+
+module.exports = { serializeYAML };
