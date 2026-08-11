@@ -16,6 +16,10 @@ const os = require('os');
 // Module under test
 const TerminalSpawner = require('../../.aexos-core/core/orchestration/terminal-spawner');
 
+// Cleanup exercises the shared Windows temp directory and can exceed Jest's
+// 10 second default when filesystem indexing or antivirus is active.
+jest.setTimeout(60 * 1000);
+
 describe('TerminalSpawner', () => {
   const tmpDir = os.tmpdir();
 

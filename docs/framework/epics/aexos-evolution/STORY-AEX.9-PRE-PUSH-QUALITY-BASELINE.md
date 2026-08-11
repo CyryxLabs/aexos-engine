@@ -133,6 +133,7 @@ npm run validate:parity
 | 2026-08-11 | 0.2.0 | Development started in autonomous mode — Status: Ready → InProgress | @dev |
 | 2026-08-11 | 0.3.0 | Quality baseline restored — Status: InProgress → InReview | @dev |
 | 2026-08-11 | 0.3.1 | QA Gate PASS — Status: InReview → Done | @qa |
+| 2026-08-11 | 0.3.2 | Post-commit Windows contention hardening validated — Gate remains PASS | @qa |
 
 ## Dev Agent Record
 
@@ -155,6 +156,7 @@ OpenAI Codex
 - Pro detection now treats packages explicitly marked as unimplemented scaffolds as unavailable; throwing stub exports no longer masquerade as an installed product.
 - Moved the Node 22-only release toolchain out of the Node 18-compatible root dependency graph and pinned it for ephemeral CI execution.
 - Full Jest: 392 passed suites, 12 intentionally skipped, zero failed; 9,861 passed tests, 172 skipped, zero failed.
+- Hardened filesystem/npm integration tests with bounded Windows-aware timeouts and accepted both supported Vulcan greeting formats.
 - `npm audit`: zero vulnerabilities. No forced dependency upgrade was used.
 - AEX.8 regression remained green: 20 squads, zero errors/warnings, 156 projected agents and zero generated drift.
 
@@ -172,6 +174,10 @@ OpenAI Codex
 - `scripts/run-semantic-release.js`
 - `tests/cli/pro-buyer.test.js`
 - `tests/core/terminal-spawner.test.js`
+- `tests/core/master-orchestrator.test.js`
+- `tests/ids/squad-packaging.test.js`
+- `tests/installer/pro-setup-target-install.test.js`
+- `tests/integration/onboarding-smoke.test.js`
 - `tests/installer/pro-setup-auth.test.js`
 - `tests/integration/core-super-update-cli.test.js`
 - `tests/packages/aexos-install/integration.test.js`
@@ -189,7 +195,7 @@ OpenAI Codex
 
 ### Reviewed By: Argus (Test Architect)
 
-### Reviewed Revision: working-tree-sha256:eff27c008138bfbaf7414e4d1331bc68c377e03e20c1d2f23288cb99b882eefa
+### Reviewed Revision: implementation-diff-sha256:7f5108697de94a2227f29c5c0add4b9d21952322b58a65b72ef7c9ada17331af
 
 ### Code Quality Assessment
 
@@ -200,7 +206,9 @@ footprint, and Pro scaffold metadata is honored at runtime boundaries.
 
 ### Refactoring Performed
 
-No additional QA refactoring was required.
+QA hardened the Windows I/O integration tests with finite 60/180 second bounds
+and made the onboarding assertion compatible with the two supported Vulcan
+title renderings. Focused validation passed 77/77 tests before full regression.
 
 ### Requirements Traceability
 
@@ -233,7 +241,7 @@ targeted secret/source-ownership scan.
 ### Performance Considerations
 
 The resolver uses a bounded candidate list with synchronous probes only at
-process-dispatch boundaries. Full serial regression completed in 226.441s.
+process-dispatch boundaries. Final full serial regression completed in 167.343s.
 
 ### Gate Status
 
