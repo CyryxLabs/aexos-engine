@@ -5,6 +5,11 @@
 Proposed. Part of [EPIC-AEXOS-EVOLUTION](../EPIC-AEXOS-EVOLUTION.md).
 Product decision recorded 2026-08-02. No story assigned yet.
 
+Core-library exception: [ADR-AEX-008](./ADR-AEX-008-AEXOS-SQUAD-LIBRARY-IN-CORE.md)
+classifies eleven named AEXOS squads as Core by explicit Product Owner
+instruction. This does not change the proposed default here for future
+subscription-gated squads.
+
 Depends on nothing in Wave 1. Can proceed independently, but the licence
 server it requires does not exist yet (see Consequences).
 

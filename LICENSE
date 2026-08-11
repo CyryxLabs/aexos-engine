@@ -1,5 +1,5 @@
-AEXOS LICENSE
-Version 1.0 — 2026
+AEXOS PROPRIETARY LICENSE
+Version 1.1 — 2026
 
 Copyright (c) 2026 Cyryx Labs LLC. All rights reserved.
 
@@ -13,7 +13,8 @@ accept the terms below. If You do not accept them, do not use the Software.
    "Licensor" means Cyryx Labs LLC.
 
    "Software" means the AEXOS framework, including its source code, agent and
-   task definitions, templates, configuration, and documentation, in any form.
+   task definitions, squads, templates, configuration, and documentation, in
+   any form.
 
    "Core Edition" means the portion of the Software distributed by Licensor at
    no charge.
@@ -105,7 +106,9 @@ accept the terms below. If You do not accept them, do not use the Software.
 
    The Software is licensed, not sold. Licensor retains all right, title, and
    interest in and to the Software, including all intellectual property rights.
-   You retain all right, title, and interest in and to Your Work.
+   All AEXOS squads distributed with the framework are integral parts of the
+   Software and are licensed under this AEXOS Proprietary License. You retain
+   all right, title, and interest in and to Your Work.
 
 
 6. CONTRIBUTIONS
@@ -157,9 +160,9 @@ accept the terms below. If You do not accept them, do not use the Software.
 
 10. THIRD-PARTY COMPONENTS
 
-    Third-party components included with or depended upon by the Software remain
-    subject to their own license terms, which this license does not alter. See
-    docs/legal/terms.md.
+    Independent third-party packages, tools, fonts, media, or other components
+    not owned or acquired by Licensor remain subject to their own license terms,
+    which this license does not alter. See docs/legal/terms.md.
 
 
 11. GOVERNING LAW

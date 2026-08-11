@@ -169,6 +169,10 @@ module.exports = [
     },
     rules: {
       ...tsPlugin.configs.recommended.rules,
+      // TypeScript resolves runtime and type globals through the applicable
+      // tsconfig/lib declarations. The base ESLint rule cannot distinguish
+      // type names from runtime identifiers and reports false positives.
+      'no-undef': 'off',
       '@typescript-eslint/no-unused-vars': [
         'warn',
         {
@@ -178,6 +182,48 @@ module.exports = [
       ],
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
+    },
+  },
+
+  // Nested Vite configuration files belong to an ESM package even though the
+  // AEXOS repository itself uses CommonJS for root-level JavaScript.
+  {
+    files: ['squads/legal-analyst/webapp/frontend/*.js'],
+    languageOptions: {
+      sourceType: 'module',
+    },
+  },
+
+  // Native squads include self-contained CLIs, examples, and an embedded Vite
+  // application with their own style conventions. Root lint still enforces
+  // correctness, while style/unused diagnostics remain the responsibility of
+  // each nested runtime's own toolchain.
+  {
+    files: [
+      'squads/apex/examples/**/*.{js,cjs,mjs,ts,tsx}',
+      'squads/apex/scripts/**/*.{js,cjs,mjs,ts,tsx}',
+      'squads/deep-research/scripts/**/*.{js,cjs,mjs,ts,tsx}',
+      'squads/kaizen-v2/scripts/**/*.{js,cjs,mjs,ts,tsx}',
+      'squads/legal-analyst/webapp/frontend/**/*.{js,cjs,mjs,ts,tsx}',
+      'squads/squad-creator/scripts/**/*.{js,cjs,mjs,ts,tsx}',
+    ],
+    rules: {
+      'no-unused-vars': 'off',
+      'prefer-const': 'off',
+      'no-useless-escape': 'off',
+      quotes: 'off',
+      'comma-dangle': 'off',
+    },
+  },
+  {
+    files: [
+      'squads/apex/examples/**/*.{ts,tsx}',
+      'squads/deep-research/scripts/**/*.{ts,tsx}',
+      'squads/legal-analyst/webapp/frontend/**/*.{ts,tsx}',
+    ],
+    rules: {
+      '@typescript-eslint/no-unused-vars': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
     },
   },
 
