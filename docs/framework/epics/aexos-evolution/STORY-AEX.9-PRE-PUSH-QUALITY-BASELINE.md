@@ -134,6 +134,7 @@ npm run validate:parity
 | 2026-08-11 | 0.3.0 | Quality baseline restored — Status: InProgress → InReview | @dev |
 | 2026-08-11 | 0.3.1 | QA Gate PASS — Status: InReview → Done | @qa |
 | 2026-08-11 | 0.3.2 | Post-commit Windows contention hardening validated — Gate remains PASS | @qa |
+| 2026-08-11 | 0.3.3 | CodeQL YAML escaping alerts resolved — Gate remains PASS | @qa |
 
 ## Dev Agent Record
 
@@ -155,8 +156,9 @@ OpenAI Codex
 - Isolated wizard tests from the real checkout's legacy-install footprint and replaced the POSIX-only `|| true` assertion harness.
 - Pro detection now treats packages explicitly marked as unimplemented scaffolds as unavailable; throwing stub exports no longer masquerade as an installed product.
 - Moved the Node 22-only release toolchain out of the Node 18-compatible root dependency graph and pinned it for ephemeral CI execution.
-- Full Jest: 392 passed suites, 12 intentionally skipped, zero failed; 9,861 passed tests, 172 skipped, zero failed.
+- Full Jest: 393 passed suites, 12 intentionally skipped, zero failed; 9,862 passed tests, 172 skipped, zero failed.
 - Hardened filesystem/npm integration tests with bounded Windows-aware timeouts and accepted both supported Vulcan greeting formats.
+- Replaced incomplete hand-written YAML escaping in Kaizen v2 with valid JSON/YAML quoted scalars and added a round-trip security regression.
 - `npm audit`: zero vulnerabilities. No forced dependency upgrade was used.
 - AEX.8 regression remained green: 20 squads, zero errors/warnings, 156 projected agents and zero generated drift.
 
@@ -178,6 +180,8 @@ OpenAI Codex
 - `tests/ids/squad-packaging.test.js`
 - `tests/installer/pro-setup-target-install.test.js`
 - `tests/integration/onboarding-smoke.test.js`
+- `squads/kaizen-v2/scripts/stop-capture.cjs`
+- `tests/security/kaizen-v2-stop-capture.test.js`
 - `tests/installer/pro-setup-auth.test.js`
 - `tests/integration/core-super-update-cli.test.js`
 - `tests/packages/aexos-install/integration.test.js`
@@ -197,6 +201,8 @@ OpenAI Codex
 
 ### Reviewed Revision: implementation-diff-sha256:7f5108697de94a2227f29c5c0add4b9d21952322b58a65b72ef7c9ada17331af
 
+### Supplemental Security Revision: implementation-diff-sha256:0a27d5e9f93c0caba7256675e4be5ff6e2ad8396fe8d464302d738943b13a0be
+
 ### Code Quality Assessment
 
 The corrective diff addresses the reproduced causes without weakening Jest
@@ -215,7 +221,8 @@ title renderings. Focused validation passed 77/77 tests before full regression.
 - AC1/AC2: full Jest passes with zero failed suites/tests; focused regression
   covers shell resolution, installer/wizard isolation and Pro scaffold binding.
 - AC3: root dependency audit reports zero vulnerabilities; release-only Node 22
-  dependencies are isolated from the Node 18-compatible runtime graph.
+  dependencies are isolated from the Node 18-compatible runtime graph; two
+  CodeQL high alerts in YAML escaping were resolved with a round-trip test.
 - AC4/AC5: lint, typecheck, build, port denylist, manifests, registry, parity
   and all 20 squad gates pass; 156 agent projections remain drift-free.
 - AC6: CodeRabbit attempt and exact WSL failure are recorded with manual fallback
@@ -236,12 +243,13 @@ title renderings. Focused validation passed 77/77 tests before full regression.
 
 `npm audit --audit-level=high` reports zero vulnerabilities. The publish safety
 gate confirms that `pro/` remains excluded, and the reviewed files passed the
-targeted secret/source-ownership scan.
+targeted secret/source-ownership scan. CodeQL identified two incomplete escaping
+alerts in Kaizen v2; both were fixed by using JSON-compatible YAML scalars.
 
 ### Performance Considerations
 
 The resolver uses a bounded candidate list with synchronous probes only at
-process-dispatch boundaries. Final full serial regression completed in 167.343s.
+process-dispatch boundaries. Final full serial regression completed in 176.915s.
 
 ### Gate Status
 

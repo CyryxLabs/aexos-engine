@@ -12,7 +12,8 @@
 | Diff whitespace validation | PASS (`git diff --check`) |
 | ESLint | PASS |
 | TypeScript | PASS |
-| Full Jest regression | PASS — 392 suites, 9,861 tests, zero failures |
+| Full Jest regression | PASS — 393 suites, 9,862 tests, zero failures |
+| CodeQL follow-up | PASS — 2 high incomplete-escaping alerts fixed with round-trip regression |
 | npm audit | PASS — zero vulnerabilities |
 | Publish/build safety | PASS — 3,468 package files, `pro/` excluded |
 | Port denylist | PASS — 1,557 files, zero hits |
