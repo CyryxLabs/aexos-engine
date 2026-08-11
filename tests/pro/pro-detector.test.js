@@ -20,6 +20,7 @@ const {
   getProVersion,
   getProInfo,
   resolveNpmProPackage,
+  isImplementedPackage,
   PRO_PACKAGE_NAME,
   _PRO_DIR,
   _PRO_PACKAGE_PATH,
@@ -34,6 +35,9 @@ const originalRequire = jest.requireActual;
 describe('pro-detector', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    fs.readFileSync.mockReturnValue(
+      JSON.stringify({ name: '@aexos/pro', version: '0.4.0' }),
+    );
     process.chdir(originalCwd);
     // Clear require cache for pro modules to prevent stale state
     Object.keys(require.cache).forEach((key) => {
@@ -50,6 +54,7 @@ describe('pro-detector', () => {
       expect(typeof loadProModule).toBe('function');
       expect(typeof getProVersion).toBe('function');
       expect(typeof getProInfo).toBe('function');
+      expect(typeof isImplementedPackage).toBe('function');
     });
 
     it('should export internal paths for testing', () => {
@@ -64,8 +69,24 @@ describe('pro-detector', () => {
     it('should return true when pro/package.json exists (submodule)', () => {
       // npm paths return false, submodule path returns true
       fs.existsSync.mockImplementation((p) => p === _PRO_PACKAGE_PATH);
+      fs.readFileSync.mockReturnValue(
+        JSON.stringify({ name: '@aexos/pro', version: '0.4.0' }),
+      );
 
       expect(isProAvailable()).toBe(true);
+    });
+
+    it('should treat an explicit scaffold package as unavailable', () => {
+      fs.existsSync.mockImplementation((p) => p === _PRO_PACKAGE_PATH);
+      fs.readFileSync.mockReturnValue(
+        JSON.stringify({
+          name: '@aexos/pro',
+          version: '0.0.0',
+          aexosPro: { scaffold: true, implemented: false },
+        }),
+      );
+
+      expect(isProAvailable()).toBe(false);
     });
 
     it('should return true when npm package exists', () => {

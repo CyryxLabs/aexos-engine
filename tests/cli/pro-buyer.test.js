@@ -181,8 +181,10 @@ describe('Story 123.8 — buyer CLI internals', () => {
 
 const isProSubmoduleAvailable = (() => {
   try {
-    require.resolve(path.resolve(__dirname, '..', '..', 'pro', 'license', 'license-api.js'));
-    return true;
+    const modulePath = path.resolve(__dirname, '..', '..', 'pro', 'license', 'license-api.js');
+    require.resolve(modulePath);
+    const { LicenseApiClient, licenseApi } = require(modulePath);
+    return LicenseApiClient?.isProStub !== true && licenseApi?.isProStub !== true;
   } catch {
     return false;
   }

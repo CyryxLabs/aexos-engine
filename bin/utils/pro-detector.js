@@ -36,6 +36,24 @@ const PRO_PACKAGE_PATH = path.join(PRO_DIR, 'package.json');
 const PRO_PACKAGE_NAME = '@aexos/pro';
 
 /**
+ * Return whether a discovered Pro package contains an implemented runtime.
+ * Scaffold packages deliberately identify themselves as unavailable so their
+ * throwing compatibility exports cannot be mistaken for paid functionality.
+ *
+ * @param {string} packagePath - Absolute package.json path.
+ * @returns {boolean} True for implemented or legacy packages, false for scaffolds.
+ */
+function isImplementedPackage(packagePath) {
+  try {
+    const packageData = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+    const metadata = packageData.aexosPro;
+    return !(metadata && (metadata.scaffold === true || metadata.implemented === false));
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Resolve the installed npm Pro package path.
  * @returns {{ packagePath: string, packageName: string } | null}
  */
@@ -61,8 +79,14 @@ function resolveNpmProPackage() {
  */
 function isProAvailable() {
   try {
-    if (resolveNpmProPackage()) return true;
-    return fs.existsSync(PRO_PACKAGE_PATH);
+    const npmPro = resolveNpmProPackage();
+    if (
+      npmPro &&
+      isImplementedPackage(path.join(npmPro.packagePath, 'package.json'))
+    ) {
+      return true;
+    }
+    return fs.existsSync(PRO_PACKAGE_PATH) && isImplementedPackage(PRO_PACKAGE_PATH);
   } catch {
     return false;
   }
@@ -81,7 +105,10 @@ function isProAvailable() {
 function loadProModule(moduleName) {
   // 1. Try npm package
   const npmPro = resolveNpmProPackage();
-  if (npmPro) {
+  if (
+    npmPro &&
+    isImplementedPackage(path.join(npmPro.packagePath, 'package.json'))
+  ) {
     try {
       return require(path.join(npmPro.packagePath, moduleName));
     } catch {
@@ -90,7 +117,7 @@ function loadProModule(moduleName) {
   }
 
   // 2. Try submodule
-  if (fs.existsSync(PRO_PACKAGE_PATH)) {
+  if (fs.existsSync(PRO_PACKAGE_PATH) && isImplementedPackage(PRO_PACKAGE_PATH)) {
     try {
       return require(path.join(PRO_DIR, moduleName));
     } catch {
@@ -109,7 +136,10 @@ function loadProModule(moduleName) {
 function getProVersion() {
   // 1. Try npm package
   const npmPro = resolveNpmProPackage();
-  if (npmPro) {
+  if (
+    npmPro &&
+    isImplementedPackage(path.join(npmPro.packagePath, 'package.json'))
+  ) {
     try {
       const packageData = JSON.parse(
         fs.readFileSync(path.join(npmPro.packagePath, 'package.json'), 'utf8'),
@@ -121,7 +151,7 @@ function getProVersion() {
   }
 
   // 2. Try submodule
-  if (fs.existsSync(PRO_PACKAGE_PATH)) {
+  if (fs.existsSync(PRO_PACKAGE_PATH) && isImplementedPackage(PRO_PACKAGE_PATH)) {
     try {
       const packageData = JSON.parse(fs.readFileSync(PRO_PACKAGE_PATH, 'utf8'));
       return packageData.version || null;
@@ -140,7 +170,10 @@ function getProVersion() {
  */
 function getProInfo() {
   const npmPro = resolveNpmProPackage();
-  if (npmPro) {
+  if (
+    npmPro &&
+    isImplementedPackage(path.join(npmPro.packagePath, 'package.json'))
+  ) {
     try {
       const packageData = JSON.parse(
         fs.readFileSync(path.join(npmPro.packagePath, 'package.json'), 'utf8'),
@@ -157,7 +190,7 @@ function getProInfo() {
     }
   }
 
-  if (fs.existsSync(PRO_PACKAGE_PATH)) {
+  if (fs.existsSync(PRO_PACKAGE_PATH) && isImplementedPackage(PRO_PACKAGE_PATH)) {
     try {
       const packageData = JSON.parse(fs.readFileSync(PRO_PACKAGE_PATH, 'utf8'));
       return {
@@ -187,6 +220,7 @@ module.exports = {
   getProVersion,
   getProInfo,
   resolveNpmProPackage,
+  isImplementedPackage,
   PRO_PACKAGE_NAME,
   // Exported for testing
   _PRO_DIR: PRO_DIR,

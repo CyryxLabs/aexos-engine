@@ -17,6 +17,7 @@ const fs = require('fs').promises;
 const fsSync = require('fs');
 const path = require('path');
 const os = require('os');
+const { resolveBashExecutable } = require('../utils/shell-resolver');
 
 // Constants
 const POLL_INTERVAL_MS = 500;
@@ -375,7 +376,8 @@ async function spawnInline(agent, task, options = {}) {
     const errorChunks = [];
 
     // Spawn the process inline with piped stdout/stderr (Task 2.2)
-    const child = spawn('bash', [scriptPath, ...args], {
+    const bashExecutable = resolveBashExecutable();
+    const child = spawn(bashExecutable, [scriptPath, ...args], {
       env: {
         ...process.env,
         AEXOS_DEBUG: opts.debug ? 'true' : 'false',
@@ -573,7 +575,9 @@ async function spawnAgent(agent, task, options = {}) {
     try {
       if (opts.debug) {
         console.log(`[TerminalSpawner] Attempt ${attempt}/${opts.retries}`);
-        console.log(`[TerminalSpawner] Executing: bash ${scriptPath} ${args.join(' ')}`);
+        console.log(
+          `[TerminalSpawner] Executing: ${resolveBashExecutable()} ${scriptPath} ${args.join(' ')}`,
+        );
       }
 
       // Execute pm.sh
@@ -584,7 +588,7 @@ async function spawnAgent(agent, task, options = {}) {
         AEXOS_MODEL_BUDGET_CEILING_USD: String(opts.budgetCeilingUsd || ''),
       };
 
-      const result = execFileSync('bash', [scriptPath, ...args], {
+      const result = execFileSync(resolveBashExecutable(), [scriptPath, ...args], {
         encoding: 'utf8',
         timeout: opts.timeout,
         env,

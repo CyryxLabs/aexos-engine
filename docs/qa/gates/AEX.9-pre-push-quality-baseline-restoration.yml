@@ -1,0 +1,63 @@
+schema: 1
+story: 'AEX.9'
+story_title: 'Pre-Push Quality Baseline Restoration'
+gate: PASS
+status_reason: >-
+  All eight acceptance criteria pass: the full regression, security audit,
+  distribution, squad and multi-IDE gates are green with no blocking finding.
+reviewer: 'Argus (Test Architect)'
+reviewed_revision: 'working-tree-sha256:eff27c008138bfbaf7414e4d1331bc68c377e03e20c1d2f23288cb99b882eefa'
+updated: '2026-08-11T19:58:39Z'
+
+top_issues: []
+
+waiver:
+  active: false
+
+quality_score: 100
+expires: '2026-08-25T19:58:39Z'
+
+evidence:
+  tests_reviewed: 10033
+  tests_passed: 9861
+  tests_skipped: 172
+  suites_passed: 392
+  suites_skipped: 12
+  audit_vulnerabilities: 0
+  squad_validation:
+    squads: 20
+    errors: 0
+    warnings: 0
+    projected_agents: 156
+  risks_identified: 0
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6, 7, 8]
+    ac_gaps: []
+
+nfr_validation:
+  security:
+    status: PASS
+    notes: >-
+      npm audit reports zero vulnerabilities; the reviewed files contain no
+      credential, source-machine or upstream-ownership marker.
+  performance:
+    status: PASS
+    notes: >-
+      The shell resolver performs bounded filesystem probes and the complete
+      serial Jest run completed in 226.441 seconds.
+  reliability:
+    status: PASS
+    notes: >-
+      Windows shell selection, installer isolation and Pro scaffold detection
+      are deterministic; full Jest completed with zero failures.
+  maintainability:
+    status: PASS
+    notes: >-
+      Runtime dependencies remain Node 18-compatible, while the Node 22 release
+      toolchain is isolated and version-pinned for CI execution.
+
+recommendations:
+  immediate: []
+  future:
+    - action: 'Provision a WSL distribution with Bash and authenticated CodeRabbit CLI for automated review evidence.'
+      refs: ['docs/qa/coderabbit-reports/AEX.9-pre-push-quality-baseline.md']

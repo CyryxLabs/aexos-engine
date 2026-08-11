@@ -9,7 +9,7 @@
 
 const path = require('path');
 const fs = require('fs');
-const { execSync } = require('child_process');
+const { execFileSync, execSync } = require('child_process');
 
 const PKG_DIR = path.resolve(__dirname, '../../../packages/aexos-install');
 
@@ -178,10 +178,16 @@ describe('Integration - Task 8.3: Local NPX Execution', () => {
       const binPath = path.join(PKG_DIR, 'bin/aexos-install.js');
 
       // When
-      const result = execSync(`node "${binPath}" --invalid-flag 2>&1 || true`, {
-        encoding: 'utf8',
-        timeout: 10000,
-      });
+      let result = '';
+      try {
+        execFileSync(process.execPath, [binPath, '--invalid-flag'], {
+          encoding: 'utf8',
+          timeout: 10000,
+          stdio: 'pipe',
+        });
+      } catch (error) {
+        result = `${error.stdout || ''}${error.stderr || ''}`;
+      }
 
       // Then
       expect(result).toContain('error');
