@@ -11,6 +11,10 @@
  */
 
 const path = require('path');
+
+// These integration-style tests create and remove complete temporary project
+// trees. Windows filesystem contention can exceed Jest's 10 second default.
+jest.setTimeout(60 * 1000);
 const fs = require('fs-extra');
 const os = require('os');
 

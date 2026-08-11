@@ -33,7 +33,10 @@ const { execFileSync } = require('child_process');
 
 const proSetup = require('../../packages/installer/src/wizard/pro-setup');
 
-const NPM_INSTALL_TIMEOUT_MS = 60 * 1000;
+// npm pack/install can be I/O-bound on Windows (antivirus, indexing, or a busy
+// workspace). Keep the assertion bounded without relying on Jest's short
+// default timeout.
+const NPM_INSTALL_TIMEOUT_MS = 180 * 1000;
 
 function makeTempDir(prefix) {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));

@@ -18,6 +18,10 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
+// Copying the complete squad catalog can legitimately exceed Jest's default
+// 10 second timeout on Windows hosts under filesystem contention.
+jest.setTimeout(60 * 1000);
+
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
 const SQUADS_DIR = path.join(REPO_ROOT, 'squads');
 
