@@ -25,7 +25,9 @@ try {
   // pro/ submodule not available — `pro-setup machine id compatibility` skips
 }
 
-const isProAvailable = !!generateRuntimeMachineId;
+const isProAvailable = Boolean(
+  generateRuntimeMachineId && generateRuntimeMachineId.isProStub !== true,
+);
 
 describe('pro-setup auth constants', () => {
   it('should export EMAIL_PATTERN', () => {

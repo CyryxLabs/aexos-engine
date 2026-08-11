@@ -25,7 +25,11 @@ try {
   // pro/ submodule not available (CI environment)
 }
 
-const isProAvailable = !!extractorModule;
+const isProAvailable = Boolean(
+  extractorModule &&
+  typeof extractorModule.extractSessionDigest === 'function' &&
+  extractorModule.extractSessionDigest.isProStub !== true,
+);
 const extractSessionDigest = isProAvailable ? extractorModule.extractSessionDigest : undefined;
 const _analyzeConversation = isProAvailable ? extractorModule._analyzeConversation : undefined;
 const _generateDigestDocument = isProAvailable ? extractorModule._generateDigestDocument : undefined;

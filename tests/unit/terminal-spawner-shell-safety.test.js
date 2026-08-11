@@ -9,7 +9,7 @@ describe('terminal dispatch shell safety', () => {
       path.resolve(__dirname, '../../.aexos-core/core/orchestration/terminal-spawner.js'),
       'utf8',
     );
-    expect(source).toContain("execFileSync('bash', [scriptPath, ...args]");
+    expect(source).toContain('execFileSync(resolveBashExecutable(), [scriptPath, ...args]');
     expect(source).not.toContain("const { spawn, execSync } = require('child_process')");
     expect(source).not.toMatch(/execSync\s*\(\s*`bash/);
   });

@@ -144,7 +144,7 @@ jobs:
         run: |
           echo "🔍 Running dry-run to preview release..."
           echo ""
-          npx semantic-release --dry-run 2>&1 | tee /tmp/dry-run.log || true
+          npm run release -- --dry-run 2>&1 | tee /tmp/dry-run.log || true
 
           # Extract expected version from dry-run output
           NEXT_VERSION=$(grep -oP "The next release version is \K[0-9]+\.[0-9]+\.[0-9]+" /tmp/dry-run.log || echo "")
@@ -168,9 +168,9 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN_AEXOS }}
         run: |
           if [ "${{ inputs.dry_run }}" == "true" ]; then
-            npx semantic-release --dry-run
+            npm run release -- --dry-run
           else
-            npx semantic-release
+            npm run release
           fi
 
       - name: Chain npm-publish (legacy wrapper + workspace packages)

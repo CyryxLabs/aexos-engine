@@ -25,6 +25,10 @@ jest.mock('../../packages/installer/src/installer/dependency-installer');
 jest.mock('../../packages/installer/src/config/configure-environment');
 jest.mock('../../packages/installer/src/wizard/ide-config-generator');
 jest.mock('../../packages/installer/src/installer/aexos-core-installer');
+jest.mock('../../packages/installer/src/installer/install-footprint', () => ({
+  findLegacyInstalls: jest.fn(() => ({ items: [], brands: [] })),
+  removeFootprint: jest.fn(() => ({ removed: [], failed: [] })),
+}));
 jest.mock('../../bin/modules/mcp-installer', () => ({
   installProjectMCPs: jest.fn().mockResolvedValue({
     success: true,

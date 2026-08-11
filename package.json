@@ -66,8 +66,8 @@
     "test:health-check": "mocha tests/health-check/**/*.test.js --timeout 30000",
     "lint": "eslint . --cache --cache-location .eslintcache",
     "typecheck": "tsc --noEmit",
-    "release": "semantic-release",
-    "release:test": "semantic-release --dry-run --no-ci || echo 'Config test complete - authentication errors are expected locally'",
+    "release": "node scripts/run-semantic-release.js",
+    "release:test": "node scripts/run-semantic-release.js --dry-run --no-ci --allow-failure",
     "generate:manifest": "node scripts/generate-install-manifest.js",
     "validate:manifest": "node scripts/validate-manifest.js",
     "validate:registry-determinism": "node scripts/validate-registry-determinism.js",
@@ -139,7 +139,7 @@
     "glob": "^10.4.4",
     "handlebars": "^4.7.8",
     "inquirer": "^8.2.6",
-    "js-yaml": "^4.1.0",
+    "js-yaml": "^4.3.1",
     "node-machine-id": "^1.1.12",
     "ora": "^5.4.1",
     "picocolors": "^1.1.1",
@@ -178,9 +178,6 @@
     "npm": ">=9.0.0"
   },
   "devDependencies": {
-    "@semantic-release/changelog": "^6.0.3",
-    "@semantic-release/exec": "^7.1.0",
-    "@semantic-release/git": "^10.0.1",
     "@types/jest": "^30.0.0",
     "@typescript-eslint/eslint-plugin": "^8.46.2",
     "@typescript-eslint/parser": "^8.46.2",
@@ -191,7 +188,6 @@
     "lint-staged": "^16.1.1",
     "mocha": "^11.7.5",
     "prettier": "^3.5.3",
-    "semantic-release": "^25.0.2",
     "typescript": "^5.9.3",
     "yaml-lint": "^1.7.0"
   },
@@ -209,9 +205,9 @@
     ]
   },
   "overrides": {
-    "tar": "^7.5.20",
+    "tar": "^7.5.22",
     "diff": "^8.0.3",
-    "fast-uri": "^3.1.2",
+    "fast-uri": "^3.1.5",
     "serialize-javascript": "^7.0.5",
     "test-exclude": "^7.0.1",
     "undici": "^7.28.0"

@@ -8,6 +8,7 @@ const { Command } = require('commander');
 const { createSdcCommand } = require('../../.aexos-core/cli/commands/sdc');
 const { createWaveCommand } = require('../../.aexos-core/cli/commands/wave');
 const { runWaveBatch } = require('../../.aexos-core/core/sdc');
+const { resolveBashExecutable } = require('../../.aexos-core/core/utils/shell-resolver');
 
 describe('Core Super Update CLI integration', () => {
   let dir;
@@ -198,7 +199,7 @@ describe('pm.sh governed execution integration', () => {
 
   function run(params, overrides = {}) {
     return spawnSync(
-      'bash',
+      resolveBashExecutable(),
       [script, 'dev', 'develop', params, '--context', contextPath, '--output', outputPath],
       {
         cwd: repoRoot,

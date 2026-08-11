@@ -510,9 +510,15 @@ function showStep(current, total, label) {
  * @returns {Object|null} Loaded module or null
  */
 function loadProModule(moduleName) {
+  const isStubModule = (loadedModule) =>
+    !loadedModule ||
+    loadedModule.isProStub === true ||
+    Object.values(loadedModule).some((value) => value && value.isProStub === true);
+
   const tryRequire = (requestPath) => {
     try {
-      return require(requestPath);
+      const loadedModule = require(requestPath);
+      return isStubModule(loadedModule) ? null : loadedModule;
     } catch (error) {
       if (
         error?.code === 'MODULE_NOT_FOUND' &&
