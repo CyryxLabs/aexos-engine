@@ -345,6 +345,7 @@ PASS, downstream or release credit is granted.
 | 2026-08-20 | 0.2.1 | Independent Product Owner validation GO (9.8/10) — Status: Draft → Ready. Exact approved inputs are self-contained; generated outputs remain measured double-build evidence; only B2P1B0 may follow after fresh gates, with no launcher PASS, release or downstream credit. | @po (Themis) |
 | 2026-08-20 | 0.3.0 | DevOps execution started (Ready → InProgress). Local/read-only lane discovery found no exact pinned Windows, Linux or macOS execution lane and no self-hosted runner; provisioning therefore fails closed before acquisition/build/elevation. B2P1 remains untouched and Done; no closure PASS, gate credit or B0 unblock is claimed. | @devops (Polaris) |
 | 2026-08-20 | 0.3.1 | Explicitly authorized remote execution found all exact hosted images, materialized the pinned Windows Build Tools/LLVM and proved native elevated-controller → restricted-child readiness on Windows, Linux and Darwin. Offline double-build probes remain active/incomplete and the strict generated-output closure has not been emitted; Status remains InProgress with no launcher/release/downstream credit. | @devops (Polaris) |
+| 2026-08-20 | 0.3.2 | Exact Darwin completed two byte-identical offline builds. Exact Windows completed both builds but their aggregate archive/object/member/symbol results diverged; exact Linux completed build 1 but timed out during build 2 after 240 minutes. New jobs are provider-blocked by an account billing/spending-limit annotation. Status remains InProgress; no strict closure PASS, launcher PASS or downstream credit is claimed. | @devops (Polaris) |
 
 ## Dev Agent Record
 
@@ -362,6 +363,13 @@ Codex GPT-5 (Polaris / `@devops`).
 - `artifacts/b2p-launcher-inputs-host-local/remote/b0p-unix-elevated-lanes.json.sha256`
 - `artifacts/b2p-launcher-inputs-host-local/remote/b0p-windows-elevated-lane.json`
 - `artifacts/b2p-launcher-inputs-host-local/remote/b0p-windows-elevated-lane.json.sha256`
+- `artifacts/b2p-launcher-inputs-host-local/remote/b0p-darwin-double-build.json`
+- `artifacts/b2p-launcher-inputs-host-local/remote/b0p-darwin-double-build.json.sha256`
+- `artifacts/b2p-launcher-inputs-host-local/blockers/b0p-linux-double-build-blocker.json`
+- `artifacts/b2p-launcher-inputs-host-local/blockers/b0p-linux-double-build-blocker.json.sha256`
+- GitHub Actions run `32391413085` — exact Darwin two-build aggregate `PASS`
+- GitHub Actions run `32394113321` — exact Windows builds completed, aggregate `DIVERGENCE`
+- GitHub Actions run `32391413313` — exact Linux build 1 completed, build 2 timed out
 - GitHub Actions run `32380436770` — exact Linux/Darwin elevated lanes `PASS`
 - GitHub Actions run `32381091457` — exact Windows elevated lane `PASS`
 
@@ -373,6 +381,8 @@ Codex GPT-5 (Polaris / `@devops`).
 - Exact native governed lanes now pass: Linux root → uid/gid `65534` with effective/permitted/ambient capabilities zero; Darwin root → uid/gid `4294967294`; Windows Administrators-owned known-folder root → restricted user token at Medium integrity with Administrators deny-only and forbidden privileges disabled. Every child was denied root write/delete/ACL/owner or privilege regain authority.
 - T2–T4 and T6–T8 remain incomplete. The complete generatedOutputs, byte-identical offline double-build equality for all tuples, closure PASS and independent gate credit do not yet exist.
 - The exact Windows `20260818.277.1` lane acquired the pinned Build Tools, standalone LLVM 20.1.8 and SDK, but its two-build step reached the 120-minute job limit without emitting evidence. A 240-minute retry failed closed before acquisition on hosted image `20260802.262.1`; no exact self-hosted Windows lane is configured.
+- A later exact Windows 240-minute allocation completed both offline builds but failed closed on aggregate archive/object/member/symbol divergence. The diagnostic workflow now emits only the six approved hash/count result fields on a retry; a scoped sanitization scan found no credential, private-key or user-path literals.
+- Exact Darwin completed both offline builds with byte-identical aggregate evidence. Exact Linux completed its first offline build in 3h30m57s and timed out during build 2 at 240 minutes. Two subsequent diagnostic jobs were rejected before startup because recent account payments failed or the spending limit requires increase, so no safe remote retry is currently executable.
 - CodeRabbit degraded truthfully: configured WSL command returned `WSL_E_DISTRO_NOT_FOUND` because the required Ubuntu distribution is absent; no automated-review PASS is claimed and T8 remains unchecked.
 - Authorized remote preflight workflow run `32371422672` proved the exact macOS arm64 lane and, from attempt 2, the exact Ubuntu 24 lane. Three independent Windows allocations remained on image `20260802.262.1` / build `5386`, not the required `20260818.277.1` / build `5499`; the provider rollout is therefore still fail-closed. The organization exposes no self-hosted runner or custom hosted-runner API and no configured Azure/AWS/GCP provisioning credential is available.
 
@@ -392,6 +402,8 @@ Codex GPT-5 (Polaris / `@devops`).
 - `artifacts/b2p-launcher-inputs-host-local/blockers/b0p-remote-lane-probe.json.sha256`
 - `artifacts/b2p-launcher-inputs-host-local/blockers/b0p-windows-double-build-blocker.json`
 - `artifacts/b2p-launcher-inputs-host-local/blockers/b0p-windows-double-build-blocker.json.sha256`
+- `artifacts/b2p-launcher-inputs-host-local/blockers/b0p-linux-double-build-blocker.json`
+- `artifacts/b2p-launcher-inputs-host-local/blockers/b0p-linux-double-build-blocker.json.sha256`
 - `.github/workflows/b0p-exact-lane-probe.yml`
 - `.github/workflows/b0p-windows-rollout-probe.yml`
 - `.github/workflows/b0p-toolchain-preflight.yml`
@@ -408,6 +420,10 @@ Codex GPT-5 (Polaris / `@devops`).
 - `artifacts/b2p-launcher-inputs-host-local/remote/b0p-unix-elevated-lanes.json.sha256`
 - `artifacts/b2p-launcher-inputs-host-local/remote/b0p-windows-elevated-lane.json`
 - `artifacts/b2p-launcher-inputs-host-local/remote/b0p-windows-elevated-lane.json.sha256`
+- `artifacts/b2p-launcher-inputs-host-local/remote/b0p-darwin-double-build.json`
+- `artifacts/b2p-launcher-inputs-host-local/remote/b0p-darwin-double-build.json.sha256`
+- `artifacts/b2p-launcher-inputs-host-local/remote/b0p-diagnostic-sanitization-scan.json`
+- `artifacts/b2p-launcher-inputs-host-local/remote/b0p-diagnostic-sanitization-scan.json.sha256`
 
 ## QA Results
 
