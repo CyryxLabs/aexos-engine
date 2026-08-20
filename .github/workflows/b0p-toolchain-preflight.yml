@@ -1,6 +1,11 @@
 name: B0P Toolchain and Isolation Preflight
 
 on:
+  push:
+    branches:
+      - codex/cerberus-knowledge-plane
+    paths:
+      - .github/workflows/b0p-toolchain-preflight.yml
   workflow_dispatch:
 
 permissions:
