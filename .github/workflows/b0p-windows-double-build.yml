@@ -64,6 +64,19 @@ jobs:
           if (-not (Test-Path -LiteralPath (Join-Path $installPath 'VC\Auxiliary\Build\vcvars64.bat'))) { throw 'B0P_NATIVE_DESKTOP_WORKLOAD_MISSING_VCVARS' }
           if (-not (Test-Path -LiteralPath (Join-Path $installPath 'MSBuild\Current\Bin\MSBuild.exe'))) { throw 'B0P_NATIVE_DESKTOP_WORKLOAD_MISSING_MSBUILD' }
 
+          # Node >=24 intentionally resolves ClangCL below VCINSTALLDIR. Bind that
+          # lookup to the lane-pinned standalone LLVM 20.1.8 without modifying
+          # the Node source tree or falling back to the component's LLVM 19.1.5.
+          $vendorLlvm = Join-Path $installPath 'VC\Tools\Llvm\x64'
+          $vendorLlvmBackup = "$vendorLlvm.vendor-19.1.5"
+          $approvedLlvm = 'C:\Program Files\LLVM'
+          if (-not (Test-Path -LiteralPath (Join-Path $approvedLlvm 'bin\clang.exe'))) { throw 'B0P_APPROVED_LLVM_MISSING' }
+          if (Test-Path -LiteralPath $vendorLlvmBackup) { throw 'B0P_VENDOR_LLVM_BACKUP_ALREADY_EXISTS' }
+          Move-Item -LiteralPath $vendorLlvm -Destination $vendorLlvmBackup
+          New-Item -ItemType Junction -Path $vendorLlvm -Target $approvedLlvm | Out-Null
+          $clangVersion = (& (Join-Path $vendorLlvm 'bin\clang.exe') --version | Select-Object -First 1)
+          if ($clangVersion -notmatch '20\.1\.8') { throw "B0P_APPROVED_LLVM_VERSION_MISMATCH:$clangVersion" }
+
       - name: Execute two independent offline static builds
         shell: pwsh
         run: |
@@ -109,7 +122,8 @@ jobs:
                 $ruleNames.Add($ruleName)
               }
               $vcvars = 'C:\AEXOSBuildTools\VC\Auxiliary\Build\vcvars64.bat'
-              $command = "call `"$vcvars`" && set `"PATH=$llvmRoot;%PATH%`" && call vcbuild.bat release x64 vs2022 static nonpm nocorepack openssl-no-asm"
+              $msbuildRoot = 'C:\AEXOSBuildTools\MSBuild\Current\Bin'
+              $command = "call `"$vcvars`" && set `"PATH=$llvmRoot;$msbuildRoot;%PATH%`" && call vcbuild.bat release x64 vs2022 static nonpm nocorepack openssl-no-asm"
               $stdout = Join-Path $evidenceRoot "build-$buildNumber.stdout.log"
               $stderr = Join-Path $evidenceRoot "build-$buildNumber.stderr.log"
               $builder = Start-Process -FilePath "$env:SystemRoot\System32\cmd.exe" -ArgumentList @('/d', '/s', '/c', $command) -WorkingDirectory $sourceRoot -Wait -PassThru -NoNewWindow -RedirectStandardOutput $stdout -RedirectStandardError $stderr
