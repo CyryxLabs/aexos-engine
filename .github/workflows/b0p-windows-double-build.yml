@@ -1,6 +1,7 @@
 name: B0P Windows Offline Double Build
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - codex/cerberus-knowledge-plane
