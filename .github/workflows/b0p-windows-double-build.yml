@@ -113,7 +113,11 @@ jobs:
               $stdout = Join-Path $evidenceRoot "build-$buildNumber.stdout.log"
               $stderr = Join-Path $evidenceRoot "build-$buildNumber.stderr.log"
               $builder = Start-Process -FilePath "$env:SystemRoot\System32\cmd.exe" -ArgumentList @('/d', '/s', '/c', $command) -WorkingDirectory $sourceRoot -Wait -PassThru -NoNewWindow -RedirectStandardOutput $stdout -RedirectStandardError $stderr
-              if ($builder.ExitCode -ne 0) { throw "B0P_WINDOWS_STATIC_BUILD_FAILED:$($builder.ExitCode)" }
+              if ($builder.ExitCode -ne 0) {
+                Get-Content -LiteralPath $stdout -Tail 200 -ErrorAction SilentlyContinue | Write-Output
+                Get-Content -LiteralPath $stderr -Tail 200 -ErrorAction SilentlyContinue | Write-Error
+                throw "B0P_WINDOWS_STATIC_BUILD_FAILED:$($builder.ExitCode)"
+              }
             } finally {
               foreach ($ruleName in $ruleNames) { Remove-NetFirewallRule -DisplayName $ruleName -ErrorAction SilentlyContinue }
             }
