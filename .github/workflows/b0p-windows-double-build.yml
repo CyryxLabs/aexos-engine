@@ -109,7 +109,7 @@ jobs:
                 $ruleNames.Add($ruleName)
               }
               $vcvars = 'C:\AEXOSBuildTools\VC\Auxiliary\Build\vcvars64.bat'
-              $command = "call `"$vcvars`" && set `"PATH=$llvmRoot;%PATH%`" && call vcbuild.bat release x64 vs2022 static nonpm nocorepack"
+              $command = "call `"$vcvars`" && set `"PATH=$llvmRoot;%PATH%`" && call vcbuild.bat release x64 vs2022 static nonpm nocorepack openssl-no-asm"
               $stdout = Join-Path $evidenceRoot "build-$buildNumber.stdout.log"
               $stderr = Join-Path $evidenceRoot "build-$buildNumber.stderr.log"
               $builder = Start-Process -FilePath "$env:SystemRoot\System32\cmd.exe" -ArgumentList @('/d', '/s', '/c', $command) -WorkingDirectory $sourceRoot -Wait -PassThru -NoNewWindow -RedirectStandardOutput $stdout -RedirectStandardError $stderr
