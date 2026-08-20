@@ -6,7 +6,7 @@
 **Decision:** [ADR-AEX-012](adr/ADR-AEX-012-ATOMIC-NO-REPLACE-PROMOTION.md)  
 **Depends on:** [AEX.11B2P1](STORY-AEX.11B2P1-NATIVE-NO-REPLACE-HOST-CAPABILITY.md) (`Done`, Architecture/QA `PASS`)  
 **Unblocks:** [AEX.11B2P1B0](STORY-AEX.11B2P1B0-OS-ROOTED-PRE-JS-LAUNCHER.md) only  
-**Status:** InProgress — execution started; fail-closed lane preflight confirms the exact immutable Windows/Linux/macOS build and elevation lanes are not available from this worktree/host, so no closure `PASS` or downstream credit exists  
+**Status:** InProgress — all three exact immutable remote lanes and elevated-controller/restricted-child proofs are now observed, while the complete two-build generated-output closures remain pending; no closure `PASS` or downstream credit exists  
 **Owner / Primary Executor:** `@devops`  
 **Quality Gates:** `@architect`, `@po`, `@qa`  
 **Architecture Gate:** `@architect`  
@@ -189,8 +189,8 @@ aexos.embedder-recipe/v1|encoding=utf-8-lf|format=canonical-json|argv=ordered-ex
   - [ ] Acquire only in the pinned lane, disable egress, execute two independent builds and bind exact recipe/tool files/argv/archives/objects/symbols/imports/system libraries/lane identities; reject divergence, addon import libraries and dynamic runtime discovery.
 - [ ] **T4 — Pin layout/selector/activation-lock policies (`@devops`, `@architect`)** (AC5)
   - [ ] Hash exact platform layouts, atomic selector transactions, flushes, rollback and shared/exclusive lock contracts.
-- [ ] **T5 — Provision governed elevated-controller/restricted-child lane (`@devops`)** (AC6)
-  - [ ] Build the native test-only controller, observe exact runner/controller/principal/oracle identities, create the protected root and prove the restricted runtime token/UID/GID/capability boundary.
+- [x] **T5 — Provision governed elevated-controller/restricted-child lane (`@devops`)** (AC6)
+  - [x] Build the native test-only controller, observe exact runner/controller/principal/oracle identities, create the protected root and prove the restricted runtime token/UID/GID/capability boundary.
 - [ ] **T6 — Validate launcher receipt policy readiness (`@devops`, `@qa`)** (AC7)
   - [ ] Fix schema/preimage, cell-set hash, exact 53+3 denominators/counters and zero-egress policy without emitting launcher PASS.
 - [ ] **T7 — Run independent Architecture, Product and QA gates (`@architect`, `@po`, `@qa`)** (AC1–AC8)
@@ -344,6 +344,7 @@ PASS, downstream or release credit is granted.
 | 2026-08-20 | 0.2.0 | Synchronized Draft to spec v3.1: closure v2 separates fixed `approvedInputs` from measured `generatedOutputs`; pins Node 24.19.0 RELEASE identity, three immutable lanes/toolchain semantics and seven policy byte/hash pairs; preserves Node 24.15.0 as HOST_TEST-only; requires two independent offline builds and fresh gates. Historical NO-GO preserved; no launcher PASS or release credit. | @sm (Chronos) |
 | 2026-08-20 | 0.2.1 | Independent Product Owner validation GO (9.8/10) — Status: Draft → Ready. Exact approved inputs are self-contained; generated outputs remain measured double-build evidence; only B2P1B0 may follow after fresh gates, with no launcher PASS, release or downstream credit. | @po (Themis) |
 | 2026-08-20 | 0.3.0 | DevOps execution started (Ready → InProgress). Local/read-only lane discovery found no exact pinned Windows, Linux or macOS execution lane and no self-hosted runner; provisioning therefore fails closed before acquisition/build/elevation. B2P1 remains untouched and Done; no closure PASS, gate credit or B0 unblock is claimed. | @devops (Polaris) |
+| 2026-08-20 | 0.3.1 | Explicitly authorized remote execution found all exact hosted images, materialized the pinned Windows Build Tools/LLVM and proved native elevated-controller → restricted-child readiness on Windows, Linux and Darwin. Offline double-build probes remain active/incomplete and the strict generated-output closure has not been emitted; Status remains InProgress with no launcher/release/downstream credit. | @devops (Polaris) |
 
 ## Dev Agent Record
 
@@ -357,14 +358,20 @@ Codex GPT-5 (Polaris / `@devops`).
 - `artifacts/b2p-launcher-inputs-host-local/blockers/b0p-lane-readiness-blocker.json.sha256`
 - `artifacts/b2p-launcher-inputs-host-local/blockers/b0p-remote-lane-probe.json`
 - `artifacts/b2p-launcher-inputs-host-local/blockers/b0p-remote-lane-probe.json.sha256`
+- `artifacts/b2p-launcher-inputs-host-local/remote/b0p-unix-elevated-lanes.json`
+- `artifacts/b2p-launcher-inputs-host-local/remote/b0p-unix-elevated-lanes.json.sha256`
+- `artifacts/b2p-launcher-inputs-host-local/remote/b0p-windows-elevated-lane.json`
+- `artifacts/b2p-launcher-inputs-host-local/remote/b0p-windows-elevated-lane.json.sha256`
+- GitHub Actions run `32380436770` — exact Linux/Darwin elevated lanes `PASS`
+- GitHub Actions run `32381091457` — exact Windows elevated lane `PASS`
 
 ### Completion Notes List
 
 - Implemented a deterministic, fail-closed B0P lane preflight and strict closure verifier without producing a partial or synthetic closure.
 - Verified the seven policy byte/hash pairs and exact three RELEASE tuples from spec v3.1; Node 24.15.0 remains HOST_TEST-only.
-- Current host is Windows `10.0.26200`, Node `24.15.0`, medium integrity; Docker exposes only a non-pinned Linux/WSL kernel, no Darwin arm64 lane exists, and the repository has no self-hosted runner.
-- The configured GitHub-hosted labels cannot select the historical asserted image snapshots, and no B0P workflow exists on the remote default branch. Remote workflow mutation, push and invented elevation were prohibited.
-- T2–T8 remain incomplete. No generatedOutputs, offline double-build equality, elevated-controller/restricted-child positive proof, closure PASS or independent gate credit exists.
+- Initial local-host constraints remain truthful historical blocker evidence, but explicit authorization enabled branch-scoped hosted-lane workflows; stochastic Windows allocation was sampled until the exact asserted image appeared, without weakening any pin.
+- Exact native governed lanes now pass: Linux root → uid/gid `65534` with effective/permitted/ambient capabilities zero; Darwin root → uid/gid `4294967294`; Windows Administrators-owned known-folder root → restricted user token at Medium integrity with Administrators deny-only and forbidden privileges disabled. Every child was denied root write/delete/ACL/owner or privilege regain authority.
+- T2–T4 and T6–T8 remain incomplete. The complete generatedOutputs, byte-identical offline double-build equality for all tuples, closure PASS and independent gate credit do not yet exist.
 - CodeRabbit degraded truthfully: configured WSL command returned `WSL_E_DISTRO_NOT_FOUND` because the required Ubuntu distribution is absent; no automated-review PASS is claimed and T8 remains unchecked.
 - Authorized remote preflight workflow run `32371422672` proved the exact macOS arm64 lane and, from attempt 2, the exact Ubuntu 24 lane. Three independent Windows allocations remained on image `20260802.262.1` / build `5386`, not the required `20260818.277.1` / build `5499`; the provider rollout is therefore still fail-closed. The organization exposes no self-hosted runner or custom hosted-runner API and no configured Azure/AWS/GCP provisioning credential is available.
 
@@ -384,6 +391,19 @@ Codex GPT-5 (Polaris / `@devops`).
 - `artifacts/b2p-launcher-inputs-host-local/blockers/b0p-remote-lane-probe.json.sha256`
 - `.github/workflows/b0p-exact-lane-probe.yml`
 - `.github/workflows/b0p-windows-rollout-probe.yml`
+- `.github/workflows/b0p-toolchain-preflight.yml`
+- `.github/workflows/b0p-windows-buildtools-preflight.yml`
+- `.github/workflows/b0p-unix-double-build.yml`
+- `.github/workflows/b0p-darwin-double-build.yml`
+- `.github/workflows/b0p-windows-double-build.yml`
+- `.github/workflows/b0p-unix-elevated-lane.yml`
+- `.github/workflows/b0p-windows-elevated-lane.yml`
+- `tests/fixtures/knowledge/atomic-no-replace/trust-root-lane-controller/unix-controller.c`
+- `tests/fixtures/knowledge/atomic-no-replace/trust-root-lane-controller/windows-controller.cpp`
+- `artifacts/b2p-launcher-inputs-host-local/remote/b0p-unix-elevated-lanes.json`
+- `artifacts/b2p-launcher-inputs-host-local/remote/b0p-unix-elevated-lanes.json.sha256`
+- `artifacts/b2p-launcher-inputs-host-local/remote/b0p-windows-elevated-lane.json`
+- `artifacts/b2p-launcher-inputs-host-local/remote/b0p-windows-elevated-lane.json.sha256`
 
 ## QA Results
 
