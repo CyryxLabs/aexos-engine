@@ -97,14 +97,9 @@ jobs:
             result = 'PASS'
           }
           $evidence | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath evidence/windows.json -Encoding utf8NoBOM
-
-      - name: Upload Windows preflight evidence
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: b0p-preflight-windows
-          path: evidence
-          if-no-files-found: warn
+          Write-Output 'B0P_PREFLIGHT_EVIDENCE_BEGIN'
+          Get-Content -LiteralPath evidence/windows.json -Raw
+          Write-Output 'B0P_PREFLIGHT_EVIDENCE_END'
 
   linux:
     name: linux-x64-glibc-node-v24.19.0
@@ -155,14 +150,9 @@ jobs:
           cat > evidence/linux.json <<EOF
           {"schemaVersion":"aexos.b0p-toolchain-isolation-preflight/v1","launcherTupleId":"linux-x64-glibc-node-v24.19.0","imageOS":"$ImageOS","imageVersion":"$ImageVersion","osIdentity":"$PRETTY_NAME","kernel":"$(uname -r)","gccPath":"$gcc_path","gxxPath":"$gxx_path","linkerPath":"$ld_path","librarianPath":"$ar_path","gccVersion":"$(gcc-13 -dumpfullversion)","binutilsPackageVersion":"$(dpkg-query -W -f='${Version}' binutils)","makePackageVersion":"$(dpkg-query -W -f='${Version}' make)","pythonVersion":"$(python3 --version)","glibcVersion":"$(getconf GNU_LIBC_VERSION)","nodeArchiveSha256":"16fe258006a6e86844fbe05b3b5e1e5623ca8d3da54e32d98d9e83234bf25b01","installerPrincipalId":"uid=0","runtimePrincipalId":"uid=$restricted_uid,gid=$restricted_gid","offlinePrimitive":"root-network-namespace","result":"PASS"}
           EOF
-
-      - name: Upload Linux preflight evidence
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: b0p-preflight-linux
-          path: evidence
-          if-no-files-found: warn
+          echo B0P_PREFLIGHT_EVIDENCE_BEGIN
+          cat evidence/linux.json
+          echo B0P_PREFLIGHT_EVIDENCE_END
 
   darwin:
     name: darwin-arm64-none-node-v24.19.0
@@ -217,11 +207,6 @@ jobs:
           cat > evidence/darwin.json <<EOF
           {"schemaVersion":"aexos.b0p-toolchain-isolation-preflight/v1","launcherTupleId":"darwin-arm64-none-node-v24.19.0","imageOS":"$ImageOS","imageVersion":"$ImageVersion","osIdentity":"macOS $(sw_vers -productVersion) ($(sw_vers -buildVersion))","kernel":"Darwin $(uname -r)","xcode":"$(xcodebuild -version | tr '\n' ' ' | sed 's/ $//')","clangPath":"$clang_path","linkerPath":"$ld_path","librarianPath":"$ar_path","clangVersion":"$clang_version","sdkPath":"$sdk_path","sdkVersion":"$(xcrun --sdk macosx --show-sdk-version)","deploymentTarget":"$MACOSX_DEPLOYMENT_TARGET","nodeArchiveSha256":"16fe258006a6e86844fbe05b3b5e1e5623ca8d3da54e32d98d9e83234bf25b01","installerPrincipalId":"uid=0","runtimePrincipalId":"uid=$restricted_uid,gid=$restricted_gid","offlinePrimitive":"sandbox-exec-deny-network","result":"PASS"}
           EOF
-
-      - name: Upload Darwin preflight evidence
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: b0p-preflight-darwin
-          path: evidence
-          if-no-files-found: warn
+          echo B0P_PREFLIGHT_EVIDENCE_BEGIN
+          cat evidence/darwin.json
+          echo B0P_PREFLIGHT_EVIDENCE_END
