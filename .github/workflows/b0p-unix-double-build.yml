@@ -48,7 +48,7 @@ jobs:
             sudo rm -rf "$source_root"
             mkdir -p "$source_root"
             tar -xzf "$RUNNER_TEMP/node-v24.19.0.tar.gz" --strip-components=1 -C "$source_root"
-            sudo -n unshare --net --mount-proc bash -c "
+            if ! sudo -n unshare --net --mount-proc bash -c "
               set -euo pipefail
               cd '$source_root'
               env -i PATH=/usr/bin:/bin HOME=/tmp \
@@ -57,7 +57,10 @@ jobs:
               env -i PATH=/usr/bin:/bin HOME=/tmp \
                 CC=/usr/bin/gcc-13 CXX=/usr/bin/g++-13 PYTHON=/usr/bin/python3 \
                 make -j2
-            " >"$evidence_root/build-$build_number.log" 2>&1
+            " >"$evidence_root/build-$build_number.log" 2>&1; then
+              tail -200 "$evidence_root/build-$build_number.log" >&2
+              exit 1
+            fi
             archive="$(find "$source_root/out/Release" -type f -name 'libnode.a' -print -quit)"
             test -n "$archive"
             test "$(find "$source_root/out/Release" -type f -name 'libnode.a' | wc -l)" = 1
@@ -123,12 +126,15 @@ jobs:
             rm -rf "$source_root"
             mkdir -p "$source_root"
             tar -xzf "$RUNNER_TEMP/node-v24.19.0.tar.gz" --strip-components=1 -C "$source_root"
-            /usr/bin/sandbox-exec -p '(version 1)(deny network*)(allow default)' \
+            if ! /usr/bin/sandbox-exec -p '(version 1)(deny network*)(allow default)' \
               /usr/bin/env -i PATH=/usr/bin:/bin HOME=/tmp \
               DEVELOPER_DIR="$DEVELOPER_DIR" MACOSX_DEPLOYMENT_TARGET="$MACOSX_DEPLOYMENT_TARGET" \
               CC="$(xcrun --find clang)" CXX="$(xcrun --find clang++)" PYTHON=/usr/bin/python3 \
               /bin/bash -c "cd '$source_root' && ./configure --enable-static --without-npm --without-corepack && make -j2" \
-              >"$evidence_root/build-$build_number.log" 2>&1
+              >"$evidence_root/build-$build_number.log" 2>&1; then
+              tail -200 "$evidence_root/build-$build_number.log" >&2
+              exit 1
+            fi
             archive="$(find "$source_root/out/Release" -type f -name 'libnode.a' -print -quit)"
             test -n "$archive"
             test "$(find "$source_root/out/Release" -type f -name 'libnode.a' | wc -l | tr -d ' ')" = 1
