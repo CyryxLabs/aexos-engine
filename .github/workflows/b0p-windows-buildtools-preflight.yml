@@ -54,10 +54,13 @@ jobs:
           $instances = @(& $vswhere -products '*' -format json -utf8 | ConvertFrom-Json)
           $instance = $instances | Where-Object { $_.installationPath -eq $installPath } | Select-Object -First 1
           if (-not $instance -or $instance.installationVersion -ne '17.14.37614.0') { throw 'B0P_BUILD_TOOLS_VERSION_MISMATCH' }
-          foreach ($component in $components) {
+          $verifiablePackages = $components | Where-Object { $_ -ne 'Microsoft.VisualStudio.Workload.NativeDesktop' }
+          foreach ($component in $verifiablePackages) {
             $componentPaths = @(& $vswhere -products '*' -requires $component -property installationPath)
             if ($componentPaths -notcontains $installPath) { throw "B0P_BUILD_TOOLS_COMPONENT_MISSING:$component" }
           }
+          if (-not (Test-Path -LiteralPath (Join-Path $installPath 'VC\Auxiliary\Build\vcvars64.bat'))) { throw 'B0P_NATIVE_DESKTOP_WORKLOAD_MISSING_VCVARS' }
+          if (-not (Test-Path -LiteralPath (Join-Path $installPath 'MSBuild\Current\Bin\MSBuild.exe'))) { throw 'B0P_NATIVE_DESKTOP_WORKLOAD_MISSING_MSBUILD' }
 
           $evidence = [ordered]@{
             schemaVersion = 'aexos.b0p-windows-buildtools-acquisition/v1'
@@ -68,7 +71,8 @@ jobs:
             productVersion = $instance.catalog.productDisplayVersion
             installationVersion = $instance.installationVersion
             installationPath = $instance.installationPath
-            components = $components
+            requestedComponents = $components
+            verifiedPackageComponents = $verifiablePackages
             result = 'PASS'
           }
           Write-Output 'B0P_BUILDTOOLS_EVIDENCE_BEGIN'
