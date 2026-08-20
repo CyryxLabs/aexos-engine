@@ -1,0 +1,86 @@
+name: B0P Linux Offline Double Build
+
+on:
+  push:
+    branches:
+      - codex/cerberus-knowledge-plane
+    paths:
+      - .github/workflows/b0p-linux-double-build.yml
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    name: linux-x64-glibc-node-v24.19.0
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - name: Acquire exact source
+        shell: bash
+        run: |
+          set -euo pipefail
+          . /etc/os-release
+          test "$RUNNER_OS" = Linux
+          test "$RUNNER_ARCH" = X64
+          test "$ImageOS" = ubuntu24
+          test "$ImageVersion" = 20260816.277.1
+          test "$PRETTY_NAME" = 'Ubuntu 24.04.4 LTS'
+          test "$(uname -r)" = 6.17.0-1022-azure
+          curl --fail --location --silent --show-error \
+            https://nodejs.org/dist/v24.19.0/node-v24.19.0.tar.gz \
+            --output "$RUNNER_TEMP/node-v24.19.0.tar.gz"
+          test "$(stat -c %s "$RUNNER_TEMP/node-v24.19.0.tar.gz")" = 112888473
+          echo '16fe258006a6e86844fbe05b3b5e1e5623ca8d3da54e32d98d9e83234bf25b01  '"$RUNNER_TEMP/node-v24.19.0.tar.gz" | sha256sum --check --strict
+
+      - name: Execute two independent offline static builds
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_root="$RUNNER_TEMP/b0p-node-source"
+          evidence_root="$RUNNER_TEMP/b0p-build-evidence"
+          mkdir -p "$evidence_root"
+          for build_number in 1 2; do
+            sudo rm -rf "$source_root"
+            mkdir -p "$source_root"
+            tar -xzf "$RUNNER_TEMP/node-v24.19.0.tar.gz" --strip-components=1 -C "$source_root"
+            if ! sudo -n unshare --net --mount-proc bash -c "
+              set -euo pipefail
+              cd '$source_root'
+              env -i PATH=/usr/bin:/bin HOME=/tmp \
+                CC=/usr/bin/gcc-13 CXX=/usr/bin/g++-13 PYTHON=/usr/bin/python3 \
+                ./configure --enable-static --without-npm --without-corepack
+              env -i PATH=/usr/bin:/bin HOME=/tmp \
+                CC=/usr/bin/gcc-13 CXX=/usr/bin/g++-13 PYTHON=/usr/bin/python3 \
+                make -j4
+            " >"$evidence_root/build-$build_number.log" 2>&1; then
+              tail -200 "$evidence_root/build-$build_number.log" >&2
+              exit 1
+            fi
+            archive="$(find "$source_root/out/Release" -type f -name 'libnode.a' -print -quit)"
+            test -n "$archive"
+            test "$(find "$source_root/out/Release" -type f -name 'libnode.a' | wc -l)" = 1
+            archive_sha="$(sha256sum "$archive" | awk '{print $1}')"
+            archive_bytes="$(stat -c %s "$archive")"
+            /usr/bin/ar t "$archive" | LC_ALL=C sort >"$evidence_root/archive-members-$build_number.txt"
+            /usr/bin/nm -A -P "$archive" | LC_ALL=C sort >"$evidence_root/archive-symbols-$build_number.txt"
+            find "$source_root/out/Release" -type f \( -name '*.o' -o -name '*.a' \) -print0 \
+              | LC_ALL=C sort -z \
+              | while IFS= read -r -d '' file; do
+                  relative="${file#"$source_root/"}"
+                  printf '%s\t%s\t%s\n' "$relative" "$(stat -c %s "$file")" "$(sha256sum "$file" | awk '{print $1}')"
+                done >"$evidence_root/object-set-$build_number.txt"
+            printf '%s\n%s\n%s\n%s\n%s\n' \
+              "$archive_sha" "$archive_bytes" \
+              "$(sha256sum "$evidence_root/archive-members-$build_number.txt" | awk '{print $1}')" \
+              "$(sha256sum "$evidence_root/archive-symbols-$build_number.txt" | awk '{print $1}')" \
+              "$(sha256sum "$evidence_root/object-set-$build_number.txt" | awk '{print $1}')" \
+              >"$evidence_root/result-$build_number.txt"
+          done
+          cmp "$evidence_root/result-1.txt" "$evidence_root/result-2.txt"
+          mapfile -t result <"$evidence_root/result-1.txt"
+          printf 'B0P_DOUBLE_BUILD_EVIDENCE_BEGIN\n'
+          printf '{"schemaVersion":"aexos.b0p-offline-double-build/v1","launcherTupleId":"linux-x64-glibc-node-v24.19.0","imageVersion":"%s","archiveSha256":"%s","archiveBytes":%s,"memberInventorySha256":"%s","symbolInventorySha256":"%s","objectSetSha256":"%s","objectRecordCount":%s,"buildCount":2,"network":"root-network-namespace","byteIdentical":true,"result":"PASS"}\n' \
+            "$ImageVersion" "${result[0]}" "${result[1]}" "${result[2]}" "${result[3]}" "${result[4]}" \
+            "$(wc -l <"$evidence_root/object-set-1.txt" | tr -d ' ')"
+          printf 'B0P_DOUBLE_BUILD_EVIDENCE_END\n'
