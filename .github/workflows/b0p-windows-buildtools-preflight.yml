@@ -1,0 +1,76 @@
+name: B0P Windows Build Tools Preflight
+
+on:
+  push:
+    branches:
+      - codex/cerberus-knowledge-plane
+    paths:
+      - .github/workflows/b0p-windows-buildtools-preflight.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: b0p-windows-buildtools-preflight
+  cancel-in-progress: false
+
+jobs:
+  windows:
+    name: win32 exact Build Tools acquisition
+    runs-on: windows-2022
+    timeout-minutes: 45
+    steps:
+      - name: Assert exact Windows lane
+        shell: pwsh
+        run: |
+          $build = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion'
+          $windowsBuild = "10.0.$($build.CurrentBuildNumber).$($build.UBR)"
+          if ($env:RUNNER_OS -ne 'Windows' -or $env:RUNNER_ARCH -ne 'X64') { throw 'B0P_WINDOWS_RUNNER_IDENTITY_MISMATCH' }
+          if ($env:ImageOS -ne 'win22' -or $env:ImageVersion -ne '20260818.277.1') { throw 'B0P_WINDOWS_IMAGE_MISMATCH' }
+          if ($windowsBuild -ne '10.0.20348.5499') { throw 'B0P_WINDOWS_BUILD_MISMATCH' }
+
+      - name: Acquire and verify approved Build Tools
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $bootstrap = Join-Path $env:RUNNER_TEMP 'vs_BuildTools.exe'
+          Invoke-WebRequest -UseBasicParsing -Uri 'https://download.visualstudio.microsoft.com/download/pr/fa619120-9c0e-47e6-bfe0-3ee96fb671b2/236367b68ba9a51708263ab10a1c85546cc4a8eca78b365168811d19c4fb2f29/vs_BuildTools.exe' -OutFile $bootstrap
+          if ((Get-Item -LiteralPath $bootstrap).Length -ne 4473936) { throw 'B0P_VS_BOOTSTRAP_BYTES_MISMATCH' }
+          if ((Get-FileHash -LiteralPath $bootstrap -Algorithm SHA256).Hash.ToLowerInvariant() -ne '236367b68ba9a51708263ab10a1c85546cc4a8eca78b365168811d19c4fb2f29') { throw 'B0P_VS_BOOTSTRAP_SHA256_MISMATCH' }
+
+          $installPath = 'C:\AEXOSBuildTools'
+          $components = @(
+            'Microsoft.VisualStudio.Workload.NativeDesktop',
+            'Microsoft.VisualStudio.Component.VC.Llvm.Clang',
+            'Microsoft.VisualStudio.Component.VC.Llvm.ClangToolset',
+            'Microsoft.VisualStudio.Component.VC.Tools.x86.x64'
+          )
+          $arguments = @('--quiet', '--wait', '--norestart', '--nocache', '--installPath', $installPath)
+          foreach ($component in $components) { $arguments += @('--add', $component) }
+          $installer = Start-Process -FilePath $bootstrap -ArgumentList $arguments -Wait -PassThru -WindowStyle Hidden
+          if ($installer.ExitCode -notin @(0, 3010)) { throw "B0P_BUILD_TOOLS_INSTALL_FAILED:$($installer.ExitCode)" }
+
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $instances = @(& $vswhere -path $installPath -products '*' -format json -utf8 | ConvertFrom-Json)
+          $instance = $instances | Select-Object -First 1
+          if (-not $instance -or $instance.installationVersion -ne '17.14.37614.0') { throw 'B0P_BUILD_TOOLS_VERSION_MISMATCH' }
+          foreach ($component in $components) {
+            $componentPath = (& $vswhere -path $installPath -products '*' -requires $component -property installationPath).Trim()
+            if ($componentPath -ne $installPath) { throw "B0P_BUILD_TOOLS_COMPONENT_MISSING:$component" }
+          }
+
+          $evidence = [ordered]@{
+            schemaVersion = 'aexos.b0p-windows-buildtools-acquisition/v1'
+            imageVersion = $env:ImageVersion
+            bootstrapBytes = 4473936
+            bootstrapSha256 = '236367b68ba9a51708263ab10a1c85546cc4a8eca78b365168811d19c4fb2f29'
+            productId = $instance.productId
+            productVersion = $instance.catalog.productDisplayVersion
+            installationVersion = $instance.installationVersion
+            installationPath = $instance.installationPath
+            components = $components
+            result = 'PASS'
+          }
+          Write-Output 'B0P_BUILDTOOLS_EVIDENCE_BEGIN'
+          $evidence | ConvertTo-Json -Depth 5 -Compress
+          Write-Output 'B0P_BUILDTOOLS_EVIDENCE_END'
