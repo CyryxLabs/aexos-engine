@@ -372,6 +372,7 @@ Codex GPT-5 (Polaris / `@devops`).
 - Initial local-host constraints remain truthful historical blocker evidence, but explicit authorization enabled branch-scoped hosted-lane workflows; stochastic Windows allocation was sampled until the exact asserted image appeared, without weakening any pin.
 - Exact native governed lanes now pass: Linux root → uid/gid `65534` with effective/permitted/ambient capabilities zero; Darwin root → uid/gid `4294967294`; Windows Administrators-owned known-folder root → restricted user token at Medium integrity with Administrators deny-only and forbidden privileges disabled. Every child was denied root write/delete/ACL/owner or privilege regain authority.
 - T2–T4 and T6–T8 remain incomplete. The complete generatedOutputs, byte-identical offline double-build equality for all tuples, closure PASS and independent gate credit do not yet exist.
+- The exact Windows `20260818.277.1` lane acquired the pinned Build Tools, standalone LLVM 20.1.8 and SDK, but its two-build step reached the 120-minute job limit without emitting evidence. A 240-minute retry failed closed before acquisition on hosted image `20260802.262.1`; no exact self-hosted Windows lane is configured.
 - CodeRabbit degraded truthfully: configured WSL command returned `WSL_E_DISTRO_NOT_FOUND` because the required Ubuntu distribution is absent; no automated-review PASS is claimed and T8 remains unchecked.
 - Authorized remote preflight workflow run `32371422672` proved the exact macOS arm64 lane and, from attempt 2, the exact Ubuntu 24 lane. Three independent Windows allocations remained on image `20260802.262.1` / build `5386`, not the required `20260818.277.1` / build `5499`; the provider rollout is therefore still fail-closed. The organization exposes no self-hosted runner or custom hosted-runner API and no configured Azure/AWS/GCP provisioning credential is available.
 
@@ -389,11 +390,14 @@ Codex GPT-5 (Polaris / `@devops`).
 - `artifacts/b2p-launcher-inputs-host-local/blockers/b0p-lane-readiness-blocker.json.sha256`
 - `artifacts/b2p-launcher-inputs-host-local/blockers/b0p-remote-lane-probe.json`
 - `artifacts/b2p-launcher-inputs-host-local/blockers/b0p-remote-lane-probe.json.sha256`
+- `artifacts/b2p-launcher-inputs-host-local/blockers/b0p-windows-double-build-blocker.json`
+- `artifacts/b2p-launcher-inputs-host-local/blockers/b0p-windows-double-build-blocker.json.sha256`
 - `.github/workflows/b0p-exact-lane-probe.yml`
 - `.github/workflows/b0p-windows-rollout-probe.yml`
 - `.github/workflows/b0p-toolchain-preflight.yml`
 - `.github/workflows/b0p-windows-buildtools-preflight.yml`
 - `.github/workflows/b0p-unix-double-build.yml`
+- `.github/workflows/b0p-linux-double-build.yml`
 - `.github/workflows/b0p-darwin-double-build.yml`
 - `.github/workflows/b0p-windows-double-build.yml`
 - `.github/workflows/b0p-unix-elevated-lane.yml`
