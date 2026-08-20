@@ -14,7 +14,7 @@ jobs:
   darwin:
     name: darwin-arm64-none-node-v24.19.0
     runs-on: macos-15
-    timeout-minutes: 120
+    timeout-minutes: 240
     env:
       DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
       MACOSX_DEPLOYMENT_TARGET: '13.5'
