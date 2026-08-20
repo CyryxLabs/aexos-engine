@@ -43,6 +43,9 @@ jobs:
           set -euo pipefail
           source_root="$RUNNER_TEMP/b0p-node-source"
           evidence_root="$RUNNER_TEMP/b0p-build-evidence"
+          sdk_root="$(xcrun --sdk macosx --show-sdk-path)"
+          test "$(xcrun --sdk macosx --show-sdk-version)" = 15.5
+          test -d "$sdk_root/usr/include"
           mkdir -p "$evidence_root"
           for build_number in 1 2; do
             rm -rf "$source_root"
@@ -51,6 +54,9 @@ jobs:
             if ! /usr/bin/sandbox-exec -p '(version 1)(deny network*)(allow default)' \
               /usr/bin/env -i PATH=/usr/bin:/bin HOME=/tmp \
               DEVELOPER_DIR="$DEVELOPER_DIR" MACOSX_DEPLOYMENT_TARGET="$MACOSX_DEPLOYMENT_TARGET" \
+              SDKROOT="$sdk_root" \
+              CFLAGS="-isysroot $sdk_root" CXXFLAGS="-isysroot $sdk_root" \
+              LDFLAGS="-isysroot $sdk_root" \
               CC="$(xcrun --find clang)" CXX="$(xcrun --find clang++)" PYTHON=/usr/bin/python3 \
               /bin/bash -c "cd '$source_root' && ./configure --enable-static --without-npm --without-corepack && make -j2" \
               >"$evidence_root/build-$build_number.log" 2>&1; then
