@@ -1,0 +1,131 @@
+name: B0P Windows Elevated Lane
+
+on:
+  push:
+    branches:
+      - codex/cerberus-knowledge-plane
+    paths:
+      - .github/workflows/b0p-windows-elevated-lane.yml
+      - tests/fixtures/knowledge/atomic-no-replace/trust-root-lane-controller/windows-controller.cpp
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    name: win32-x64-elevated-to-restricted
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - name: Assert exact Windows lane
+        shell: pwsh
+        run: |
+          $build = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion'
+          $windowsBuild = "10.0.$($build.CurrentBuildNumber).$($build.UBR)"
+          if ($env:RUNNER_OS -ne 'Windows' -or $env:RUNNER_ARCH -ne 'X64') { throw 'B0P_WINDOWS_RUNNER_IDENTITY_MISMATCH' }
+          if ($env:ImageOS -ne 'win22' -or $env:ImageVersion -ne '20260818.277.1') { throw 'B0P_WINDOWS_IMAGE_MISMATCH' }
+          if ($windowsBuild -ne '10.0.20348.5499') { throw 'B0P_WINDOWS_BUILD_MISMATCH' }
+
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+
+      - name: Acquire exact Build Tools
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $bootstrap = Join-Path $env:RUNNER_TEMP 'vs_BuildTools.exe'
+          Invoke-WebRequest -UseBasicParsing -Uri 'https://download.visualstudio.microsoft.com/download/pr/fa619120-9c0e-47e6-bfe0-3ee96fb671b2/236367b68ba9a51708263ab10a1c85546cc4a8eca78b365168811d19c4fb2f29/vs_BuildTools.exe' -OutFile $bootstrap
+          if ((Get-Item -LiteralPath $bootstrap).Length -ne 4473936) { throw 'B0P_VS_BOOTSTRAP_BYTES_MISMATCH' }
+          if ((Get-FileHash -LiteralPath $bootstrap -Algorithm SHA256).Hash.ToLowerInvariant() -ne '236367b68ba9a51708263ab10a1c85546cc4a8eca78b365168811d19c4fb2f29') { throw 'B0P_VS_BOOTSTRAP_SHA256_MISMATCH' }
+
+          $installPath = 'C:\AEXOSBuildTools'
+          $components = @(
+            'Microsoft.VisualStudio.Workload.NativeDesktop',
+            'Microsoft.VisualStudio.Component.VC.Llvm.Clang',
+            'Microsoft.VisualStudio.Component.VC.Llvm.ClangToolset',
+            'Microsoft.VisualStudio.Component.VC.Tools.x86.x64'
+          )
+          $arguments = @('--quiet', '--wait', '--norestart', '--nocache', '--installPath', $installPath)
+          foreach ($component in $components) { $arguments += @('--add', $component) }
+          $installer = Start-Process -FilePath $bootstrap -ArgumentList $arguments -Wait -PassThru -WindowStyle Hidden
+          if ($installer.ExitCode -notin @(0, 3010)) { throw "B0P_BUILD_TOOLS_INSTALL_FAILED:$($installer.ExitCode)" }
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $instances = @(& $vswhere -products '*' -format json -utf8 | ConvertFrom-Json)
+          $instance = $instances | Where-Object { $_.installationPath -eq $installPath } | Select-Object -First 1
+          if (-not $instance -or $instance.installationVersion -ne '17.14.37614.0') { throw 'B0P_BUILD_TOOLS_VERSION_MISMATCH' }
+          foreach ($component in ($components | Where-Object { $_ -ne 'Microsoft.VisualStudio.Workload.NativeDesktop' })) {
+            $componentPaths = @(& $vswhere -products '*' -requires $component -property installationPath)
+            if ($componentPaths -notcontains $installPath) { throw "B0P_BUILD_TOOLS_COMPONENT_MISSING:$component" }
+          }
+          if (-not (Test-Path -LiteralPath (Join-Path $installPath 'VC\Auxiliary\Build\vcvars64.bat'))) { throw 'B0P_NATIVE_DESKTOP_WORKLOAD_MISSING_VCVARS' }
+          if (-not (Test-Path -LiteralPath (Join-Path $installPath 'MSBuild\Current\Bin\MSBuild.exe'))) { throw 'B0P_NATIVE_DESKTOP_WORKLOAD_MISSING_MSBUILD' }
+          $clang = 'C:\Program Files\LLVM\bin\clang-cl.exe'
+          $lld = 'C:\Program Files\LLVM\bin\lld-link.exe'
+          foreach ($tool in @($clang, $lld)) {
+            if (-not (Test-Path -LiteralPath $tool)) { throw "B0P_APPROVED_LLVM_MISSING:$tool" }
+          }
+          if ((& $clang --version | Select-Object -First 1) -notmatch '20\.1\.8') { throw 'B0P_APPROVED_LLVM_VERSION_MISMATCH' }
+          $global:LASTEXITCODE = 0
+
+      - name: Build and execute elevated lane offline
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $source = Join-Path $env:GITHUB_WORKSPACE 'tests\fixtures\knowledge\atomic-no-replace\trust-root-lane-controller\windows-controller.cpp'
+          $binary = Join-Path $env:RUNNER_TEMP 'b0p-windows-lane-controller.exe'
+          $stdout = Join-Path $env:RUNNER_TEMP 'b0p-windows-lane-controller.jsonl'
+          $stderr = Join-Path $env:RUNNER_TEMP 'b0p-windows-lane-controller.stderr.log'
+          $llvmRoot = 'C:\Program Files\LLVM\bin'
+          $clang = Join-Path $llvmRoot 'clang-cl.exe'
+          $lld = Join-Path $llvmRoot 'lld-link.exe'
+          $vcvars = 'C:\AEXOSBuildTools\VC\Auxiliary\Build\vcvars64.bat'
+          $ruleNames = [Collections.Generic.List[string]]::new()
+          try {
+            foreach ($program in @("$env:SystemRoot\System32\cmd.exe", $clang, $lld)) {
+              $ruleName = "AEXOS-B0P-WINDOWS-LANE-$([Guid]::NewGuid().ToString('N'))"
+              New-NetFirewallRule -DisplayName $ruleName -Direction Outbound -Action Block -Program $program -Profile Any | Out-Null
+              $ruleNames.Add($ruleName)
+            }
+            $command = "call `"$vcvars`" && set `"PATH=$llvmRoot;%PATH%`" && `"$clang`" /nologo /std:c++20 /O2 /W4 /WX /EHsc `"$source`" /Fe:`"$binary`" -fuse-ld=lld /link advapi32.lib shell32.lib ole32.lib"
+            $compiler = Start-Process -FilePath "$env:SystemRoot\System32\cmd.exe" -ArgumentList @('/d', '/s', '/c', $command) -Wait -PassThru -NoNewWindow
+            if ($compiler.ExitCode -ne 0 -or -not (Test-Path -LiteralPath $binary)) { throw "B0P_WINDOWS_CONTROLLER_BUILD_FAILED:$($compiler.ExitCode)" }
+            $controllerRule = "AEXOS-B0P-WINDOWS-LANE-$([Guid]::NewGuid().ToString('N'))"
+            New-NetFirewallRule -DisplayName $controllerRule -Direction Outbound -Action Block -Program $binary -Profile Any | Out-Null
+            $ruleNames.Add($controllerRule)
+            $controller = Start-Process -FilePath $binary -Wait -PassThru -NoNewWindow -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+            if ($controller.ExitCode -ne 0) {
+              Get-Content -LiteralPath $stdout -ErrorAction SilentlyContinue | Write-Output
+              Get-Content -LiteralPath $stderr -ErrorAction SilentlyContinue | Write-Error
+              throw "B0P_WINDOWS_CONTROLLER_FAILED:$($controller.ExitCode)"
+            }
+          } finally {
+            foreach ($ruleName in $ruleNames) { Remove-NetFirewallRule -DisplayName $ruleName -ErrorAction SilentlyContinue }
+          }
+          $global:LASTEXITCODE = 0
+
+          $lines = @(Get-Content -LiteralPath $stdout)
+          if ($lines.Count -ne 2) { throw "B0P_WINDOWS_CONTROLLER_ORACLE_LINE_COUNT:$($lines.Count)" }
+          $child = $lines[0] | ConvertFrom-Json
+          $parent = $lines[1] | ConvertFrom-Json
+          if (-not $child.ready -or -not $parent.ready) { throw 'B0P_WINDOWS_CONTROLLER_NOT_READY' }
+          if ($child.integrityRid -ne 8192 -or -not $child.administratorsDenyOnly) { throw 'B0P_WINDOWS_RESTRICTED_TOKEN_MISMATCH' }
+          if ($child.forbiddenPrivilegesEnabled -ne 0 -or $child.rootWrite -or $child.rootDelete -or $child.rootAcl -or $child.rootOwner) { throw 'B0P_WINDOWS_RESTRICTED_AUTHORITY_PRESENT' }
+          if (-not $parent.createRestrictedToken -or -not $parent.createProcessAsUserW) { throw 'B0P_WINDOWS_NATIVE_TOKEN_API_MISSING' }
+          if ($parent.installerPrincipalId -ne 'S-1-5-32-544' -or $child.runtimeSid -eq $parent.installerPrincipalId -or $child.runtimeSid -ne $parent.runtimeSid) { throw 'B0P_WINDOWS_PRINCIPAL_MISMATCH' }
+
+          $evidence = [ordered]@{
+            laneId = 'win22/20260818.277@20260818.277.1'
+            runnerImageVersion = $env:ImageVersion
+            controllerSourceSha256 = (Get-FileHash -LiteralPath $source -Algorithm SHA256).Hash.ToLowerInvariant()
+            controllerBinarySha256 = (Get-FileHash -LiteralPath $binary -Algorithm SHA256).Hash.ToLowerInvariant()
+            installerPrincipalId = $parent.installerPrincipalId
+            runtimePrincipalId = $child.runtimeSid
+            installerPrincipalPolicySha256 = '82e1b42af04cda7d0d55139edb045bd4328654ba03313dfcd8cba8febc50fcb8'
+            runtimeTokenPolicySha256 = '9d6cde9cf73a12797228befdef1c2eb0c66f004a36bba6b147a7911bb9c0f0be'
+            provisioningOracleSha256 = (Get-FileHash -LiteralPath $stdout -Algorithm SHA256).Hash.ToLowerInvariant()
+            ready = $true
+          }
+          Write-Output 'B0P_ELEVATED_LANE_EVIDENCE_BEGIN'
+          $evidence | ConvertTo-Json -Compress
+          Write-Output 'B0P_ELEVATED_LANE_EVIDENCE_END'
