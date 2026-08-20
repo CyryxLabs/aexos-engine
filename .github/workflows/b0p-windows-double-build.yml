@@ -177,7 +177,11 @@ jobs:
 
           $result1 = Get-Content -LiteralPath (Join-Path $evidenceRoot 'result-1.txt')
           $result2 = Get-Content -LiteralPath (Join-Path $evidenceRoot 'result-2.txt')
-          if ([string]::Join("`n", $result1) -cne [string]::Join("`n", $result2)) { throw 'B0P_WINDOWS_DOUBLE_BUILD_DIVERGENCE' }
+          if ([string]::Join("`n", $result1) -cne [string]::Join("`n", $result2)) {
+            Write-Output "B0P_WINDOWS_RESULT_1=$($result1 -join ',')"
+            Write-Output "B0P_WINDOWS_RESULT_2=$($result2 -join ',')"
+            throw 'B0P_WINDOWS_DOUBLE_BUILD_DIVERGENCE'
+          }
           $evidence = [ordered]@{
             schemaVersion = 'aexos.b0p-offline-double-build/v1'
             launcherTupleId = 'win32-x64-none-node-v24.19.0'
