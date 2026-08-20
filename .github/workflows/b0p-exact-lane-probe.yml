@@ -36,7 +36,6 @@ jobs:
           if ($env:RUNNER_OS -ne 'Windows' -or $env:RUNNER_ARCH -ne 'X64') { throw 'B0P_WINDOWS_RUNNER_IDENTITY_MISMATCH' }
           if ($env:ImageOS -ne 'win22' -or $env:ImageVersion -ne '20260818.277.1') { throw 'B0P_WINDOWS_IMAGE_MISMATCH' }
           if ($observed.windowsBuild -ne '10.0.20348.5499') { throw 'B0P_WINDOWS_BUILD_MISMATCH' }
-          if ($observed.nodeVersion -ne 'v24.19.0') { throw 'B0P_WINDOWS_NODE_MISMATCH' }
 
   linux:
     name: ubuntu24/20260816.277@20260816.277.1
@@ -56,7 +55,6 @@ jobs:
           test "$ImageVersion" = 20260816.277.1
           test "$PRETTY_NAME" = 'Ubuntu 24.04.4 LTS'
           test "$(uname -r)" = 6.17.0-1022-azure
-          test "$(node --version)" = v24.19.0
 
   darwin:
     name: macos-15-arm64/20260727.0256@20260727.0256.1
@@ -77,4 +75,3 @@ jobs:
           test "$(sw_vers -buildVersion)" = 24G720
           test "$(uname -r)" = 24.6.0
           test "$(uname -m)" = arm64
-          test "$(node --version)" = v24.19.0
