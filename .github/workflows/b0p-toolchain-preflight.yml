@@ -1,0 +1,222 @@
+name: B0P Toolchain and Isolation Preflight
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: b0p-toolchain-preflight
+  cancel-in-progress: false
+
+jobs:
+  windows:
+    name: win32-x64-none-node-v24.19.0
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - name: Verify exact Windows inputs and isolation primitive
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path evidence | Out-Null
+          $build = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion'
+          $windowsBuild = "10.0.$($build.CurrentBuildNumber).$($build.UBR)"
+          if ($env:RUNNER_OS -ne 'Windows' -or $env:RUNNER_ARCH -ne 'X64') { throw 'B0P_WINDOWS_RUNNER_IDENTITY_MISMATCH' }
+          if ($env:ImageOS -ne 'win22' -or $env:ImageVersion -ne '20260818.277.1') { throw 'B0P_WINDOWS_IMAGE_MISMATCH' }
+          if ($windowsBuild -ne '10.0.20348.5499') { throw 'B0P_WINDOWS_BUILD_MISMATCH' }
+
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          if (-not (Test-Path -LiteralPath $vswhere)) { throw 'B0P_VSWHERE_MISSING' }
+          $instances = @(& $vswhere -products '*' -format json -utf8 | ConvertFrom-Json)
+          $instance = $instances | Where-Object { $_.installationVersion -eq '17.14.37614.0' } | Select-Object -First 1
+          if (-not $instance) { throw 'B0P_VISUAL_STUDIO_BUILD_MISMATCH' }
+          $clang = Join-Path $instance.installationPath 'VC\Tools\Llvm\x64\bin\clang-cl.exe'
+          $lld = Join-Path $instance.installationPath 'VC\Tools\Llvm\x64\bin\lld-link.exe'
+          $llvmLib = Join-Path $instance.installationPath 'VC\Tools\Llvm\x64\bin\llvm-lib.exe'
+          foreach ($tool in @($clang, $lld, $llvmLib)) {
+            if (-not (Test-Path -LiteralPath $tool)) { throw "B0P_TOOL_MISSING:$tool" }
+          }
+          $clangVersion = (& $clang --version | Out-String).Trim()
+          if ($clangVersion -notmatch '20\.1\.8') { throw 'B0P_CLANG_VERSION_MISMATCH' }
+          $sdkRoot = "${env:ProgramFiles(x86)}\Windows Kits\10"
+          $sdkVersion = '10.0.26100.0'
+          foreach ($sdkPath in @(
+            (Join-Path $sdkRoot "Include\$sdkVersion"),
+            (Join-Path $sdkRoot "Lib\$sdkVersion"),
+            (Join-Path $sdkRoot "bin\$sdkVersion\x64")
+          )) {
+            if (-not (Test-Path -LiteralPath $sdkPath)) { throw "B0P_WINDOWS_SDK_MISSING:$sdkPath" }
+          }
+
+          $nodeArchive = Join-Path $env:RUNNER_TEMP 'node-v24.19.0.tar.gz'
+          $bootstrap = Join-Path $env:RUNNER_TEMP 'vs_BuildTools.exe'
+          Invoke-WebRequest -UseBasicParsing -Uri 'https://nodejs.org/dist/v24.19.0/node-v24.19.0.tar.gz' -OutFile $nodeArchive
+          Invoke-WebRequest -UseBasicParsing -Uri 'https://download.visualstudio.microsoft.com/download/pr/fa619120-9c0e-47e6-bfe0-3ee96fb671b2/236367b68ba9a51708263ab10a1c85546cc4a8eca78b365168811d19c4fb2f29/vs_BuildTools.exe' -OutFile $bootstrap
+          if ((Get-Item -LiteralPath $nodeArchive).Length -ne 112888473) { throw 'B0P_NODE_ARCHIVE_BYTES_MISMATCH' }
+          if ((Get-FileHash -LiteralPath $nodeArchive -Algorithm SHA256).Hash.ToLowerInvariant() -ne '16fe258006a6e86844fbe05b3b5e1e5623ca8d3da54e32d98d9e83234bf25b01') { throw 'B0P_NODE_ARCHIVE_SHA256_MISMATCH' }
+          if ((Get-Item -LiteralPath $bootstrap).Length -ne 4473936) { throw 'B0P_VS_BOOTSTRAP_BYTES_MISMATCH' }
+          if ((Get-FileHash -LiteralPath $bootstrap -Algorithm SHA256).Hash.ToLowerInvariant() -ne '236367b68ba9a51708263ab10a1c85546cc4a8eca78b365168811d19c4fb2f29') { throw 'B0P_VS_BOOTSTRAP_SHA256_MISMATCH' }
+
+          $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+          $principal = [Security.Principal.WindowsPrincipal]::new($identity)
+          if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) { throw 'B0P_WINDOWS_INSTALLER_NOT_ADMINISTRATOR' }
+          $curlCopy = Join-Path $env:RUNNER_TEMP 'b0p-no-egress-curl.exe'
+          Copy-Item -LiteralPath "$env:SystemRoot\System32\curl.exe" -Destination $curlCopy
+          $ruleName = "AEXOS-B0P-$([Guid]::NewGuid().ToString('N'))"
+          try {
+            New-NetFirewallRule -DisplayName $ruleName -Direction Outbound -Action Block -Program $curlCopy -Profile Any | Out-Null
+            & $curlCopy --silent --show-error --connect-timeout 3 'https://nodejs.org/' 2>&1 | Out-Null
+            if ($LASTEXITCODE -eq 0) { throw 'B0P_WINDOWS_OFFLINE_PRIMITIVE_FAILED_OPEN' }
+          } finally {
+            Remove-NetFirewallRule -DisplayName $ruleName -ErrorAction SilentlyContinue
+          }
+
+          $evidence = [ordered]@{
+            schemaVersion = 'aexos.b0p-toolchain-isolation-preflight/v1'
+            launcherTupleId = 'win32-x64-none-node-v24.19.0'
+            imageOS = $env:ImageOS
+            imageVersion = $env:ImageVersion
+            osIdentity = $windowsBuild
+            visualStudioProductId = $instance.productId
+            visualStudioVersion = $instance.catalog.productDisplayVersion
+            visualStudioBuild = $instance.installationVersion
+            clangPath = $clang
+            clangVersion = $clangVersion
+            sdkVersion = $sdkVersion
+            nodeArchiveSha256 = '16fe258006a6e86844fbe05b3b5e1e5623ca8d3da54e32d98d9e83234bf25b01'
+            bootstrapSha256 = '236367b68ba9a51708263ab10a1c85546cc4a8eca78b365168811d19c4fb2f29'
+            installerPrincipalId = $identity.User.Value
+            offlinePrimitive = 'windows-defender-firewall-program-outbound-block'
+            result = 'PASS'
+          }
+          $evidence | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath evidence/windows.json -Encoding utf8NoBOM
+
+      - name: Upload Windows preflight evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: b0p-preflight-windows
+          path: evidence
+          if-no-files-found: warn
+
+  linux:
+    name: linux-x64-glibc-node-v24.19.0
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Verify exact Linux inputs and isolation primitive
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          . /etc/os-release
+          test "$RUNNER_OS" = Linux
+          test "$RUNNER_ARCH" = X64
+          test "$ImageOS" = ubuntu24
+          test "$ImageVersion" = 20260816.277.1
+          test "$PRETTY_NAME" = 'Ubuntu 24.04.4 LTS'
+          test "$(uname -r)" = 6.17.0-1022-azure
+          test "$(gcc-13 -dumpfullversion)" = 13.3.0
+          test "$(g++-13 -dumpfullversion)" = 13.3.0
+          test "$(dpkg-query -W -f='${Version}' binutils)" = 2.42-4ubuntu2.10
+          test "$(dpkg-query -W -f='${Version}' make)" = 4.3-4.1build2
+          test "$(python3 --version)" = 'Python 3.12.3'
+          test "$(getconf GNU_LIBC_VERSION)" = 'glibc 2.39'
+
+          curl --fail --location --silent --show-error \
+            https://nodejs.org/dist/v24.19.0/node-v24.19.0.tar.gz \
+            --output "$RUNNER_TEMP/node-v24.19.0.tar.gz"
+          test "$(stat -c %s "$RUNNER_TEMP/node-v24.19.0.tar.gz")" = 112888473
+          echo '16fe258006a6e86844fbe05b3b5e1e5623ca8d3da54e32d98d9e83234bf25b01  '"$RUNNER_TEMP/node-v24.19.0.tar.gz" | sha256sum --check --strict
+
+          test "$(sudo -n id -u)" = 0
+          if sudo -n unshare --net --mount-proc bash -c \
+            "curl --fail --silent --show-error --connect-timeout 3 https://nodejs.org/ >/dev/null 2>&1"; then
+            echo 'B0P_LINUX_OFFLINE_PRIMITIVE_FAILED_OPEN' >&2
+            exit 1
+          fi
+          restricted_uid="$(id -u nobody)"
+          restricted_gid="$(id -g nobody)"
+          test "$restricted_uid" != 0
+          sudo -n setpriv --clear-groups --reuid "$restricted_uid" --regid "$restricted_gid" \
+            bash -c 'test "$(id -u)" != 0 && test "$(id -ru)" = "$(id -u)"'
+
+          gcc_path="$(readlink -f "$(command -v gcc-13)")"
+          gxx_path="$(readlink -f "$(command -v g++-13)")"
+          ld_path="$(readlink -f "$(command -v ld)")"
+          ar_path="$(readlink -f "$(command -v ar)")"
+          cat > evidence/linux.json <<EOF
+          {"schemaVersion":"aexos.b0p-toolchain-isolation-preflight/v1","launcherTupleId":"linux-x64-glibc-node-v24.19.0","imageOS":"$ImageOS","imageVersion":"$ImageVersion","osIdentity":"$PRETTY_NAME","kernel":"$(uname -r)","gccPath":"$gcc_path","gxxPath":"$gxx_path","linkerPath":"$ld_path","librarianPath":"$ar_path","gccVersion":"$(gcc-13 -dumpfullversion)","binutilsPackageVersion":"$(dpkg-query -W -f='${Version}' binutils)","makePackageVersion":"$(dpkg-query -W -f='${Version}' make)","pythonVersion":"$(python3 --version)","glibcVersion":"$(getconf GNU_LIBC_VERSION)","nodeArchiveSha256":"16fe258006a6e86844fbe05b3b5e1e5623ca8d3da54e32d98d9e83234bf25b01","installerPrincipalId":"uid=0","runtimePrincipalId":"uid=$restricted_uid,gid=$restricted_gid","offlinePrimitive":"root-network-namespace","result":"PASS"}
+          EOF
+
+      - name: Upload Linux preflight evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: b0p-preflight-linux
+          path: evidence
+          if-no-files-found: warn
+
+  darwin:
+    name: darwin-arm64-none-node-v24.19.0
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - name: Verify exact Darwin inputs and isolation primitive
+        shell: bash
+        env:
+          DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+          MACOSX_DEPLOYMENT_TARGET: '13.5'
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          test "$RUNNER_OS" = macOS
+          test "$RUNNER_ARCH" = ARM64
+          test "$ImageOS" = macos15
+          test "$ImageVersion" = 20260727.0256.1
+          test "$(sw_vers -productVersion)" = 15.7.7
+          test "$(sw_vers -buildVersion)" = 24G720
+          test "$(uname -r)" = 24.6.0
+          test "$(uname -m)" = arm64
+          test "$(xcodebuild -version | tr '\n' ' ')" = 'Xcode 16.4 Build version 16F6 '
+          clang_version="$(xcrun clang --version | head -1)"
+          case "$clang_version" in
+            'Apple clang version 17.0.0 '*) ;;
+            *) echo 'B0P_APPLE_CLANG_VERSION_MISMATCH' >&2; exit 1 ;;
+          esac
+          test "$(xcrun --sdk macosx --show-sdk-version)" = 15.5
+
+          curl --fail --location --silent --show-error \
+            https://nodejs.org/dist/v24.19.0/node-v24.19.0.tar.gz \
+            --output "$RUNNER_TEMP/node-v24.19.0.tar.gz"
+          test "$(stat -f %z "$RUNNER_TEMP/node-v24.19.0.tar.gz")" = 112888473
+          test "$(shasum -a 256 "$RUNNER_TEMP/node-v24.19.0.tar.gz" | awk '{print $1}')" = 16fe258006a6e86844fbe05b3b5e1e5623ca8d3da54e32d98d9e83234bf25b01
+
+          test "$(sudo -n id -u)" = 0
+          if /usr/bin/sandbox-exec -p '(version 1)(deny network*)(allow default)' \
+            /usr/bin/curl --fail --silent --show-error --connect-timeout 3 https://nodejs.org/ >/dev/null 2>&1; then
+            echo 'B0P_DARWIN_OFFLINE_PRIMITIVE_FAILED_OPEN' >&2
+            exit 1
+          fi
+          restricted_uid="$(id -u nobody)"
+          restricted_gid="$(id -g nobody)"
+          test "$restricted_uid" != 0
+          sudo -n -u nobody /bin/sh -c 'test "$(id -u)" != 0 && test "$(id -ru)" = "$(id -u)"'
+
+          clang_path="$(xcrun --find clang)"
+          ld_path="$(xcrun --find ld)"
+          ar_path="$(xcrun --find ar)"
+          sdk_path="$(xcrun --sdk macosx --show-sdk-path)"
+          cat > evidence/darwin.json <<EOF
+          {"schemaVersion":"aexos.b0p-toolchain-isolation-preflight/v1","launcherTupleId":"darwin-arm64-none-node-v24.19.0","imageOS":"$ImageOS","imageVersion":"$ImageVersion","osIdentity":"macOS $(sw_vers -productVersion) ($(sw_vers -buildVersion))","kernel":"Darwin $(uname -r)","xcode":"$(xcodebuild -version | tr '\n' ' ' | sed 's/ $//')","clangPath":"$clang_path","linkerPath":"$ld_path","librarianPath":"$ar_path","clangVersion":"$clang_version","sdkPath":"$sdk_path","sdkVersion":"$(xcrun --sdk macosx --show-sdk-version)","deploymentTarget":"$MACOSX_DEPLOYMENT_TARGET","nodeArchiveSha256":"16fe258006a6e86844fbe05b3b5e1e5623ca8d3da54e32d98d9e83234bf25b01","installerPrincipalId":"uid=0","runtimePrincipalId":"uid=$restricted_uid,gid=$restricted_gid","offlinePrimitive":"sandbox-exec-deny-network","result":"PASS"}
+          EOF
+
+      - name: Upload Darwin preflight evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: b0p-preflight-darwin
+          path: evidence
+          if-no-files-found: warn
