@@ -37,9 +37,10 @@ jobs:
           $instances = @(& $vswhere -products '*' -format json -utf8 | ConvertFrom-Json)
           $instance = $instances | Where-Object { $_.installationVersion -eq '17.14.37614.0' } | Select-Object -First 1
           if (-not $instance) { throw 'B0P_VISUAL_STUDIO_BUILD_MISMATCH' }
-          $clang = Join-Path $instance.installationPath 'VC\Tools\Llvm\x64\bin\clang-cl.exe'
-          $lld = Join-Path $instance.installationPath 'VC\Tools\Llvm\x64\bin\lld-link.exe'
-          $llvmLib = Join-Path $instance.installationPath 'VC\Tools\Llvm\x64\bin\llvm-lib.exe'
+          $llvmRoot = 'C:\Program Files\LLVM\bin'
+          $clang = Join-Path $llvmRoot 'clang-cl.exe'
+          $lld = Join-Path $llvmRoot 'lld-link.exe'
+          $llvmLib = Join-Path $llvmRoot 'llvm-lib.exe'
           foreach ($tool in @($clang, $lld, $llvmLib)) {
             if (-not (Test-Path -LiteralPath $tool)) { throw "B0P_TOOL_MISSING:$tool" }
           }
@@ -77,6 +78,7 @@ jobs:
           } finally {
             Remove-NetFirewallRule -DisplayName $ruleName -ErrorAction SilentlyContinue
           }
+          $global:LASTEXITCODE = 0
 
           $evidence = [ordered]@{
             schemaVersion = 'aexos.b0p-toolchain-isolation-preflight/v1'
