@@ -1,0 +1,176 @@
+name: B0P Windows Offline Double Build
+
+on:
+  push:
+    branches:
+      - codex/cerberus-knowledge-plane
+    paths:
+      - .github/workflows/b0p-windows-double-build.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: b0p-windows-double-build
+  cancel-in-progress: false
+
+jobs:
+  windows:
+    name: win32-x64-none-node-v24.19.0
+    runs-on: windows-2022
+    timeout-minutes: 120
+    steps:
+      - name: Assert exact Windows lane
+        shell: pwsh
+        run: |
+          $build = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion'
+          $windowsBuild = "10.0.$($build.CurrentBuildNumber).$($build.UBR)"
+          if ($env:RUNNER_OS -ne 'Windows' -or $env:RUNNER_ARCH -ne 'X64') { throw 'B0P_WINDOWS_RUNNER_IDENTITY_MISMATCH' }
+          if ($env:ImageOS -ne 'win22' -or $env:ImageVersion -ne '20260818.277.1') { throw 'B0P_WINDOWS_IMAGE_MISMATCH' }
+          if ($windowsBuild -ne '10.0.20348.5499') { throw 'B0P_WINDOWS_BUILD_MISMATCH' }
+
+      - name: Acquire exact source and Build Tools
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $nodeArchive = Join-Path $env:RUNNER_TEMP 'node-v24.19.0.tar.gz'
+          $bootstrap = Join-Path $env:RUNNER_TEMP 'vs_BuildTools.exe'
+          Invoke-WebRequest -UseBasicParsing -Uri 'https://nodejs.org/dist/v24.19.0/node-v24.19.0.tar.gz' -OutFile $nodeArchive
+          Invoke-WebRequest -UseBasicParsing -Uri 'https://download.visualstudio.microsoft.com/download/pr/fa619120-9c0e-47e6-bfe0-3ee96fb671b2/236367b68ba9a51708263ab10a1c85546cc4a8eca78b365168811d19c4fb2f29/vs_BuildTools.exe' -OutFile $bootstrap
+          if ((Get-Item -LiteralPath $nodeArchive).Length -ne 112888473) { throw 'B0P_NODE_ARCHIVE_BYTES_MISMATCH' }
+          if ((Get-FileHash -LiteralPath $nodeArchive -Algorithm SHA256).Hash.ToLowerInvariant() -ne '16fe258006a6e86844fbe05b3b5e1e5623ca8d3da54e32d98d9e83234bf25b01') { throw 'B0P_NODE_ARCHIVE_SHA256_MISMATCH' }
+          if ((Get-Item -LiteralPath $bootstrap).Length -ne 4473936) { throw 'B0P_VS_BOOTSTRAP_BYTES_MISMATCH' }
+          if ((Get-FileHash -LiteralPath $bootstrap -Algorithm SHA256).Hash.ToLowerInvariant() -ne '236367b68ba9a51708263ab10a1c85546cc4a8eca78b365168811d19c4fb2f29') { throw 'B0P_VS_BOOTSTRAP_SHA256_MISMATCH' }
+
+          $installPath = 'C:\AEXOSBuildTools'
+          $components = @(
+            'Microsoft.VisualStudio.Workload.NativeDesktop',
+            'Microsoft.VisualStudio.Component.VC.Llvm.Clang',
+            'Microsoft.VisualStudio.Component.VC.Llvm.ClangToolset',
+            'Microsoft.VisualStudio.Component.VC.Tools.x86.x64'
+          )
+          $arguments = @('--quiet', '--wait', '--norestart', '--nocache', '--installPath', $installPath)
+          foreach ($component in $components) { $arguments += @('--add', $component) }
+          $installer = Start-Process -FilePath $bootstrap -ArgumentList $arguments -Wait -PassThru -WindowStyle Hidden
+          if ($installer.ExitCode -notin @(0, 3010)) { throw "B0P_BUILD_TOOLS_INSTALL_FAILED:$($installer.ExitCode)" }
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $instances = @(& $vswhere -products '*' -format json -utf8 | ConvertFrom-Json)
+          $instance = $instances | Where-Object { $_.installationPath -eq $installPath } | Select-Object -First 1
+          if (-not $instance -or $instance.installationVersion -ne '17.14.37614.0') { throw 'B0P_BUILD_TOOLS_VERSION_MISMATCH' }
+          foreach ($component in ($components | Where-Object { $_ -ne 'Microsoft.VisualStudio.Workload.NativeDesktop' })) {
+            $componentPaths = @(& $vswhere -products '*' -requires $component -property installationPath)
+            if ($componentPaths -notcontains $installPath) { throw "B0P_BUILD_TOOLS_COMPONENT_MISSING:$component" }
+          }
+          if (-not (Test-Path -LiteralPath (Join-Path $installPath 'VC\Auxiliary\Build\vcvars64.bat'))) { throw 'B0P_NATIVE_DESKTOP_WORKLOAD_MISSING_VCVARS' }
+          if (-not (Test-Path -LiteralPath (Join-Path $installPath 'MSBuild\Current\Bin\MSBuild.exe'))) { throw 'B0P_NATIVE_DESKTOP_WORKLOAD_MISSING_MSBUILD' }
+
+      - name: Execute two independent offline static builds
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $sourceRoot = Join-Path $env:RUNNER_TEMP 'b0p-node-source'
+          $evidenceRoot = Join-Path $env:RUNNER_TEMP 'b0p-build-evidence'
+          New-Item -ItemType Directory -Force -Path $evidenceRoot | Out-Null
+          $llvmRoot = 'C:\Program Files\LLVM\bin'
+          $clang = Join-Path $llvmRoot 'clang-cl.exe'
+          $lld = Join-Path $llvmRoot 'lld-link.exe'
+          $llvmLib = Join-Path $llvmRoot 'llvm-lib.exe'
+          $llvmNm = Join-Path $llvmRoot 'llvm-nm.exe'
+          foreach ($tool in @($clang, $lld, $llvmLib, $llvmNm)) {
+            if (-not (Test-Path -LiteralPath $tool)) { throw "B0P_TOOL_MISSING:$tool" }
+          }
+
+          for ($buildNumber = 1; $buildNumber -le 2; $buildNumber++) {
+            if (Test-Path -LiteralPath $sourceRoot) { Remove-Item -LiteralPath $sourceRoot -Recurse -Force }
+            New-Item -ItemType Directory -Force -Path $sourceRoot | Out-Null
+            tar.exe -xzf (Join-Path $env:RUNNER_TEMP 'node-v24.19.0.tar.gz') --strip-components=1 -C $sourceRoot
+            if ($LASTEXITCODE -ne 0) { throw 'B0P_NODE_ARCHIVE_EXTRACT_FAILED' }
+
+            $programs = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+            foreach ($program in @(
+              "$env:SystemRoot\System32\cmd.exe",
+              "$env:SystemRoot\System32\curl.exe",
+              (Get-Command python.exe).Source,
+              (Get-Command node.exe).Source,
+              (Get-Command git.exe).Source,
+              $clang,
+              $lld,
+              $llvmLib,
+              $llvmNm
+            )) {
+              if ($program -and (Test-Path -LiteralPath $program)) { [void]$programs.Add($program) }
+            }
+            Get-ChildItem -LiteralPath 'C:\AEXOSBuildTools\MSBuild' -Filter msbuild.exe -File -Recurse | ForEach-Object { [void]$programs.Add($_.FullName) }
+            $ruleNames = [Collections.Generic.List[string]]::new()
+            try {
+              foreach ($program in $programs) {
+                $ruleName = "AEXOS-B0P-$buildNumber-$([Guid]::NewGuid().ToString('N'))"
+                New-NetFirewallRule -DisplayName $ruleName -Direction Outbound -Action Block -Program $program -Profile Any | Out-Null
+                $ruleNames.Add($ruleName)
+              }
+              $vcvars = 'C:\AEXOSBuildTools\VC\Auxiliary\Build\vcvars64.bat'
+              $command = "call `"$vcvars`" && set `"PATH=$llvmRoot;%PATH%`" && call vcbuild.bat release x64 vs2022 static nonpm nocorepack"
+              $stdout = Join-Path $evidenceRoot "build-$buildNumber.stdout.log"
+              $stderr = Join-Path $evidenceRoot "build-$buildNumber.stderr.log"
+              $builder = Start-Process -FilePath "$env:SystemRoot\System32\cmd.exe" -ArgumentList @('/d', '/s', '/c', $command) -WorkingDirectory $sourceRoot -Wait -PassThru -NoNewWindow -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+              if ($builder.ExitCode -ne 0) { throw "B0P_WINDOWS_STATIC_BUILD_FAILED:$($builder.ExitCode)" }
+            } finally {
+              foreach ($ruleName in $ruleNames) { Remove-NetFirewallRule -DisplayName $ruleName -ErrorAction SilentlyContinue }
+            }
+            $global:LASTEXITCODE = 0
+
+            $archives = @(Get-ChildItem -LiteralPath (Join-Path $sourceRoot 'out\Release') -Filter *.lib -File -Recurse | Sort-Object FullName)
+            $objects = @(Get-ChildItem -LiteralPath (Join-Path $sourceRoot 'out\Release') -Filter *.obj -File -Recurse | Sort-Object FullName)
+            if ($archives.Count -eq 0 -or $objects.Count -eq 0) { throw 'B0P_WINDOWS_STATIC_OUTPUT_SET_EMPTY' }
+            $archiveInventory = Join-Path $evidenceRoot "archive-set-$buildNumber.txt"
+            $objectInventory = Join-Path $evidenceRoot "object-set-$buildNumber.txt"
+            $memberInventory = Join-Path $evidenceRoot "archive-members-$buildNumber.txt"
+            $symbolInventory = Join-Path $evidenceRoot "archive-symbols-$buildNumber.txt"
+            $archiveLines = foreach ($file in $archives) {
+              $relative = [IO.Path]::GetRelativePath($sourceRoot, $file.FullName).Replace('\', '/')
+              "$relative`t$($file.Length)`t$((Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant())"
+            }
+            $archiveLines | Set-Content -LiteralPath $archiveInventory -Encoding utf8NoBOM
+            $objectLines = foreach ($file in $objects) {
+              $relative = [IO.Path]::GetRelativePath($sourceRoot, $file.FullName).Replace('\', '/')
+              "$relative`t$($file.Length)`t$((Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant())"
+            }
+            $objectLines | Set-Content -LiteralPath $objectInventory -Encoding utf8NoBOM
+            $memberLines = foreach ($file in $archives) {
+              $relative = [IO.Path]::GetRelativePath($sourceRoot, $file.FullName).Replace('\', '/')
+              & $llvmLib /list $file.FullName | ForEach-Object { "$relative`t$_" }
+            }
+            $memberLines | Sort-Object | Set-Content -LiteralPath $memberInventory -Encoding utf8NoBOM
+            $symbolLines = foreach ($file in $archives) { & $llvmNm -A -P $file.FullName }
+            $symbolLines | Sort-Object | Set-Content -LiteralPath $symbolInventory -Encoding utf8NoBOM
+            @(
+              (Get-FileHash -LiteralPath $archiveInventory -Algorithm SHA256).Hash.ToLowerInvariant(),
+              (Get-FileHash -LiteralPath $objectInventory -Algorithm SHA256).Hash.ToLowerInvariant(),
+              (Get-FileHash -LiteralPath $memberInventory -Algorithm SHA256).Hash.ToLowerInvariant(),
+              (Get-FileHash -LiteralPath $symbolInventory -Algorithm SHA256).Hash.ToLowerInvariant(),
+              $archives.Count,
+              $objects.Count
+            ) | Set-Content -LiteralPath (Join-Path $evidenceRoot "result-$buildNumber.txt") -Encoding utf8NoBOM
+          }
+
+          $result1 = Get-Content -LiteralPath (Join-Path $evidenceRoot 'result-1.txt')
+          $result2 = Get-Content -LiteralPath (Join-Path $evidenceRoot 'result-2.txt')
+          if ([string]::Join("`n", $result1) -cne [string]::Join("`n", $result2)) { throw 'B0P_WINDOWS_DOUBLE_BUILD_DIVERGENCE' }
+          $evidence = [ordered]@{
+            schemaVersion = 'aexos.b0p-offline-double-build/v1'
+            launcherTupleId = 'win32-x64-none-node-v24.19.0'
+            imageVersion = $env:ImageVersion
+            archiveSetSha256 = $result1[0]
+            objectSetSha256 = $result1[1]
+            memberInventorySha256 = $result1[2]
+            symbolInventorySha256 = $result1[3]
+            archiveCount = [int]$result1[4]
+            objectCount = [int]$result1[5]
+            buildCount = 2
+            network = 'windows-defender-firewall-exact-build-program-set'
+            byteIdentical = $true
+            result = 'PASS'
+          }
+          Write-Output 'B0P_DOUBLE_BUILD_EVIDENCE_BEGIN'
+          $evidence | ConvertTo-Json -Compress
+          Write-Output 'B0P_DOUBLE_BUILD_EVIDENCE_END'
