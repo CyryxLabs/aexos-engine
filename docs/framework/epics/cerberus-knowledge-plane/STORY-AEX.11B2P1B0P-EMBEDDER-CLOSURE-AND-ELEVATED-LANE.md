@@ -6,7 +6,7 @@
 **Decision:** [ADR-AEX-012](adr/ADR-AEX-012-ATOMIC-NO-REPLACE-PROMOTION.md)  
 **Depends on:** [AEX.11B2P1](STORY-AEX.11B2P1-NATIVE-NO-REPLACE-HOST-CAPABILITY.md) (`Done`, Architecture/QA `PASS`)  
 **Unblocks:** [AEX.11B2P1B0](STORY-AEX.11B2P1B0-OS-ROOTED-PRE-JS-LAUNCHER.md) only  
-**Status:** InProgress — all three exact immutable remote lanes and elevated-controller/restricted-child proofs are now observed, while the complete two-build generated-output closures remain pending; no closure `PASS` or downstream credit exists  
+**Status:** InProgress — all three exact immutable remote lanes and elevated-controller/restricted-child proofs are now observed, while the complete two-build generated-output closures remain pending; no closure `PASS` or downstream credit exists
 **Owner / Primary Executor:** `@devops`  
 **Quality Gates:** `@architect`, `@po`, `@qa`  
 **Architecture Gate:** `@architect`  
