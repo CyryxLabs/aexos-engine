@@ -99,6 +99,7 @@ jobs:
           } finally {
             Remove-NetFirewallRule -DisplayName $ruleName -ErrorAction SilentlyContinue
           }
+          $global:LASTEXITCODE = 0
 
           $evidence = [ordered]@{
             schemaVersion = 'aexos.b0p-toolchain-isolation-preflight/v1'
