@@ -17,22 +17,106 @@ concurrency:
 
 jobs:
   windows:
-    name: win22/20260818.277@20260818.277.1
+    name: win22 exact candidate ${{ matrix.candidate }}
     runs-on: windows-2022
-    timeout-minutes: 5
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        candidate: [1, 2, 3, 4, 5, 6, 7, 8]
     steps:
-      - name: Assert exact Windows lane
+      - name: Classify exact Windows lane
+        id: lane
         shell: pwsh
         run: |
           $build = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion'
-          $observed = [ordered]@{
-            runnerOS = $env:RUNNER_OS
-            runnerArch = $env:RUNNER_ARCH
+          $windowsBuild = "10.0.$($build.CurrentBuildNumber).$($build.UBR)"
+          $exact = (
+            $env:RUNNER_OS -eq 'Windows' -and
+            $env:RUNNER_ARCH -eq 'X64' -and
+            $env:ImageOS -eq 'win22' -and
+            $env:ImageVersion -eq '20260818.277.1' -and
+            $windowsBuild -eq '10.0.20348.5499'
+          )
+          [ordered]@{
+            candidate = '${{ matrix.candidate }}'
             imageOS = $env:ImageOS
             imageVersion = $env:ImageVersion
-            windowsBuild = "10.0.$($build.CurrentBuildNumber).$($build.UBR)"
+            windowsBuild = $windowsBuild
+            exact = $exact
+          } | ConvertTo-Json -Compress
+          "exact=$($exact.ToString().ToLowerInvariant())" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Verify exact Windows inputs and isolation primitive
+        if: steps.lane.outputs.exact == 'true'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          if (-not (Test-Path -LiteralPath $vswhere)) { throw 'B0P_VSWHERE_MISSING' }
+          $instances = @(& $vswhere -products '*' -format json -utf8 | ConvertFrom-Json)
+          $instance = $instances | Where-Object { $_.installationVersion -eq '17.14.37614.0' } | Select-Object -First 1
+          if (-not $instance) { throw 'B0P_VISUAL_STUDIO_BUILD_MISMATCH' }
+          $clang = Join-Path $instance.installationPath 'VC\Tools\Llvm\x64\bin\clang-cl.exe'
+          $lld = Join-Path $instance.installationPath 'VC\Tools\Llvm\x64\bin\lld-link.exe'
+          $llvmLib = Join-Path $instance.installationPath 'VC\Tools\Llvm\x64\bin\llvm-lib.exe'
+          foreach ($tool in @($clang, $lld, $llvmLib)) {
+            if (-not (Test-Path -LiteralPath $tool)) { throw "B0P_TOOL_MISSING:$tool" }
           }
-          $observed | ConvertTo-Json -Compress
-          if ($env:RUNNER_OS -ne 'Windows' -or $env:RUNNER_ARCH -ne 'X64') { throw 'B0P_WINDOWS_RUNNER_IDENTITY_MISMATCH' }
-          if ($env:ImageOS -ne 'win22' -or $env:ImageVersion -ne '20260818.277.1') { throw 'B0P_WINDOWS_IMAGE_MISMATCH' }
-          if ($observed.windowsBuild -ne '10.0.20348.5499') { throw 'B0P_WINDOWS_BUILD_MISMATCH' }
+          $clangVersion = (& $clang --version | Out-String).Trim()
+          if ($clangVersion -notmatch '20\.1\.8') { throw 'B0P_CLANG_VERSION_MISMATCH' }
+          $sdkRoot = "${env:ProgramFiles(x86)}\Windows Kits\10"
+          $sdkVersion = '10.0.26100.0'
+          foreach ($sdkPath in @(
+            (Join-Path $sdkRoot "Include\$sdkVersion"),
+            (Join-Path $sdkRoot "Lib\$sdkVersion"),
+            (Join-Path $sdkRoot "bin\$sdkVersion\x64")
+          )) {
+            if (-not (Test-Path -LiteralPath $sdkPath)) { throw "B0P_WINDOWS_SDK_MISSING:$sdkPath" }
+          }
+
+          $nodeArchive = Join-Path $env:RUNNER_TEMP 'node-v24.19.0.tar.gz'
+          $bootstrap = Join-Path $env:RUNNER_TEMP 'vs_BuildTools.exe'
+          Invoke-WebRequest -UseBasicParsing -Uri 'https://nodejs.org/dist/v24.19.0/node-v24.19.0.tar.gz' -OutFile $nodeArchive
+          Invoke-WebRequest -UseBasicParsing -Uri 'https://download.visualstudio.microsoft.com/download/pr/fa619120-9c0e-47e6-bfe0-3ee96fb671b2/236367b68ba9a51708263ab10a1c85546cc4a8eca78b365168811d19c4fb2f29/vs_BuildTools.exe' -OutFile $bootstrap
+          if ((Get-Item -LiteralPath $nodeArchive).Length -ne 112888473) { throw 'B0P_NODE_ARCHIVE_BYTES_MISMATCH' }
+          if ((Get-FileHash -LiteralPath $nodeArchive -Algorithm SHA256).Hash.ToLowerInvariant() -ne '16fe258006a6e86844fbe05b3b5e1e5623ca8d3da54e32d98d9e83234bf25b01') { throw 'B0P_NODE_ARCHIVE_SHA256_MISMATCH' }
+          if ((Get-Item -LiteralPath $bootstrap).Length -ne 4473936) { throw 'B0P_VS_BOOTSTRAP_BYTES_MISMATCH' }
+          if ((Get-FileHash -LiteralPath $bootstrap -Algorithm SHA256).Hash.ToLowerInvariant() -ne '236367b68ba9a51708263ab10a1c85546cc4a8eca78b365168811d19c4fb2f29') { throw 'B0P_VS_BOOTSTRAP_SHA256_MISMATCH' }
+
+          $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+          $principal = [Security.Principal.WindowsPrincipal]::new($identity)
+          if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) { throw 'B0P_WINDOWS_INSTALLER_NOT_ADMINISTRATOR' }
+          $curlCopy = Join-Path $env:RUNNER_TEMP 'b0p-no-egress-curl.exe'
+          Copy-Item -LiteralPath "$env:SystemRoot\System32\curl.exe" -Destination $curlCopy
+          $ruleName = "AEXOS-B0P-$([Guid]::NewGuid().ToString('N'))"
+          try {
+            New-NetFirewallRule -DisplayName $ruleName -Direction Outbound -Action Block -Program $curlCopy -Profile Any | Out-Null
+            & $curlCopy --silent --show-error --connect-timeout 3 'https://nodejs.org/' 2>&1 | Out-Null
+            if ($LASTEXITCODE -eq 0) { throw 'B0P_WINDOWS_OFFLINE_PRIMITIVE_FAILED_OPEN' }
+          } finally {
+            Remove-NetFirewallRule -DisplayName $ruleName -ErrorAction SilentlyContinue
+          }
+
+          $evidence = [ordered]@{
+            schemaVersion = 'aexos.b0p-toolchain-isolation-preflight/v1'
+            launcherTupleId = 'win32-x64-none-node-v24.19.0'
+            imageOS = $env:ImageOS
+            imageVersion = $env:ImageVersion
+            osIdentity = 'Windows Server 10.0.20348.5499'
+            visualStudioProductId = $instance.productId
+            visualStudioVersion = $instance.catalog.productDisplayVersion
+            visualStudioBuild = $instance.installationVersion
+            clangPath = $clang
+            clangVersion = $clangVersion
+            sdkVersion = $sdkVersion
+            nodeArchiveSha256 = '16fe258006a6e86844fbe05b3b5e1e5623ca8d3da54e32d98d9e83234bf25b01'
+            bootstrapSha256 = '236367b68ba9a51708263ab10a1c85546cc4a8eca78b365168811d19c4fb2f29'
+            installerPrincipalId = $identity.User.Value
+            offlinePrimitive = 'windows-defender-firewall-program-outbound-block'
+            result = 'PASS'
+          }
+          Write-Output 'B0P_PREFLIGHT_EVIDENCE_BEGIN'
+          $evidence | ConvertTo-Json -Depth 5 -Compress
+          Write-Output 'B0P_PREFLIGHT_EVIDENCE_END'
