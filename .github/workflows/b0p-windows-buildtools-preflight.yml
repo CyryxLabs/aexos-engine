@@ -51,12 +51,12 @@ jobs:
           if ($installer.ExitCode -notin @(0, 3010)) { throw "B0P_BUILD_TOOLS_INSTALL_FAILED:$($installer.ExitCode)" }
 
           $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
-          $instances = @(& $vswhere -path $installPath -products '*' -format json -utf8 | ConvertFrom-Json)
-          $instance = $instances | Select-Object -First 1
+          $instances = @(& $vswhere -products '*' -format json -utf8 | ConvertFrom-Json)
+          $instance = $instances | Where-Object { $_.installationPath -eq $installPath } | Select-Object -First 1
           if (-not $instance -or $instance.installationVersion -ne '17.14.37614.0') { throw 'B0P_BUILD_TOOLS_VERSION_MISMATCH' }
           foreach ($component in $components) {
-            $componentPath = (& $vswhere -path $installPath -products '*' -requires $component -property installationPath).Trim()
-            if ($componentPath -ne $installPath) { throw "B0P_BUILD_TOOLS_COMPONENT_MISSING:$component" }
+            $componentPaths = @(& $vswhere -products '*' -requires $component -property installationPath)
+            if ($componentPaths -notcontains $installPath) { throw "B0P_BUILD_TOOLS_COMPONENT_MISSING:$component" }
           }
 
           $evidence = [ordered]@{
