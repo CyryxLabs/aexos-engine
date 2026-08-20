@@ -18,7 +18,7 @@ jobs:
   windows:
     name: win32-x64-none-node-v24.19.0
     runs-on: windows-2022
-    timeout-minutes: 120
+    timeout-minutes: 240
     steps:
       - name: Assert exact Windows lane
         shell: pwsh
@@ -95,6 +95,7 @@ jobs:
           }
 
           for ($buildNumber = 1; $buildNumber -le 2; $buildNumber++) {
+            Write-Output "B0P_BUILD_${buildNumber}_BEGIN"
             if (Test-Path -LiteralPath $sourceRoot) { Remove-Item -LiteralPath $sourceRoot -Recurse -Force }
             New-Item -ItemType Directory -Force -Path $sourceRoot | Out-Null
             tar.exe -xzf (Join-Path $env:RUNNER_TEMP 'node-v24.19.0.tar.gz') --strip-components=1 -C $sourceRoot
@@ -170,6 +171,7 @@ jobs:
               $archives.Count,
               $objects.Count
             ) | Set-Content -LiteralPath (Join-Path $evidenceRoot "result-$buildNumber.txt") -Encoding utf8NoBOM
+            Write-Output "B0P_BUILD_${buildNumber}_END"
           }
 
           $result1 = Get-Content -LiteralPath (Join-Path $evidenceRoot 'result-1.txt')
