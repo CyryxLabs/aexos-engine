@@ -1,0 +1,116 @@
+name: B0P Unix Elevated Lane
+
+on:
+  push:
+    branches:
+      - codex/cerberus-knowledge-plane
+    paths:
+      - .github/workflows/b0p-unix-elevated-lane.yml
+      - tests/fixtures/knowledge/atomic-no-replace/trust-root-lane-controller/unix-controller.c
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    name: linux-x64-glibc-elevated-to-restricted
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Build and execute exact elevated lane offline
+        shell: bash
+        run: |
+          set -euo pipefail
+          . /etc/os-release
+          test "$RUNNER_OS" = Linux
+          test "$RUNNER_ARCH" = X64
+          test "$ImageOS" = ubuntu24
+          test "$ImageVersion" = 20260816.277.1
+          test "$PRETTY_NAME" = 'Ubuntu 24.04.4 LTS'
+          test "$(uname -r)" = 6.17.0-1022-azure
+          source_path="$GITHUB_WORKSPACE/tests/fixtures/knowledge/atomic-no-replace/trust-root-lane-controller/unix-controller.c"
+          binary_path="$RUNNER_TEMP/b0p-unix-lane-controller"
+          output_path="$RUNNER_TEMP/b0p-unix-lane-controller.jsonl"
+          test "$(id -u)" != 0
+          sudo -n unshare --net --mount-proc /bin/bash -c "
+            set -euo pipefail
+            env -i PATH=/usr/bin:/bin /usr/bin/gcc-13 \
+              -std=c11 -O2 -Wall -Wextra -Werror \
+              '$source_path' -o '$binary_path'
+            env -i PATH=/usr/bin:/bin '$binary_path'
+          " >"$output_path"
+          test "$(wc -l <"$output_path" | tr -d ' ')" = 2
+          grep -F '"rootWrite":false' "$output_path" >/dev/null
+          grep -F '"rootDelete":false' "$output_path" >/dev/null
+          grep -F '"rootAcl":false' "$output_path" >/dev/null
+          grep -F '"rootRegain":false' "$output_path" >/dev/null
+          test "$(grep -c -F '"ready":true' "$output_path")" = 2
+          runtime_uid="$(tail -1 "$output_path" | sed -E 's/.*"runtimeUid":([0-9]+).*/\1/')"
+          runtime_gid="$(tail -1 "$output_path" | sed -E 's/.*"runtimeGid":([0-9]+).*/\1/')"
+          test "$runtime_uid" != 0
+          test "$runtime_gid" != 0
+          source_sha="$(sha256sum "$source_path" | awk '{print $1}')"
+          binary_sha="$(sha256sum "$binary_path" | awk '{print $1}')"
+          oracle_sha="$(sha256sum "$output_path" | awk '{print $1}')"
+          printf 'B0P_ELEVATED_LANE_EVIDENCE_BEGIN\n'
+          printf '{"laneId":"ubuntu24/20260816.277@20260816.277.1","runnerImageVersion":"%s","controllerSourceSha256":"%s","controllerBinarySha256":"%s","installerPrincipalId":"uid=0,gid=0","runtimePrincipalId":"uid=%s,gid=%s","installerPrincipalPolicySha256":"82e1b42af04cda7d0d55139edb045bd4328654ba03313dfcd8cba8febc50fcb8","runtimeTokenPolicySha256":"9d6cde9cf73a12797228befdef1c2eb0c66f004a36bba6b147a7911bb9c0f0be","provisioningOracleSha256":"%s","ready":true}\n' \
+            "$ImageVersion" "$source_sha" "$binary_sha" "$runtime_uid" "$runtime_gid" "$oracle_sha"
+          printf 'B0P_ELEVATED_LANE_EVIDENCE_END\n'
+
+  darwin:
+    name: darwin-arm64-elevated-to-restricted
+    runs-on: macos-15
+    timeout-minutes: 15
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+      MACOSX_DEPLOYMENT_TARGET: '13.5'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Build and execute exact elevated lane offline
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$RUNNER_OS" = macOS
+          test "$RUNNER_ARCH" = ARM64
+          test "$ImageOS" = macos15
+          test "$ImageVersion" = 20260727.0256.1
+          test "$(sw_vers -productVersion)" = 15.7.7
+          test "$(sw_vers -buildVersion)" = 24G720
+          test "$(uname -r)" = 24.6.0
+          test "$(uname -m)" = arm64
+          source_path="$GITHUB_WORKSPACE/tests/fixtures/knowledge/atomic-no-replace/trust-root-lane-controller/unix-controller.c"
+          binary_path="$RUNNER_TEMP/b0p-unix-lane-controller"
+          output_path="$RUNNER_TEMP/b0p-unix-lane-controller.jsonl"
+          clang_path="$(xcrun --find clang)"
+          test "$(id -u)" != 0
+          sudo -n /usr/bin/sandbox-exec -p '(version 1)(deny network*)(allow default)' \
+            /usr/bin/env -i PATH=/usr/bin:/bin \
+            DEVELOPER_DIR="$DEVELOPER_DIR" MACOSX_DEPLOYMENT_TARGET="$MACOSX_DEPLOYMENT_TARGET" \
+            /bin/bash -c "
+              set -euo pipefail
+              '$clang_path' -std=c11 -O2 -Wall -Wextra -Werror \
+                -mmacosx-version-min=13.5 '$source_path' -o '$binary_path'
+              '$binary_path'
+            " >"$output_path"
+          test "$(wc -l <"$output_path" | tr -d ' ')" = 2
+          grep -F '"rootWrite":false' "$output_path" >/dev/null
+          grep -F '"rootDelete":false' "$output_path" >/dev/null
+          grep -F '"rootAcl":false' "$output_path" >/dev/null
+          grep -F '"rootRegain":false' "$output_path" >/dev/null
+          test "$(grep -c -F '"ready":true' "$output_path")" = 2
+          runtime_uid="$(tail -1 "$output_path" | sed -E 's/.*"runtimeUid":([0-9]+).*/\1/')"
+          runtime_gid="$(tail -1 "$output_path" | sed -E 's/.*"runtimeGid":([0-9]+).*/\1/')"
+          test "$runtime_uid" != 0
+          test "$runtime_gid" != 0
+          source_sha="$(shasum -a 256 "$source_path" | awk '{print $1}')"
+          binary_sha="$(shasum -a 256 "$binary_path" | awk '{print $1}')"
+          oracle_sha="$(shasum -a 256 "$output_path" | awk '{print $1}')"
+          printf 'B0P_ELEVATED_LANE_EVIDENCE_BEGIN\n'
+          printf '{"laneId":"macos-15-arm64/20260727.0256@20260727.0256.1","runnerImageVersion":"%s","controllerSourceSha256":"%s","controllerBinarySha256":"%s","installerPrincipalId":"uid=0,gid=0","runtimePrincipalId":"uid=%s,gid=%s","installerPrincipalPolicySha256":"82e1b42af04cda7d0d55139edb045bd4328654ba03313dfcd8cba8febc50fcb8","runtimeTokenPolicySha256":"9d6cde9cf73a12797228befdef1c2eb0c66f004a36bba6b147a7911bb9c0f0be","provisioningOracleSha256":"%s","ready":true}\n' \
+            "$ImageVersion" "$source_sha" "$binary_sha" "$runtime_uid" "$runtime_gid" "$oracle_sha"
+          printf 'B0P_ELEVATED_LANE_EVIDENCE_END\n'
