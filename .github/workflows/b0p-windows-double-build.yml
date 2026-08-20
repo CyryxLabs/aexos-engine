@@ -76,6 +76,7 @@ jobs:
           New-Item -ItemType Junction -Path $vendorLlvm -Target $approvedLlvm | Out-Null
           $clangVersion = (& (Join-Path $vendorLlvm 'bin\clang.exe') --version | Select-Object -First 1)
           if ($clangVersion -notmatch '20\.1\.8') { throw "B0P_APPROVED_LLVM_VERSION_MISMATCH:$clangVersion" }
+          if (-not (Test-Path -LiteralPath (Join-Path $vendorLlvm 'lib\clang\20'))) { throw 'B0P_APPROVED_LLVM_RESOURCE_DIR_MISSING' }
 
       - name: Execute two independent offline static builds
         shell: pwsh
@@ -123,7 +124,7 @@ jobs:
               }
               $vcvars = 'C:\AEXOSBuildTools\VC\Auxiliary\Build\vcvars64.bat'
               $msbuildRoot = 'C:\AEXOSBuildTools\MSBuild\Current\Bin'
-              $command = "call `"$vcvars`" && set `"PATH=$llvmRoot;$msbuildRoot;%PATH%`" && call vcbuild.bat release x64 vs2022 static nonpm nocorepack openssl-no-asm"
+              $command = "call `"$vcvars`" && set `"PATH=$llvmRoot;$msbuildRoot;%PATH%`" && set `"msbuild_args=/p:LLVMToolsVersion=20`" && call vcbuild.bat release x64 vs2022 static nonpm nocorepack openssl-no-asm"
               $stdout = Join-Path $evidenceRoot "build-$buildNumber.stdout.log"
               $stderr = Join-Path $evidenceRoot "build-$buildNumber.stderr.log"
               $builder = Start-Process -FilePath "$env:SystemRoot\System32\cmd.exe" -ArgumentList @('/d', '/s', '/c', $command) -WorkingDirectory $sourceRoot -Wait -PassThru -NoNewWindow -RedirectStandardOutput $stdout -RedirectStandardError $stderr
