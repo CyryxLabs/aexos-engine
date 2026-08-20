@@ -87,14 +87,19 @@ jobs:
           binary_path="$RUNNER_TEMP/b0p-unix-lane-controller"
           output_path="$RUNNER_TEMP/b0p-unix-lane-controller.jsonl"
           clang_path="$(xcrun --find clang)"
+          sdk_root="$(xcrun --sdk macosx --show-sdk-path)"
+          test "$(xcrun --sdk macosx --show-sdk-version)" = 15.5
+          "$clang_path" --version | head -1 | grep -F 'Apple clang version 17.0.0' >/dev/null
           test "$(id -u)" != 0
           sudo -n /usr/bin/sandbox-exec -p '(version 1)(deny network*)(allow default)' \
             /usr/bin/env -i PATH=/usr/bin:/bin \
-            DEVELOPER_DIR="$DEVELOPER_DIR" MACOSX_DEPLOYMENT_TARGET="$MACOSX_DEPLOYMENT_TARGET" \
+            DEVELOPER_DIR="$DEVELOPER_DIR" SDKROOT="$sdk_root" \
+            MACOSX_DEPLOYMENT_TARGET="$MACOSX_DEPLOYMENT_TARGET" \
             /bin/bash -c "
               set -euo pipefail
               '$clang_path' -std=c11 -O2 -Wall -Wextra -Werror \
-                -mmacosx-version-min=13.5 '$source_path' -o '$binary_path'
+                -isysroot '$sdk_root' -mmacosx-version-min=13.5 \
+                '$source_path' -o '$binary_path'
               '$binary_path'
             " >"$output_path"
           test "$(wc -l <"$output_path" | tr -d ' ')" = 2
