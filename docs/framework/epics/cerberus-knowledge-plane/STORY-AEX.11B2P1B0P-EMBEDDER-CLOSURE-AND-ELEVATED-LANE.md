@@ -383,6 +383,7 @@ Codex GPT-5 (Polaris / `@devops`).
 - `artifacts/b2p-launcher-inputs-host-local/blockers/b0p-remote-lane-probe.json`
 - `artifacts/b2p-launcher-inputs-host-local/blockers/b0p-remote-lane-probe.json.sha256`
 - `.github/workflows/b0p-exact-lane-probe.yml`
+- `.github/workflows/b0p-windows-rollout-probe.yml`
 
 ## QA Results
 

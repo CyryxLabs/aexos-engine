@@ -1,0 +1,38 @@
+name: B0P Windows Rollout Probe
+
+on:
+  push:
+    branches:
+      - codex/cerberus-knowledge-plane
+    paths:
+      - .github/workflows/b0p-windows-rollout-probe.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: b0p-windows-rollout-probe
+  cancel-in-progress: false
+
+jobs:
+  windows:
+    name: win22/20260818.277@20260818.277.1
+    runs-on: windows-2022
+    timeout-minutes: 5
+    steps:
+      - name: Assert exact Windows lane
+        shell: pwsh
+        run: |
+          $build = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion'
+          $observed = [ordered]@{
+            runnerOS = $env:RUNNER_OS
+            runnerArch = $env:RUNNER_ARCH
+            imageOS = $env:ImageOS
+            imageVersion = $env:ImageVersion
+            windowsBuild = "10.0.$($build.CurrentBuildNumber).$($build.UBR)"
+          }
+          $observed | ConvertTo-Json -Compress
+          if ($env:RUNNER_OS -ne 'Windows' -or $env:RUNNER_ARCH -ne 'X64') { throw 'B0P_WINDOWS_RUNNER_IDENTITY_MISMATCH' }
+          if ($env:ImageOS -ne 'win22' -or $env:ImageVersion -ne '20260818.277.1') { throw 'B0P_WINDOWS_IMAGE_MISMATCH' }
+          if ($observed.windowsBuild -ne '10.0.20348.5499') { throw 'B0P_WINDOWS_BUILD_MISMATCH' }
