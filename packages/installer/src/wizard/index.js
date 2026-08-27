@@ -47,6 +47,7 @@ const {
   findLegacyInstalls,
   removeFootprint,
 } = require('../installer/install-footprint');
+const { enforceCommercialInstallGate } = require('../licensing/commercial-license-gate');
 const {
   validateInstallation,
   displayValidationReport,
@@ -282,6 +283,21 @@ async function runWizard(options = {}) {
     // Start i18n with default or detected language
     setLanguage(options.language || 'en');
 
+    // Paid-only candidates prove entitlement before the installer writes any
+    // framework, squad, IDE or configuration files. Historical packages use
+    // legacy mode and preserve the terms under which they were distributed.
+    const commercialLicense = await enforceCommercialInstallGate({
+      targetDir: process.cwd(),
+      licenseKey: options.licenseKey,
+      licenseEmail: options.licenseEmail,
+      licensePassword: options.licensePassword,
+      quiet: options.quiet || options.ci,
+      force: options.force,
+      config: options.commercialLicenseConfig,
+      runLicenseWizard: options.runLicenseWizard,
+      env: options.env,
+    });
+
     let answers = {};
 
     // A terminal that cannot be prompted is not a reason to crash. Without this
@@ -376,6 +392,8 @@ async function runWizard(options = {}) {
         );
       }
     }
+
+    answers.commercialLicense = commercialLicense;
 
     if (options.dryRun) {
       const preview = {
@@ -1062,8 +1080,13 @@ async function runWizard(options = {}) {
       answers.llmRoutingInstalled = false;
     }
 
-    // Story INS-3.2: Pro Installation Wizard (optional phase)
-    if (!options.skipPro) {
+    // A paid-only candidate already acquired and verified its private artifact
+    // at the pre-install boundary. Historical packages retain the optional Pro
+    // flow associated with their original release terms.
+    if (commercialLicense.required) {
+      answers.proInstalled = true;
+      answers.proResult = commercialLicense.result;
+    } else if (!options.skipPro) {
       try {
         const { runProWizard } = require('./pro-setup');
         const isCI = process.env.CI === 'true' || !process.stdout.isTTY;
