@@ -151,12 +151,12 @@ describe('Doctor Check: rules-files', () => {
     expect(EXPECTED_RULES.length).toBeGreaterThan(0);
   });
 
-  it('deve retornar FAIL quando diretorio de regras nao existe', async () => {
+  it('deve retornar PASS quando regras Claude opcionais nao foram configuradas', async () => {
     const ctx = makeContext(tmpDir);
     const result = await run(ctx);
 
-    expect(result.status).toBe('FAIL');
-    expect(result.message).toContain('not found');
+    expect(result.status).toBe('PASS');
+    expect(result.message).toContain('optional IDE integration');
   });
 
   it('deve retornar PASS quando todos os arquivos de regras existem', async () => {
@@ -580,12 +580,12 @@ describe('Doctor Check: hooks-claude-count', () => {
     expect(name).toBe('hooks-claude-count');
   });
 
-  it('deve retornar FAIL quando diretorio de hooks nao existe', async () => {
+  it('deve retornar PASS quando hooks Claude opcionais nao foram configurados', async () => {
     const ctx = makeContext(tmpDir);
     const result = await run(ctx);
 
-    expect(result.status).toBe('FAIL');
-    expect(result.message).toContain('not found');
+    expect(result.status).toBe('PASS');
+    expect(result.message).toContain('optional IDE integration');
   });
 
   it('deve retornar FAIL quando nenhum .cjs encontrado', async () => {
@@ -699,7 +699,7 @@ describe('Doctor Check: settings-json', () => {
     expect(result.message).toContain('invalid JSON');
   });
 
-  it('deve retornar WARN quando deny rules < 40', async () => {
+  it('deve retornar PASS sem threshold global de deny rules', async () => {
     const claudeDir = path.join(tmpDir, '.claude');
     fs.mkdirSync(claudeDir, { recursive: true });
     const settings = {
@@ -713,7 +713,7 @@ describe('Doctor Check: settings-json', () => {
     const ctx = makeContext(tmpDir);
     const result = await run(ctx);
 
-    expect(result.status).toBe('WARN');
+    expect(result.status).toBe('PASS');
     expect(result.message).toContain('10');
   });
 

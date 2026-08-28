@@ -21,9 +21,9 @@ async function run(context) {
   if (!fs.existsSync(hooksDir)) {
     return {
       check: name,
-      status: 'FAIL',
-      message: 'Hooks directory not found (.claude/hooks/)',
-      fixCommand: 'npx @aexos/core install --force',
+      status: 'PASS',
+      message: 'Claude hooks not configured (optional IDE integration)',
+      fixCommand: null,
     };
   }
 

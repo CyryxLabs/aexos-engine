@@ -24,9 +24,9 @@ async function run(context) {
   if (!fs.existsSync(claudeMdPath)) {
     return {
       check: name,
-      status: 'FAIL',
-      message: 'CLAUDE.md not found',
-      fixCommand: 'aexos doctor --fix',
+      status: 'PASS',
+      message: 'CLAUDE.md not configured (optional IDE integration)',
+      fixCommand: null,
     };
   }
 

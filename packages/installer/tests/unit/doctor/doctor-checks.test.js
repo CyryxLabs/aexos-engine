@@ -63,13 +63,24 @@ describe('node-version check', () => {
 describe('npm-packages check', () => {
   it('should PASS when node_modules exists', async () => {
     fs.existsSync.mockReturnValue(true);
+    fs.readFileSync.mockReturnValue(JSON.stringify({ dependencies: {} }));
     const result = await npmPackagesCheck.run(mockContext);
     expect(result.status).toBe('PASS');
-    expect(result.message).toContain('node_modules present');
+    expect(result.message).toContain('Project dependency state is consistent');
   });
 
-  it('should FAIL when node_modules missing', async () => {
+  it('should PASS when a greenfield project has no package.json or node_modules', async () => {
     fs.existsSync.mockReturnValue(false);
+    const result = await npmPackagesCheck.run(mockContext);
+    expect(result.status).toBe('PASS');
+    expect(result.message).toContain('not required');
+  });
+
+  it('should FAIL when declared project dependencies have no node_modules', async () => {
+    const packageJsonPath = path.join(mockContext.projectRoot, 'package.json');
+    fs.existsSync.mockImplementation((candidate) => candidate === packageJsonPath);
+    fs.readFileSync.mockReturnValue(JSON.stringify({ dependencies: { chalk: '^5.0.0' } }));
+
     const result = await npmPackagesCheck.run(mockContext);
     expect(result.status).toBe('FAIL');
     expect(result.fixCommand).toBe('npm install');
@@ -94,7 +105,7 @@ describe('settings-json check', () => {
 
     const result = await settingsJsonCheck.run(mockContext);
     expect(result.status).toBe('PASS');
-    expect(result.message).toContain('50 rules');
+    expect(result.message).toContain('50 deny rules');
   });
 
   it('should FAIL when settings.json not found', async () => {
@@ -103,16 +114,23 @@ describe('settings-json check', () => {
     expect(result.status).toBe('FAIL');
   });
 
-  it('should WARN when deny rules below threshold', async () => {
+  it('should PASS with zero deny rules when framework protection is disabled', async () => {
     fs.existsSync.mockReturnValue(true);
-    const mockSettings = { permissions: { deny: ['one'], allow: [] } };
-    fs.readFileSync.mockReturnValue(JSON.stringify(mockSettings));
+    const mockSettings = { permissions: { deny: [], allow: [] } };
+    fs.readFileSync.mockImplementation((candidate) => {
+      if (candidate.includes('settings.json')) return JSON.stringify(mockSettings);
+      if (candidate.includes('core-config')) {
+        return 'boundary:\n  frameworkProtection: false\n  protected: []';
+      }
+      return '';
+    });
 
     const result = await settingsJsonCheck.run(mockContext);
-    expect(result.status).toBe('WARN');
+    expect(result.status).toBe('PASS');
+    expect(result.message).toContain('protection disabled');
   });
 
-  it('should WARN when boundary paths not covered by deny rules', async () => {
+  it('should FAIL when boundary paths are not covered while protection is enabled', async () => {
     fs.existsSync.mockReturnValue(true);
     const mockSettings = {
       permissions: {
@@ -120,7 +138,7 @@ describe('settings-json check', () => {
         allow: [],
       },
     };
-    const coreConfig = 'boundary:\n  protected:\n    - .aexos-core/core/**\n    - bin/aexos.js\n  exceptions:\n    - test';
+    const coreConfig = 'boundary:\n  frameworkProtection: true\n  protected:\n    - .aexos-core/core/**\n    - bin/aexos.js\n  exceptions:\n    - test';
     fs.readFileSync.mockImplementation((p) => {
       if (p.includes('settings.json')) return JSON.stringify(mockSettings);
       if (p.includes('core-config')) return coreConfig;
@@ -128,8 +146,22 @@ describe('settings-json check', () => {
     });
 
     const result = await settingsJsonCheck.run(mockContext);
-    expect(result.status).toBe('WARN');
+    expect(result.status).toBe('FAIL');
     expect(result.message).toContain('boundary coverage');
+  });
+
+  it('should FAIL when protection is enabled without deny rules', async () => {
+    fs.existsSync.mockReturnValue(true);
+    fs.readFileSync.mockImplementation((candidate) => {
+      if (candidate.includes('settings.json')) {
+        return JSON.stringify({ permissions: { deny: [], allow: [] } });
+      }
+      return 'boundary:\n  frameworkProtection: true\n  protected: []';
+    });
+
+    const result = await settingsJsonCheck.run(mockContext);
+    expect(result.status).toBe('FAIL');
+    expect(result.message).toContain('protection is enabled');
   });
 });
 
@@ -141,10 +173,11 @@ describe('rules-files check', () => {
     expect(result.message).toContain('7');
   });
 
-  it('should FAIL when rules directory missing', async () => {
+  it('should PASS when optional Claude rules are not configured', async () => {
     fs.existsSync.mockReturnValue(false);
     const result = await rulesFilesCheck.run(mockContext);
-    expect(result.status).toBe('FAIL');
+    expect(result.status).toBe('PASS');
+    expect(result.message).toContain('optional IDE integration');
   });
 
   it('should WARN when some rules missing', async () => {
@@ -250,6 +283,13 @@ describe('core-config check', () => {
 });
 
 describe('claude-md check', () => {
+  it('should PASS when optional CLAUDE.md is not configured', async () => {
+    fs.existsSync.mockReturnValue(false);
+    const result = await claudeMdCheck.run(mockContext);
+    expect(result.status).toBe('PASS');
+    expect(result.message).toContain('optional IDE integration');
+  });
+
   it('should PASS when all sections present', async () => {
     fs.existsSync.mockReturnValue(true);
     fs.readFileSync.mockReturnValue(
@@ -608,10 +648,11 @@ describe('hooks-claude-count check', () => {
     expect(result.status).toBe('FAIL');
   });
 
-  it('should FAIL when hooks directory missing', async () => {
+  it('should PASS when optional Claude hooks are not configured', async () => {
     fs.existsSync.mockReturnValue(false);
     const result = await hooksClaudeCountCheck.run(mockContext);
-    expect(result.status).toBe('FAIL');
+    expect(result.status).toBe('PASS');
+    expect(result.message).toContain('optional IDE integration');
   });
 });
 

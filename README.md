@@ -251,11 +251,10 @@ npx @aexos/core --version
 Both commands should report the same released version. At the time this README was updated, that
 version was `5.3.0`.
 
-> **Why the short form works.**
-> npx reads `package.json`, sees the name `@aexos/core`, and infers a binary called `core` from
-> the unscoped half of the name. `package.json` declares an explicit `core` alias in `bin` for
-> exactly that reason; without it npx exits with `could not determine executable to run`. If you
-> ever see that error, name the binary explicitly: `npx -p @aexos/core aexos <command>`.
+> **Bare npx is supported.**
+> `npx @aexos/core` runs the installer in the current directory. Prefer the explicit `init <name>`
+> form for a new directory and `install` for an existing one so scripts and reviewers can see the
+> intended target immediately.
 
 > **After installing, restart your IDE.** Claude Code reads commands and skills once, at session
 > start. Until you reopen it in that directory, `/AEXOS` will match nothing even though the files

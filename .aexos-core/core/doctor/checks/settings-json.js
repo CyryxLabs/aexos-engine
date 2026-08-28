@@ -13,6 +13,19 @@ const fs = require('fs');
 
 const name = 'settings-json';
 
+function readFrameworkProtection(context) {
+  const configPath = path.join(context.projectRoot, '.aexos-core', 'core-config.yaml');
+  if (!fs.existsSync(configPath)) return null;
+
+  try {
+    const content = fs.readFileSync(configPath, 'utf8');
+    const match = content.match(/^\s*frameworkProtection:\s*(true|false)\b/m);
+    return match ? match[1] === 'true' : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Checks that core-config.yaml boundary.protected paths are covered by deny rules.
  * Returns array of unprotected boundary paths.
@@ -89,22 +102,26 @@ async function run(context) {
   const allowRules = settings.permissions?.allow || [];
   const denyCount = denyRules.length;
   const allowCount = allowRules.length;
+  const frameworkProtection = readFrameworkProtection(context);
 
-  if (denyCount < 40) {
+  if (frameworkProtection === true && denyCount === 0) {
     return {
       check: name,
-      status: 'WARN',
-      message: `Deny rules below threshold (${denyCount} rules, expected >= 40)`,
+      status: 'FAIL',
+      message: 'Framework protection is enabled but no deny rules are configured',
       fixCommand: 'aexos doctor --fix',
     };
   }
 
-  // Compare deny rules against core-config.yaml boundary.protected paths
-  const boundaryIssues = checkBoundaryAlignment(context, denyRules);
+  // Boundary coverage matters only when the project opted into framework
+  // protection. A fixed global rule count was not an integrity contract.
+  const boundaryIssues = frameworkProtection === true
+    ? checkBoundaryAlignment(context, denyRules)
+    : [];
   if (boundaryIssues.length > 0) {
     return {
       check: name,
-      status: 'WARN',
+      status: 'FAIL',
       message: `Deny rules present (${denyCount}) but missing boundary coverage: ${boundaryIssues.join(', ')}`,
       fixCommand: 'aexos doctor --fix',
     };
@@ -113,9 +130,11 @@ async function run(context) {
   return {
     check: name,
     status: 'PASS',
-    message: `Deny rules present (${denyCount} rules, ${allowCount} allows)`,
+    message: frameworkProtection === false
+      ? `Framework protection disabled (${denyCount} deny rules, ${allowCount} allows)`
+      : `Permission rules valid (${denyCount} deny rules, ${allowCount} allows)`,
     fixCommand: null,
   };
 }
 
-module.exports = { name, run };
+module.exports = { name, run, readFrameworkProtection };
