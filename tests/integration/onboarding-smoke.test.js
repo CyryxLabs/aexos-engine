@@ -60,6 +60,9 @@ describe('Onboarding smoke flow (CYRYX-DIFF-4.0.5)', () => {
     const initHelp = runNode(cliBin, ['init', '--help'], tempDir);
     expect(initHelp).toContain('--skip-install');
     expect(initHelp).toContain('--template');
+    expect(initHelp).toContain('--ci');
+    expect(initHelp).toContain('--yes, -y');
+    expect(initHelp).not.toContain('github:CyryxLabs/AEXOS');
 
     const versionOutput = runNode(cliBin, ['--version'], tempDir).trim();
     expect(versionOutput).toMatch(/^\d+\.\d+\.\d+$/);

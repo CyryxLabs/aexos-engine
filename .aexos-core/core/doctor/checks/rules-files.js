@@ -28,9 +28,9 @@ async function run(context) {
   if (!fs.existsSync(rulesDir)) {
     return {
       check: name,
-      status: 'FAIL',
-      message: `Rules directory not found (expected ${EXPECTED_RULES.length} files)`,
-      fixCommand: 'aexos doctor --fix',
+      status: 'PASS',
+      message: 'Claude rules not configured (optional IDE integration)',
+      fixCommand: null,
     };
   }
 

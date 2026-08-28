@@ -1,0 +1,39 @@
+schema: 1
+story: 'AEX.10'
+story_title: 'Truthful Fresh-Init First-Value Path'
+gate: PASS
+status_reason: 'The published failure mode is reproduced, the corrected packed artifact completes init and doctor without false failures, and all acceptance criteria have automated or release-like evidence.'
+reviewer: 'Argus (Test Architect)'
+reviewed_revision: 'working-tree-sha256:9f4027a4d80ffb204ba622e87fed59d6f9c0ddc82ec90e4dbbd045b611c747af'
+updated: '2026-08-28T12:54:42.0454700Z'
+top_issues: []
+waiver:
+  active: false
+quality_score: 100
+evidence:
+  tests_reviewed: 9882
+  risks_identified: 3
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6, 7, 8, 9]
+    ac_gaps: []
+  focused_regressions: '6 suites, 120 tests passed'
+  full_jest: '397 suites passed, 9882 tests passed, 12 suites and 172 tests skipped'
+  packed_smoke: 'init=0; doctor=0 (16 PASS, 2 WARN, 0 FAIL); help=0; counts=12/214/15/8'
+  static_gates: 'lint=0; typecheck=0; build=0; validate-manifest=0; pack-dry-run=0'
+  coderabbit: 'Unavailable: configured WSL environment has no bash; graceful fallback applied'
+nfr_validation:
+  security:
+    status: PASS
+    notes: 'No dependency, secret, authentication, entitlement, pricing, or install-mode changes.'
+  performance:
+    status: PASS
+    notes: 'Changes add bounded local filesystem reads only; packed init smoke completed successfully.'
+  reliability:
+    status: PASS
+    notes: 'Required framework dependency and present-but-invalid Claude surfaces retain failure coverage.'
+  maintainability:
+    status: PASS
+    notes: 'One shared component-count contract and configuration-derived doctor semantics are covered by focused tests.'
+recommendations:
+  immediate: []
+  future: []

@@ -8,7 +8,7 @@
 # - File types for categorization
 #
 version: 5.3.0
-generated_at: "2026-08-11T19:54:10.507Z"
+generated_at: "2026-08-28T12:40:51.191Z"
 generator: scripts/generate-install-manifest.js
 file_count: 1168
 files:
@@ -305,9 +305,9 @@ files:
     type: core
     size: 1371
   - path: core/doctor/checks/claude-md.js
-    hash: sha256:2748e833ab86b73d5648cdbefe3c6e4ae30f2675981d923a874062eea17e506a
+    hash: sha256:191bb287367406033109e8cfbe4877ec5a11f1334720cc95721715c58f22d0f6
     type: core
-    size: 1191
+    size: 1207
   - path: core/doctor/checks/code-intel.js
     hash: sha256:1692e3b5f5fb3a2a52d7f001474d8af3ab9d0774c1a75d58f86a680589eff2b5
     type: core
@@ -337,9 +337,9 @@ files:
     type: core
     size: 1113
   - path: core/doctor/checks/hooks-claude-count.js
-    hash: sha256:a437e23ece2a9e3abd03369f8bdf77ee2f7df6552316da1bd56b66ec2d1506b3
+    hash: sha256:20b58fe1d2c8104a4433bc96acf44530ac14a91e4143d200605e6f7234dc499f
     type: core
-    size: 3359
+    size: 3342
   - path: core/doctor/checks/ide-sync.js
     hash: sha256:d76cae7efae4c4309e99514671ba9551750078706c4409f8660ee5c7c0ea6326
     type: core
@@ -353,21 +353,21 @@ files:
     type: core
     size: 675
   - path: core/doctor/checks/npm-packages.js
-    hash: sha256:a487113d814402d5ceeeca58be85a925738d2c3593ff6706370e3d22f8452ffc
+    hash: sha256:39ae047aee622b42c35e1d66ae45809a077565935ffa9c8b5a9b7aeaf5134d9b
     type: core
-    size: 2284
+    size: 3403
   - path: core/doctor/checks/port-denylist.js
     hash: sha256:3352c170168e882b7d88f46c24db9f11c394bce5b2463e242a3c09b6da591b2e
     type: core
     size: 1404
   - path: core/doctor/checks/rules-files.js
-    hash: sha256:136ce9432d7bcbed4f616ae72eba7280342aa95c902f18e1d721c43a8a8cb647
+    hash: sha256:256b1a16114baa4c93f8518852f6f297ac08d9f8d87e0012f0a7c390c367daf1
     type: core
-    size: 1371
+    size: 1342
   - path: core/doctor/checks/settings-json.js
-    hash: sha256:db83d37174656bf58dbb156322eddb7a14af9215072f8216e09e89be1e570219
+    hash: sha256:b0bbb0367a647a9c0d4b64adbdd23ba7973561604e504d322b52444aed1c66d3
     type: core
-    size: 3294
+    size: 4077
   - path: core/doctor/checks/skills-count.js
     hash: sha256:c14d27ec4def0a1835734367216eb470a5b4692a3f0c5382d1f538d7c2b73ac1
     type: core
@@ -1401,7 +1401,7 @@ files:
     type: data
     size: 9595
   - path: data/entity-registry.yaml
-    hash: sha256:53565179560d3a5e70874193b72a51c6a54da4b02018342aa06ee16de7bfd7d4
+    hash: sha256:c4f2c240b8c54cdfc38547885884e7cb4043415fc5915e0f5ed40a94eefc327d
     type: data
     size: 598808
   - path: data/learned-patterns.yaml

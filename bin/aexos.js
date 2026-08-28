@@ -16,6 +16,18 @@ const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 const args = process.argv.slice(2);
 const command = args[0];
 
+function parseInitExecutionFlags(initArgs) {
+  const ci = initArgs.includes('--ci');
+  const yes = initArgs.includes('--yes') || initArgs.includes('-y');
+
+  return {
+    ci,
+    yes,
+    force: initArgs.includes('--force') || yes || ci,
+    quiet: ci,
+  };
+}
+
 // Helper: Run initialization wizard
 async function runWizard(options = {}) {
   if (options.force || options.yes || options.ci) {
@@ -208,14 +220,16 @@ function showInfo() {
   console.log(`Install Location: ${path.join(__dirname, '..')}`);
 
   // Check if .aexos-core exists
-  const cyryxCoreDir = path.join(__dirname, '..', '.aexos-core');
+  const cyryxCoreDir = path.join(process.cwd(), '.aexos-core');
   if (fs.existsSync(cyryxCoreDir)) {
     console.log('\n✓ AEXOS Core installed');
 
     // Count components
     const countFiles = (dir) => {
       try {
-        return fs.readdirSync(dir).length;
+        return fs.readdirSync(dir, { withFileTypes: true })
+          .filter((entry) => entry.isFile() && !entry.name.startsWith('.'))
+          .length;
       } catch {
         return 0;
       }
@@ -818,6 +832,8 @@ use "npx @aexos/core install", which takes no name.
 
 Options:
   --force              Force creation in non-empty directory
+  --yes, -y            Accept safe defaults and overwrite an existing project directory
+  --ci                 Non-interactive CI mode (--yes --quiet)
   --skip-install       Skip npm dependency installation
   --template <name>    Use specific template (default: default)
   -t <name>            Shorthand for --template
@@ -830,6 +846,7 @@ Available Templates:
 
 Examples:
   npx @aexos/core init my-project
+  npx @aexos/core init my-project --ci --yes
   npx @aexos/core init my-project --template minimal
   npx @aexos/core init my-project --force --skip-install
   npx @aexos/core init . --template enterprise
@@ -847,7 +864,8 @@ async function initProject() {
   }
 
   // 3. Parse flags
-  const isForce = initArgs.includes('--force');
+  const initExecutionFlags = parseInitExecutionFlags(initArgs);
+  const isForce = initExecutionFlags.force;
   const skipInstall = initArgs.includes('--skip-install');
 
   // Template with argument
@@ -930,6 +948,9 @@ async function initProject() {
     template,
     skipInstall,
     force: isForce,
+    yes: initExecutionFlags.yes,
+    ci: initExecutionFlags.ci,
+    quiet: initExecutionFlags.quiet,
   });
 }
 
@@ -1113,7 +1134,15 @@ async function main() {
 }
 
 // Execute main function
-main().catch((error) => {
-  console.error('❌ Fatal error:', error.message);
-  process.exit(1);
-});
+if (require.main === module) {
+  main().catch((error) => {
+    console.error('❌ Fatal error:', error.message);
+    process.exit(1);
+  });
+}
+
+module.exports = {
+  _testing: {
+    parseInitExecutionFlags,
+  },
+};
