@@ -908,7 +908,7 @@ async function initProject() {
 
   // 5. Handle "." to install in current directory
   const isCurrentDir = projectName === '.';
-  const targetPath = isCurrentDir ? process.cwd() : path.join(process.cwd(), projectName);
+  const targetPath = isCurrentDir ? process.cwd() : path.resolve(process.cwd(), projectName);
   const displayName = isCurrentDir ? path.basename(process.cwd()) : projectName;
 
   // 6. Check if directory exists

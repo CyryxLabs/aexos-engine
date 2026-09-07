@@ -176,8 +176,8 @@ describe('rules-files check', () => {
   it('should PASS when optional Claude rules are not configured', async () => {
     fs.existsSync.mockReturnValue(false);
     const result = await rulesFilesCheck.run(mockContext);
-    expect(result.status).toBe('PASS');
-    expect(result.message).toContain('optional IDE integration');
+    expect(result.status).toBe('FAIL');
+    expect(result.message).toContain('cannot establish optional integration');
   });
 
   it('should WARN when some rules missing', async () => {
@@ -286,8 +286,8 @@ describe('claude-md check', () => {
   it('should PASS when optional CLAUDE.md is not configured', async () => {
     fs.existsSync.mockReturnValue(false);
     const result = await claudeMdCheck.run(mockContext);
-    expect(result.status).toBe('PASS');
-    expect(result.message).toContain('optional IDE integration');
+    expect(result.status).toBe('FAIL');
+    expect(result.message).toContain('cannot establish optional integration');
   });
 
   it('should PASS when all sections present', async () => {
@@ -651,8 +651,8 @@ describe('hooks-claude-count check', () => {
   it('should PASS when optional Claude hooks are not configured', async () => {
     fs.existsSync.mockReturnValue(false);
     const result = await hooksClaudeCountCheck.run(mockContext);
-    expect(result.status).toBe('PASS');
-    expect(result.message).toContain('optional IDE integration');
+    expect(result.status).toBe('FAIL');
+    expect(result.message).toContain('cannot establish optional integration');
   });
 });
 

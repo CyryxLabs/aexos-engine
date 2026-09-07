@@ -23,6 +23,7 @@ async function run(context) {
   if (fs.existsSync(projectPackageJson)) {
     try {
       const projectPackage = JSON.parse(fs.readFileSync(projectPackageJson, 'utf8'));
+      if (!projectPackage || typeof projectPackage !== 'object' || Array.isArray(projectPackage)) throw new Error('Invalid project manifest');
       const declaredDependencies = [
         ...Object.keys(projectPackage.dependencies || {}),
         ...Object.keys(projectPackage.devDependencies || {}),
@@ -38,8 +39,7 @@ async function run(context) {
         };
       }
     } catch {
-      // package.json integrity belongs to the project toolchain. Continue with
-      // the framework dependency check below instead of hiding that result.
+      return { check: name, status: 'FAIL', message: 'Cannot parse project package.json dependency manifest', fixCommand: null };
     }
   }
 
@@ -52,6 +52,7 @@ async function run(context) {
     // Verify all declared deps are installed
     try {
       const pkg = JSON.parse(fs.readFileSync(cyryxCorePackageJson, 'utf8'));
+      if (!pkg || typeof pkg !== 'object' || Array.isArray(pkg)) throw new Error('Invalid framework manifest');
       const deps = Object.keys(pkg.dependencies || {});
       const missing = [];
 
@@ -80,7 +81,7 @@ async function run(context) {
         };
       }
     } catch {
-      // If we can't parse package.json, just check existence passed above
+      return { check: name, status: 'FAIL', message: 'Cannot parse .aexos-core/package.json dependency manifest', fixCommand: null };
     }
   }
 

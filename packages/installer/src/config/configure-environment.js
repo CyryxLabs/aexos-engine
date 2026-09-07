@@ -12,6 +12,7 @@
 
 const fs = require('fs-extra');
 const path = require('path');
+const yaml = require('js-yaml');
 const { password, select } = require('@clack/prompts');
 const { generateEnvContent, generateEnvExample } = require('./templates/env-template');
 const { generateCoreConfig } = require('./templates/core-config-template');
@@ -263,8 +264,16 @@ async function configureEnvironment(options = {}) {
       const existingContent = await fs.readFile(coreConfigPath, 'utf8');
       const merger = getMergeStrategy(coreConfigPath);
       const mergeResult = await merger.merge(coreConfigContent, existingContent);
-
-      await fs.writeFile(coreConfigPath, mergeResult.content, { encoding: 'utf8' });
+      // The copied framework profile belongs to its author. The current install
+      // selection is authoritative; preserve unrelated merged fields and comments.
+      const lines = mergeResult.content.split(/\r?\n/);
+      const start = lines.findIndex((line) => /^ide:/.test(line));
+      let end = start + 1;
+      while (end < lines.length && !/^[^\s#][^:]*:/.test(lines[end])) end++;
+      const installedIde = yaml.dump({ ide: yamlValidation.parsed.ide }).trimEnd();
+      if (start >= 0) lines.splice(start, end - start, installedIde);
+      else lines.push(installedIde);
+      await fs.writeFile(coreConfigPath, lines.join('\n'), { encoding: 'utf8' });
       results.coreConfigCreated = true;
       console.log('✅ Merged .aexos-core/core-config.yaml');
     } else {

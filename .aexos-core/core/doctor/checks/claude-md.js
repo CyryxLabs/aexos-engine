@@ -9,6 +9,7 @@
 
 const path = require('path');
 const fs = require('fs');
+const { missingClaudeArtifact } = require('../claude-optional');
 
 const name = 'claude-md';
 
@@ -22,12 +23,7 @@ async function run(context) {
   const claudeMdPath = path.join(context.projectRoot, '.claude', 'CLAUDE.md');
 
   if (!fs.existsSync(claudeMdPath)) {
-    return {
-      check: name,
-      status: 'PASS',
-      message: 'CLAUDE.md not configured (optional IDE integration)',
-      fixCommand: null,
-    };
+    return missingClaudeArtifact(context, name, 'CLAUDE.md');
   }
 
   const content = fs.readFileSync(claudeMdPath, 'utf8');

@@ -155,8 +155,8 @@ describe('Doctor Check: rules-files', () => {
     const ctx = makeContext(tmpDir);
     const result = await run(ctx);
 
-    expect(result.status).toBe('PASS');
-    expect(result.message).toContain('optional IDE integration');
+    expect(result.status).toBe('FAIL');
+    expect(result.message).toContain('cannot establish optional integration');
   });
 
   it('deve retornar PASS quando todos os arquivos de regras existem', async () => {
@@ -584,8 +584,8 @@ describe('Doctor Check: hooks-claude-count', () => {
     const ctx = makeContext(tmpDir);
     const result = await run(ctx);
 
-    expect(result.status).toBe('PASS');
-    expect(result.message).toContain('optional IDE integration');
+    expect(result.status).toBe('FAIL');
+    expect(result.message).toContain('cannot establish optional integration');
   });
 
   it('deve retornar FAIL quando nenhum .cjs encontrado', async () => {

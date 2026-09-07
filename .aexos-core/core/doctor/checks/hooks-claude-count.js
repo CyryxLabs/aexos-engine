@@ -12,6 +12,7 @@
 
 const path = require('path');
 const fs = require('fs');
+const { missingClaudeArtifact } = require('../claude-optional');
 
 const name = 'hooks-claude-count';
 
@@ -19,12 +20,7 @@ async function run(context) {
   const hooksDir = path.join(context.projectRoot, '.claude', 'hooks');
 
   if (!fs.existsSync(hooksDir)) {
-    return {
-      check: name,
-      status: 'PASS',
-      message: 'Claude hooks not configured (optional IDE integration)',
-      fixCommand: null,
-    };
+    return missingClaudeArtifact(context, name, 'Claude hooks');
   }
 
   let entries;

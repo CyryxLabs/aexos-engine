@@ -1,7 +1,7 @@
 metadata:
   version: 1.0.0
-  lastUpdated: '2026-08-28T12:38:03.500Z'
-  entityCount: 848
+  lastUpdated: '2026-09-07T22:49:27.367Z'
+  entityCount: 849
   checksumAlgorithm: sha256
   resolutionRate: 100
 entities:
@@ -8768,6 +8768,28 @@ entities:
         extensionPoints: []
       checksum: sha256:202d141a292bc5a8dd0697e044d7627b260839ae8b7119fd40ae486b3a1b0825
       lastVerified: '2026-07-30T19:35:41.379Z'
+    claude-optional:
+      path: .aexos-core/core/doctor/claude-optional.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/doctor/claude-optional.js
+      keywords:
+        - claude
+        - optional
+      usedBy:
+        - claude-md
+        - hooks-claude-count
+        - rules-files
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:25e3fc6a7f5f60d7e000e018203b882c119b2fa4fa9847a47698baa7e326ca70
+      lastVerified: '2026-09-07T22:49:27.111Z'
     fix-handler:
       path: .aexos-core/core/doctor/fix-handler.js
       layer: L1
@@ -11926,7 +11948,8 @@ entities:
         - md
       usedBy:
         - doctor-checks-index
-      dependencies: []
+      dependencies:
+        - claude-optional
       externalDeps: []
       plannedDeps: []
       lifecycle: production
@@ -11934,8 +11957,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:191bb287367406033109e8cfbe4877ec5a11f1334720cc95721715c58f22d0f6
-      lastVerified: '2026-08-28T12:38:03.311Z'
+      checksum: sha256:3aacd3c774b7a72f0a0d69d908540a68fb676708f98b120459d9f88c4200f626
+      lastVerified: '2026-09-07T22:49:27.167Z'
     code-intel:
       path: .aexos-core/core/doctor/checks/code-intel.js
       layer: L1
@@ -12094,7 +12117,8 @@ entities:
         - count
       usedBy:
         - doctor-checks-index
-      dependencies: []
+      dependencies:
+        - claude-optional
       externalDeps: []
       plannedDeps: []
       lifecycle: production
@@ -12102,8 +12126,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:20b58fe1d2c8104a4433bc96acf44530ac14a91e4143d200605e6f7234dc499f
-      lastVerified: '2026-08-28T12:38:03.311Z'
+      checksum: sha256:a9771af527f2e4a9ebda9ad6d0a2b953749e1bbe11a09d559dae65c96d43364b
+      lastVerified: '2026-09-07T22:49:27.168Z'
     ide-sync:
       path: .aexos-core/core/doctor/checks/ide-sync.js
       layer: L1
@@ -12200,8 +12224,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:39ae047aee622b42c35e1d66ae45809a077565935ffa9c8b5a9b7aeaf5134d9b
-      lastVerified: '2026-08-28T12:38:03.314Z'
+      checksum: sha256:65be4404de85d1d76c18fdec23568ecfcc074dd58d0e2fbf4f21478ef24d6d00
+      lastVerified: '2026-09-07T22:49:27.171Z'
     doctor-checks-port-denylist:
       path: .aexos-core/core/doctor/checks/port-denylist.js
       layer: L1
@@ -12233,7 +12257,8 @@ entities:
       usedBy:
         - fix-handler
         - doctor-checks-index
-      dependencies: []
+      dependencies:
+        - claude-optional
       externalDeps: []
       plannedDeps: []
       lifecycle: production
@@ -12241,8 +12266,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:256b1a16114baa4c93f8518852f6f297ac08d9f8d87e0012f0a7c390c367daf1
-      lastVerified: '2026-08-28T12:38:03.314Z'
+      checksum: sha256:04b8efa1e3a54015c377ee9078a41149d87e363c36800703fdc7e377e5dccd9d
+      lastVerified: '2026-09-07T22:49:27.172Z'
     settings-json:
       path: .aexos-core/core/doctor/checks/settings-json.js
       layer: L1
@@ -15899,7 +15924,7 @@ entities:
         constraints: []
         extensionPoints: []
       checksum: sha256:<self-reference>
-      lastVerified: '2026-08-28T12:38:03.500Z'
+      lastVerified: '2026-09-07T22:49:27.367Z'
     learned-patterns:
       path: .aexos-core/data/learned-patterns.yaml
       layer: L3

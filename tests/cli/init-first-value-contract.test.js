@@ -3,13 +3,32 @@
 const os = require('os');
 const path = require('path');
 const fs = require('fs');
-const { execFileSync } = require('child_process');
+const { execFileSync, spawnSync } = require('child_process');
 
 const repoRoot = path.resolve(__dirname, '..', '..');
 const cliBin = path.join(repoRoot, 'bin', 'aexos.js');
 const { _testing } = require(cliBin);
 
 describe('init first-value CLI contract', () => {
+  it('resolves absolute destinations and preserves nonempty-directory protection', () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aexos-absolute-init-'));
+    const target = path.join(tempDir, 'project with spaces');
+    try {
+      fs.mkdirSync(target);
+      fs.writeFileSync(path.join(target, 'keep.txt'), 'existing content');
+      const result = spawnSync(process.execPath, [cliBin, 'init', target], {
+        cwd: tempDir,
+        encoding: 'utf8',
+      });
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('Directory already exists and is not empty');
+      expect(result.stderr).not.toContain('ENOENT');
+      expect(fs.readFileSync(path.join(target, 'keep.txt'), 'utf8')).toBe('existing content');
+    } finally {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
   it('documents the npm command and every supported non-interactive flag', () => {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aexos-init-help-'));
 

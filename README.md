@@ -18,12 +18,6 @@
 </p>
 
 <p align="center">
-  <a href="https://aexos.cyryxlabs.com/">
-    <img src=".github/assets/readme/website-hero.png" alt="AEXOS product website — governed AI-assisted delivery from intent to accepted outcome" width="100%" />
-  </a>
-</p>
-
-<p align="center">
   <a href="https://aexos.cyryxlabs.com/"><b>Explore the AEXOS product website</b></a>
 </p>
 
@@ -274,8 +268,15 @@ version was `5.3.0`.
 *help
 ```
 
-If the agent greets you by persona and `*help` lists commands, you have first value. If not, run
-`aexos doctor`.
+If the agent greets you by persona and `*help` lists commands, you have first value. For
+installation diagnostics and command help, run these from the project directory; no global
+installation is required:
+
+```bash
+npx @aexos/core doctor --json
+npx @aexos/core doctor --help
+npx @aexos/core init --help
+```
 
 Deeper walkthrough: [Getting Started](docs/getting-started.md).
 

@@ -93,4 +93,16 @@ describe('doctor contract for a default fresh-init fixture', () => {
     expect(hookResult.status).toBe('FAIL');
     expect(rulesResult.status).toBe('FAIL');
   });
+
+  it.each([[['claude-code']], [null], ['claude-code'], [['claude-code ']]])('does not hide missing Claude artifacts for selected/invalid profiles %p', async (selected) => {
+    fs.writeFileSync(path.join(projectRoot, '.aexos-core/core-config.yaml'), JSON.stringify({ ide: { selected } }));
+    for (const check of [claudeMd, rulesFiles, hooksClaude]) {
+      expect((await check.run(context)).status).toBe('FAIL');
+    }
+  });
+
+  it.each(['package.json', '.aexos-core/package.json'])('fails corrupt dependency manifest %s', async (manifest) => {
+    fs.writeFileSync(path.join(projectRoot, manifest), '{ invalid JSON');
+    expect((await npmPackages.run(context)).status).toBe('FAIL');
+  });
 });

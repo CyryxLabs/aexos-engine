@@ -9,6 +9,7 @@
 
 const path = require('path');
 const fs = require('fs');
+const { missingClaudeArtifact } = require('../claude-optional');
 
 const name = 'rules-files';
 
@@ -26,12 +27,7 @@ async function run(context) {
   const rulesDir = path.join(context.projectRoot, '.claude', 'rules');
 
   if (!fs.existsSync(rulesDir)) {
-    return {
-      check: name,
-      status: 'PASS',
-      message: 'Claude rules not configured (optional IDE integration)',
-      fixCommand: null,
-    };
+    return missingClaudeArtifact(context, name, 'Claude rules');
   }
 
   const missing = EXPECTED_RULES.filter(
