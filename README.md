@@ -18,12 +18,6 @@
 </p>
 
 <p align="center">
-  <a href="https://aexos.cyryxlabs.com/">
-    <img src=".github/assets/readme/website-hero.png" alt="AEXOS product website — governed AI-assisted delivery from intent to accepted outcome" width="100%" />
-  </a>
-</p>
-
-<p align="center">
   <a href="https://aexos.cyryxlabs.com/"><b>Explore the AEXOS product website</b></a>
 </p>
 
@@ -251,11 +245,10 @@ npx @aexos/core --version
 Both commands should report the same released version. At the time this README was updated, that
 version was `5.3.0`.
 
-> **Why the short form works.**
-> npx reads `package.json`, sees the name `@aexos/core`, and infers a binary called `core` from
-> the unscoped half of the name. `package.json` declares an explicit `core` alias in `bin` for
-> exactly that reason; without it npx exits with `could not determine executable to run`. If you
-> ever see that error, name the binary explicitly: `npx -p @aexos/core aexos <command>`.
+> **Bare npx is supported.**
+> `npx @aexos/core` runs the installer in the current directory. Prefer the explicit `init <name>`
+> form for a new directory and `install` for an existing one so scripts and reviewers can see the
+> intended target immediately.
 
 > **After installing, restart your IDE.** Claude Code reads commands and skills once, at session
 > start. Until you reopen it in that directory, `/AEXOS` will match nothing even though the files
@@ -275,8 +268,15 @@ version was `5.3.0`.
 *help
 ```
 
-If the agent greets you by persona and `*help` lists commands, you have first value. If not, run
-`aexos doctor`.
+If the agent greets you by persona and `*help` lists commands, you have first value. For
+installation diagnostics and command help, run these from the project directory; no global
+installation is required:
+
+```bash
+npx @aexos/core doctor --json
+npx @aexos/core doctor --help
+npx @aexos/core init --help
+```
 
 Deeper walkthrough: [Getting Started](docs/getting-started.md).
 

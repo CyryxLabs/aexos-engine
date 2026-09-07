@@ -12,6 +12,7 @@
 
 const path = require('path');
 const fs = require('fs');
+const { missingClaudeArtifact } = require('../claude-optional');
 
 const name = 'hooks-claude-count';
 
@@ -19,12 +20,7 @@ async function run(context) {
   const hooksDir = path.join(context.projectRoot, '.claude', 'hooks');
 
   if (!fs.existsSync(hooksDir)) {
-    return {
-      check: name,
-      status: 'FAIL',
-      message: 'Hooks directory not found (.claude/hooks/)',
-      fixCommand: 'npx @aexos/core install --force',
-    };
+    return missingClaudeArtifact(context, name, 'Claude hooks');
   }
 
   let entries;

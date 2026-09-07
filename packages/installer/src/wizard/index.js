@@ -72,6 +72,34 @@ function loadLLMRoutingInstaller() {
   );
 }
 
+const COMPONENT_DIRECTORIES = {
+  agents: path.join('development', 'agents'),
+  tasks: path.join('development', 'tasks'),
+  workflows: path.join('development', 'workflows'),
+  templates: path.join('development', 'templates'),
+};
+
+function getInstalledComponentCounts(projectRoot) {
+  const coreRoot = path.join(projectRoot, '.aexos-core');
+
+  return Object.fromEntries(
+    Object.entries(COMPONENT_DIRECTORIES).map(([component, relativeDir]) => {
+      const componentDir = path.join(coreRoot, relativeDir);
+      let count = 0;
+
+      try {
+        count = fse.readdirSync(componentDir, { withFileTypes: true })
+          .filter((entry) => entry.isFile() && !entry.name.startsWith('.'))
+          .length;
+      } catch {
+        count = 0;
+      }
+
+      return [component, count];
+    }),
+  );
+}
+
 // DISABLED: Legacy installation block superseded by squads flow (OSR-8)
 // /**
 //  * Generate AntiGravity workflow content for squad agents
@@ -486,17 +514,12 @@ async function runWizard(options = {}) {
       });
 
       if (cyryxCoreResult.success) {
+        const componentCounts = getInstalledComponentCounts(process.cwd());
         console.log(`✅ AEXOS core installed (${cyryxCoreResult.installedFolders.length} folders)`);
-        console.log(
-          `   - Agents: ${cyryxCoreResult.installedFolders.includes('agents') ? '✓' : '⨉'}`,
-        );
-        console.log(`   - Tasks: ${cyryxCoreResult.installedFolders.includes('tasks') ? '✓' : '⨉'}`);
-        console.log(
-          `   - Workflows: ${cyryxCoreResult.installedFolders.includes('workflows') ? '✓' : '⨉'}`,
-        );
-        console.log(
-          `   - Templates: ${cyryxCoreResult.installedFolders.includes('templates') ? '✓' : '⨉'}`,
-        );
+        console.log(`   - Agents: ${componentCounts.agents}`);
+        console.log(`   - Tasks: ${componentCounts.tasks}`);
+        console.log(`   - Workflows: ${componentCounts.workflows}`);
+        console.log(`   - Templates: ${componentCounts.templates}`);
       }
       answers.cyryxCoreInstalled = true;
       answers.cyryxCoreResult = cyryxCoreResult;
@@ -1247,6 +1270,7 @@ module.exports = {
   _testing: {
     writeClaudeSettings,
     getExistingLanguage,
+    getInstalledComponentCounts,
     LANGUAGE_MAP,
   },
 };
