@@ -1349,9 +1349,9 @@ files:
     type: core
     size: 16418
   - path: core/synapse/runtime/hook-runtime.js
-    hash: sha256:5e7b40d5f7f7ca3a88f452b7e8eae1bd95e0cce66081eeb567a1bd6dea819827
+    hash: sha256:094c7f1c9097433b5ba6553925e9d99058183e26df0c00425e424c0e193f06cb
     type: core
-    size: 4870
+    size: 5355
   - path: core/synapse/scripts/generate-constitution.js
     hash: sha256:c093c185850738c748f1f930fd48df8dd484af9fc5b981757124cc22162a2b4a
     type: script

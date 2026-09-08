@@ -4,8 +4,8 @@ const path = require('path');
 const fs = require('fs');
 
 // Manifest parsing is a pure function of file content, so it is required from
-// this package rather than from `cwd` (unlike session-manager/engine, which are
-// resolved project-side). The manifest *data* still comes from `cwd/.synapse`.
+// this package rather than from the selected runtime distribution. The manifest
+// *data* still comes from `cwd/.synapse`.
 const { parseManifest } = require('../domain/domain-loader');
 const { resolveSynapsePath } = require('../utils/paths');
 
@@ -65,11 +65,23 @@ function resolveHookRuntime(input) {
   if (!exists) return null;
 
   try {
+    // Select one distribution before loading either module. Only an absent
+    // project runtime permits package fallback; partial/broken copies remain
+    // errors instead of silently mixing engine and session implementations.
+    let runtimeBase = path.join(cwd, '.aexos-core', 'core', 'synapse');
+    try {
+      if (!fs.lstatSync(runtimeBase).isDirectory()) {
+        throw new Error('Project SYNAPSE runtime is not a directory.');
+      }
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw error;
+      runtimeBase = path.resolve(__dirname, '..');
+    }
     const { loadSession, createSession, cleanStaleSessions } = require(
-      path.join(cwd, '.aexos-core', 'core', 'synapse', 'session', 'session-manager.js'),
+      path.join(runtimeBase, 'session', 'session-manager.js'),
     );
     const { SynapseEngine } = require(
-      path.join(cwd, '.aexos-core', 'core', 'synapse', 'engine.js'),
+      path.join(runtimeBase, 'engine.js'),
     );
 
     const sessionsDir = path.join(synapsePath, 'sessions');
