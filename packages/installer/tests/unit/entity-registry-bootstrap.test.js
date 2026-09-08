@@ -27,9 +27,27 @@ const IDS_PRE_PUSH = path.join(
 
 describe('Entity Registry Bootstrap (Story INS-4.6)', () => {
   let wizardSource;
+  let originalRegistry;
+  let originalRegistryStat;
 
   beforeAll(() => {
     wizardSource = fs.readFileSync(WIZARD_PATH, 'utf8');
+    if (fs.existsSync(REGISTRY_PATH)) {
+      originalRegistryStat = fs.statSync(REGISTRY_PATH);
+      originalRegistry = fs.readFileSync(REGISTRY_PATH);
+    }
+  });
+
+  afterAll(() => {
+    // AC4/AC5 inspect a real regeneration, but must not leave the source tree
+    // or Doctor's timestamp-based checks changed after this suite finishes.
+    if (originalRegistry !== undefined) {
+      fs.writeFileSync(REGISTRY_PATH, originalRegistry);
+      fs.chmodSync(REGISTRY_PATH, originalRegistryStat.mode);
+      fs.utimesSync(REGISTRY_PATH, originalRegistryStat.atime, originalRegistryStat.mtime);
+    } else if (fs.existsSync(REGISTRY_PATH)) {
+      fs.unlinkSync(REGISTRY_PATH);
+    }
   });
 
   describe('AC1: Bootstrap called during install', () => {
@@ -130,22 +148,16 @@ describe('Entity Registry Bootstrap (Story INS-4.6)', () => {
 
     test('measured runtime is well under 15s threshold', () => {
       // Run the actual script and measure time
-      const { execSync } = require('child_process');
+      const { execFileSync } = require('child_process');
       const projectRoot = path.join(__dirname, '..', '..', '..', '..');
       const start = Date.now();
 
-      try {
-        execSync(`node "${POPULATE_SCRIPT}"`, {
-          cwd: projectRoot,
-          encoding: 'utf8',
-          timeout: 30000,
-          stdio: 'pipe',
-        });
-      } catch {
-        // Script may fail in some environments — that's ok for timing test
-        console.log('SKIP: populate script execution failed — timing not measured');
-        return;
-      }
+      execFileSync(process.execPath, [POPULATE_SCRIPT], {
+        cwd: projectRoot,
+        encoding: 'utf8',
+        timeout: 30000,
+        stdio: 'pipe',
+      });
 
       const elapsed = Date.now() - start;
       // Must be under 15s (AC4 threshold)

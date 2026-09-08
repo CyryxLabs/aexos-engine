@@ -1,6 +1,6 @@
 metadata:
   version: 1.0.0
-  lastUpdated: '2026-08-11T19:52:27.703Z'
+  lastUpdated: '2026-09-08T21:29:42.306Z'
   entityCount: 848
   checksumAlgorithm: sha256
   resolutionRate: 100
@@ -13501,8 +13501,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:5e7b40d5f7f7ca3a88f452b7e8eae1bd95e0cce66081eeb567a1bd6dea819827
-      lastVerified: '2026-08-01T22:47:02.416Z'
+      checksum: sha256:094c7f1c9097433b5ba6553925e9d99058183e26df0c00425e424c0e193f06cb
+      lastVerified: '2026-09-08T21:29:41.866Z'
     generate-constitution:
       path: .aexos-core/core/synapse/scripts/generate-constitution.js
       layer: L1
@@ -15899,7 +15899,7 @@ entities:
         constraints: []
         extensionPoints: []
       checksum: sha256:<self-reference>
-      lastVerified: '2026-08-11T19:52:27.703Z'
+      lastVerified: '2026-09-08T21:29:42.306Z'
     learned-patterns:
       path: .aexos-core/data/learned-patterns.yaml
       layer: L3
