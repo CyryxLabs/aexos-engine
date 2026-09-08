@@ -24,9 +24,12 @@ The runtime SHA256 is
 The matching hook tests and the narrow existing bootstrap-test restoration are
 included. The latter restores source registry bytes and timestamps after real
 regeneration and fails when that subprocess fails. Production registry behavior
-is unchanged. The existing manifest generator changed only its timestamp and
-the hook's hash/size; all other 1,167 entries and package version are preserved.
-Registry determinism passes with the original 848 entities.
+is unchanged. The normal post-commit IDS hook refreshed the owned runtime's
+registry checksum and verification timestamps without changing the 848-entity
+structure. The existing manifest generator updated its timestamp and the hook
+and registry hash/size entries; all other 1,166 entries and package version are
+preserved. This generated metadata delta receives separate manifest,
+determinism and bootstrap-preservation checks before the final package.
 
 ## Reproduction commands
 
@@ -86,7 +89,9 @@ installed fixture. Final package verification and whole-candidate independent
 review are recorded separately in the external candidate receipt or PR review.
 CodeRabbit is unavailable locally; no automated clearance
 is asserted. The final documentation-only delta is recorded separately from
-the tested inventory.
+the tested inventory, together with the narrowly inspected post-commit registry
+checksum and matching manifest update. The implementation tested by the full
+suite is unchanged.
 
 No remote push, review approval, merge, tag, workflow dispatch, publication or
 deployment is performed by this verification. Native Claude/Gemini/Grok runtime,

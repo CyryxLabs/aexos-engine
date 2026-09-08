@@ -87,7 +87,8 @@ Brownfield completeness/safety/information checks and story-draft categories 1�
 - Added implementation fixture: `scripts/e2e/synapse-package-runtime-smoke.js`.
 - Reused accepted source: `.aexos-core/core/synapse/runtime/hook-runtime.js`, `tests/synapse/hook-runtime.test.js`.
 - Explicit test-only gate prerequisite: the two registry-preservation/fail-on-error hunks in `packages/installer/tests/unit/entity-registry-bootstrap.test.js`; no other test/source scope.
-- Updated generated metadata: `.aexos-core/install-manifest.yaml` — timestamp and owned hook hash/size only.
+- Updated generated metadata: `.aexos-core/install-manifest.yaml` — generation timestamp and hash/size metadata for the owned hook and entity registry only; all other 1,166 entries preserved.
+- Updated generated registry: `.aexos-core/data/entity-registry.yaml` — only `metadata.lastUpdated`, the existing hook's `checksum` and `lastVerified`, and the registry self-entry's `lastVerified`; all 848 entities and their structure preserved.
 - Added public verification: `docs/framework/epics/aexos-evolution/SYNAPSE-CANDIDATE-VERIFICATION-20260908.md`.
 
 ## Dev Agent Record
@@ -108,9 +109,16 @@ Four focused suites pass 134 tests without skips. All eight candidate gates
 exit 0: lint, typecheck, full tests, build, manifest, package completeness,
 port denylist and registry determinism. Full tests: 9,875 passed, zero failed,
 172 existing skipped tests; 394 passed and 12 skipped suites. Before/after
-source inventories match. The install manifest preserves all other 1,167
-entries, and registry determinism retains 848 entities. Documentation was
-finalized separately after the source gates; no runtime changes followed them.
+source inventories match. At that gate identity the install manifest preserved
+all other 1,167 entries, and registry determinism retained 848 entities.
+The normal post-commit hook subsequently refreshed the owned hook checksum and
+verification timestamps in the existing entity registry. AC5 includes only the
+four fields listed above and the corresponding manifest metadata; the final
+manifest preserves the other 1,166 entries. This is an eight-file candidate,
+including its two public documents. The post-commit metadata delta and affected
+check results are bound separately in the external final candidate receipt.
+Documentation and generated metadata were finalized separately from the full
+source gates; no runtime or test behavior changes followed those gates.
 
 See the linked verification summary for actual commands. No final archive hash
 is embedded here because this document is itself packaged. Final package,

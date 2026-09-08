@@ -13545,8 +13545,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:5e7b40d5f7f7ca3a88f452b7e8eae1bd95e0cce66081eeb567a1bd6dea819827
-      lastVerified: '2026-08-01T22:47:02.416Z'
+      checksum: sha256:094c7f1c9097433b5ba6553925e9d99058183e26df0c00425e424c0e193f06cb
+      lastVerified: '2026-09-08T21:29:41.866Z'
     generate-constitution:
       path: .aexos-core/core/synapse/scripts/generate-constitution.js
       layer: L1
