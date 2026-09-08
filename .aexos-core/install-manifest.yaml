@@ -8,7 +8,7 @@
 # - File types for categorization
 #
 version: 5.3.0
-generated_at: "2026-09-08T21:14:08.621Z"
+generated_at: "2026-09-08T21:32:35.968Z"
 generator: scripts/generate-install-manifest.js
 file_count: 1168
 files:
@@ -1401,7 +1401,7 @@ files:
     type: data
     size: 9595
   - path: data/entity-registry.yaml
-    hash: sha256:53565179560d3a5e70874193b72a51c6a54da4b02018342aa06ee16de7bfd7d4
+    hash: sha256:0db3204f79996407dc95bac301a0ebd7f4a9e5d1abe0d54d17e7b1716e52c0c7
     type: data
     size: 598808
   - path: data/learned-patterns.yaml
