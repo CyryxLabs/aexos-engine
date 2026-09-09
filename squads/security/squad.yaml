@@ -1,33 +1,45 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# AEXOS Squad Manifest — Security & Cybersecurity Assessment
+# Conforms to .aexos-core/schemas/squad-schema.json (task-first architecture).
+# components/ is derived from disk by scripts/normalize-squad-manifests.js.
+# ═══════════════════════════════════════════════════════════════════════════════
+
 name: security
 version: 1.0.0
 short-title: Security & Cybersecurity Assessment
 description: >-
-  Core Free assessment squad that finds exploitable weaknesses, produces evidence-backed
-  findings and issues PASS, CONCERNS or FAIL. It never implements remediation.
+  Core Free assessment squad that finds exploitable weaknesses, produces evidence-backed findings
+  and issues PASS, CONCERNS or FAIL. It never implements remediation.
 author: Cyryx Labs LLC
 license: UNLICENSED
 slashPrefix: security
-tags: [security, cybersecurity, appsec, threat-modeling, supply-chain, ai-security]
+tags:
+  - security
+  - cybersecurity
+  - appsec
+  - threat-modeling
+  - supply-chain
+  - ai-security
 cyryx:
   minVersion: 6.0.0
   type: squad
 components:
   tasks:
+    - ai-security-review.md
+    - appsec-review.md
+    - arbitrate-security-verdict.md
     - assess-security.md
+    - offensive-validation.md
+    - platform-security-review.md
     - scope-security-assessment.md
     - threat-model.md
-    - appsec-review.md
-    - platform-security-review.md
-    - ai-security-review.md
-    - offensive-validation.md
-    - arbitrate-security-verdict.md
   agents:
-    - security-chief.md
-    - threat-model-lead.md
+    - ai-security-lead.md
     - appsec-lead.md
     - offensive-lead.md
     - platform-lead.md
-    - ai-security-lead.md
+    - security-chief.md
+    - threat-model-lead.md
   workflows:
     - wf-security-assessment.yaml
   checklists:
@@ -48,6 +60,13 @@ squad:
   domain: Security assessment and release verdict
   entry_agent: security-chief
   boundary: Assessment and verdict only; remediation belongs to delivery agents.
+  keywords:
+    - security
+    - cybersecurity
+    - appsec
+    - threat-modeling
+    - supply-chain
+    - ai-security
 agents:
   security-chief:
     persona: Aegis
@@ -87,9 +106,17 @@ agents:
     focus: Prompt injection, tool escalation, exfiltration, blast radius and spend bypass
 handoffs:
   security-chief:
-    routes_to: [threat-model-lead, appsec-lead, platform-lead, ai-security-lead, offensive-lead]
+    routes_to:
+      - threat-model-lead
+      - appsec-lead
+      - platform-lead
+      - ai-security-lead
+      - offensive-lead
   specialists:
     escalate_to: security-chief
 settings:
-  verdicts: [PASS, CONCERNS, FAIL]
+  verdicts:
+    - PASS
+    - CONCERNS
+    - FAIL
   implementation_allowed: false

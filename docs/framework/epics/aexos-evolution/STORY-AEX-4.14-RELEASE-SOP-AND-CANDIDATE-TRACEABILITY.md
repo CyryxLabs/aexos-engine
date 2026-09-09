@@ -108,6 +108,23 @@ Full review, historical findings and final identities: `artifacts/commercial-rea
 
 ## Change log
 
+### Integration correction, 2026-09-09
+
+The first remote integration run found two additional closure defects: the
+Security manifest had not been normalized, and the brownfield smoke selected
+only Claude while requiring Codex artifacts. This continuation owns
+`squads/security/squad.yaml` (generated normalization only) and
+`scripts/e2e/installed-skills-smoke.js` (explicit host selection and portable
+installed-CLI invocation). Office changes remain excluded.
+
+- [x] Normalize the Security manifest using the existing generator.
+- [x] Preserve the selected-host boundary and explicitly install Codex for its assertions.
+- [x] Rerun brownfield smoke, manifest normalization/schema checks and all eleven local candidate gates: exit 0; 10,439 tests passed, zero failed, 168 skipped.
+- [ ] Verify the corrected commit in remote CI and obtain required independent review.
+
+The previous local gate receipt and `d2cad07` remain historical evidence; these
+new bytes require fresh verification before acceptance.
+
 | Date | Version | Description | Author |
 | --- | --- | --- | --- |
 | 2026-09-08 | 1.0 | Ready release SOP correction and dependency-closed candidate traceability; separate Brand investigation recorded. | Themis / `@po` |
