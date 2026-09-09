@@ -25,6 +25,7 @@ const { createConfigCommand } = require('./commands/config');
 const { createProCommand } = require('./commands/pro');
 const { createSdcCommand } = require('./commands/sdc');
 const { createWaveCommand } = require('./commands/wave');
+const { createSecurityCommand } = require('./commands/security');
 
 // Read package.json for version
 const packageJsonPath = path.join(__dirname, '..', '..', 'package.json');
@@ -57,6 +58,7 @@ Commands:
   pro               AEXOS Pro license management (activate, status, deactivate, features)
   sdc               Lean full-sdc runtime (plan, status, verify, next)
   wave              Lean wave-execute planner (plan, status, next)
+  security          Security squad assessment and release verdict
   mcp               Manage global MCP configuration
   migrate           Migrate from v2.0 to v4.0.4 structure
   generate          Generate documents from templates (prd, adr, pmdr, etc.)
@@ -102,6 +104,7 @@ Examples:
   $ aexos sdc verify docs/stories/1.1.story.md develop --mark
   $ aexos wave plan --stories a.md,b.md --wave-id W1 --save
   $ aexos wave next W1
+  $ aexos security assess assessment.json --json
   $ aexos install
   $ aexos doctor
 `);
@@ -136,6 +139,7 @@ Examples:
   // Lean full-sdc + wave-execute (CORE-SUPER-UPDATE Wave B execute)
   program.addCommand(createSdcCommand());
   program.addCommand(createWaveCommand());
+  program.addCommand(createSecurityCommand());
 
   return program;
 }

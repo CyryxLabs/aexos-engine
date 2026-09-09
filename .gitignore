@@ -112,6 +112,7 @@ squads/*
 !squads/legal-analyst/
 !squads/seo/
 !squads/squad-creator/
+!squads/security/
 keys/
 *.secret
 *.credentials

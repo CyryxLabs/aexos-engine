@@ -1,7 +1,7 @@
 metadata:
   version: 1.0.0
-  lastUpdated: '2026-09-07T22:49:27.367Z'
-  entityCount: 849
+  lastUpdated: '2026-09-09T01:34:39.489Z'
+  entityCount: 850
   checksumAlgorithm: sha256
   resolutionRate: 100
 entities:
@@ -11489,6 +11489,25 @@ entities:
         extensionPoints: []
       checksum: sha256:fb2f7d557a73474a7af8f45ddfb81aea1ba3092c754cdb31494b7966087d5bc1
       lastVerified: '2026-08-03T01:32:56.354Z'
+    security-assessment:
+      path: .aexos-core/core/security/security-assessment.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/security/security-assessment.js
+      keywords:
+        - security
+        - assessment
+      usedBy: []
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: orphan
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:92c0162d9861e93e298a23de161444efb8a959d6639ebb43f4f363bdadf5c38c
+      lastVerified: '2026-09-09T01:34:39.319Z'
     context-detector:
       path: .aexos-core/core/session/context-detector.js
       layer: L1
@@ -15924,7 +15943,7 @@ entities:
         constraints: []
         extensionPoints: []
       checksum: sha256:<self-reference>
-      lastVerified: '2026-09-07T22:49:27.367Z'
+      lastVerified: '2026-09-09T01:34:39.489Z'
     learned-patterns:
       path: .aexos-core/data/learned-patterns.yaml
       layer: L3
@@ -15986,8 +16005,8 @@ entities:
         score: 0.5
         constraints: []
         extensionPoints: []
-      checksum: sha256:cd325a8a5e56d896e7121395f459cf6bab57109824c0860561e8bfbcbd8b2904
-      lastVerified: '2026-08-11T19:52:27.595Z'
+      checksum: sha256:1cb1ab7519a78420ca772b86b516c490a33320a7c4b47af90220b5117b481239
+      lastVerified: '2026-09-09T01:18:58.312Z'
     technical-preferences:
       path: .aexos-core/data/technical-preferences.md
       layer: L3

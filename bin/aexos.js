@@ -89,6 +89,7 @@ USAGE:
   aexos sdc plan <story.md>          # Lean full-sdc plan/progress
   aexos sdc next <story-id>          # Next SDC phase + skill
   aexos wave plan --stories a,b      # Lean wave-execute DAG plan
+  aexos security assess findings.json # Security squad release verdict
   aexos-delegate codex -t <slug>     # Delegate implementation to external executor
   npx @aexos/core enterprise upgrade --target . --dry-run --enterprise-source <path>
                                        # Plan Pro to Enterprise upgrade
@@ -1009,6 +1010,17 @@ async function main() {
       } catch (error) {
         console.error(`❌ Wave command error: ${error.message}`);
         process.exit(1);
+      }
+      break;
+
+    case 'security':
+      // Core Security squad deterministic assessment gate — AEX-2.7
+      try {
+        const { run } = require('../.aexos-core/cli/index.js');
+        await run(process.argv);
+      } catch (error) {
+        console.error(`❌ Security command error: ${error.message}`);
+        process.exit(4);
       }
       break;
 
