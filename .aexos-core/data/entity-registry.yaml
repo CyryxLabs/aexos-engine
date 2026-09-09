@@ -1,7 +1,7 @@
 metadata:
   version: 1.0.0
-  lastUpdated: '2026-09-09T01:34:39.489Z'
-  entityCount: 850
+  lastUpdated: '2026-09-09T01:59:04.729Z'
+  entityCount: 851
   checksumAlgorithm: sha256
   resolutionRate: 100
 entities:
@@ -8778,8 +8778,12 @@ entities:
         - optional
       usedBy:
         - claude-md
+        - commands-count
         - hooks-claude-count
+        - ide-sync
         - rules-files
+        - settings-json
+        - skills-count
       dependencies: []
       externalDeps: []
       plannedDeps: []
@@ -12016,7 +12020,8 @@ entities:
         - count
       usedBy:
         - doctor-checks-index
-      dependencies: []
+      dependencies:
+        - claude-optional
       externalDeps: []
       plannedDeps: []
       lifecycle: production
@@ -12024,8 +12029,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:581bd49a9f8301f86c277e40a631d59ca70df1ab9bd4b1e5c66a770c83bb7fd6
-      lastVerified: '2026-08-03T13:43:42.010Z'
+      checksum: sha256:6444c7973adbb2e6bc672a21c3e64a6216e9a81c423ff699be66af0b57684124
+      lastVerified: '2026-09-09T01:59:04.308Z'
     core-config:
       path: .aexos-core/core/doctor/checks/core-config.js
       layer: L1
@@ -12157,7 +12162,8 @@ entities:
         - sync
       usedBy:
         - doctor-checks-index
-      dependencies: []
+      dependencies:
+        - claude-optional
       externalDeps: []
       plannedDeps: []
       lifecycle: production
@@ -12165,8 +12171,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:d76cae7efae4c4309e99514671ba9551750078706c4409f8660ee5c7c0ea6326
-      lastVerified: '2026-08-03T13:43:42.012Z'
+      checksum: sha256:4eb5f8c9579bcd1fc6769966b36962dc367e2c094c3033aee736c6baf668b960
+      lastVerified: '2026-09-09T01:59:04.308Z'
     doctor-checks-index:
       path: .aexos-core/core/doctor/checks/index.js
       layer: L1
@@ -12297,7 +12303,8 @@ entities:
         - json
       usedBy:
         - doctor-checks-index
-      dependencies: []
+      dependencies:
+        - claude-optional
       externalDeps: []
       plannedDeps: []
       lifecycle: production
@@ -12305,8 +12312,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:b0bbb0367a647a9c0d4b64adbdd23ba7973561604e504d322b52444aed1c66d3
-      lastVerified: '2026-08-28T12:38:03.315Z'
+      checksum: sha256:fb1db03cc269a601a97a4f4f35824d3bc1270858c458e7c5339f453dad241a97
+      lastVerified: '2026-09-09T01:59:04.311Z'
     skills-count:
       path: .aexos-core/core/doctor/checks/skills-count.js
       layer: L1
@@ -12317,7 +12324,8 @@ entities:
         - count
       usedBy:
         - doctor-checks-index
-      dependencies: []
+      dependencies:
+        - claude-optional
       externalDeps: []
       plannedDeps: []
       lifecycle: production
@@ -12325,8 +12333,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:c14d27ec4def0a1835734367216eb470a5b4692a3f0c5382d1f538d7c2b73ac1
-      lastVerified: '2026-08-03T13:43:42.016Z'
+      checksum: sha256:b19c78138b82238edfc81b7e708e52e5d00db2f525010713dcfd491c968932fd
+      lastVerified: '2026-09-09T01:59:04.312Z'
     windows-npx-install:
       path: .aexos-core/core/doctor/checks/windows-npx-install.js
       layer: L1
@@ -15943,7 +15951,7 @@ entities:
         constraints: []
         extensionPoints: []
       checksum: sha256:<self-reference>
-      lastVerified: '2026-09-09T01:34:39.489Z'
+      lastVerified: '2026-09-09T01:59:04.729Z'
     learned-patterns:
       path: .aexos-core/data/learned-patterns.yaml
       layer: L3
@@ -18928,8 +18936,8 @@ entities:
         score: 0.7
         constraints: []
         extensionPoints: []
-      checksum: sha256:b79c29276117b9c1a8b01e5340cabd6b5e8a5c40dacec204c17219e8f856fb1a
-      lastVerified: '2026-07-30T19:35:41.990Z'
+      checksum: sha256:ee83e0b462d4f5ca94d5be3ab99b830bf4b68f45cc699e744f2c741e009cba2e
+      lastVerified: '2026-09-09T01:41:18.579Z'
     redirect-generator:
       path: .aexos-core/infrastructure/scripts/ide-sync/redirect-generator.js
       layer: L2

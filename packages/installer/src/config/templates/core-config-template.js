@@ -73,7 +73,7 @@ function generateCoreConfig(options = {}) {
 
     // IDE Configuration (from Story 1.4)
     ide: {
-      selected: [...selectedIDEs],
+      selected: selectedIDEs,
       configs: {
         vscode: selectedIDEs.includes('vscode'),
         codex: selectedIDEs.includes('codex'),

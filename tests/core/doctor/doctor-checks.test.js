@@ -403,7 +403,7 @@ describe('Doctor Check: skills-count', () => {
     const result = await run(ctx);
 
     expect(result.status).toBe('FAIL');
-    expect(result.message).toContain('not found');
+    expect(result.message).toContain('cannot establish optional integration');
   });
 
   it('deve retornar FAIL quando nenhuma skill e encontrada', async () => {
@@ -493,7 +493,7 @@ describe('Doctor Check: commands-count', () => {
     const result = await run(ctx);
 
     expect(result.status).toBe('FAIL');
-    expect(result.message).toContain('not found');
+    expect(result.message).toContain('cannot establish optional integration');
   });
 
   it('deve retornar FAIL quando commands < 12', async () => {
@@ -684,7 +684,7 @@ describe('Doctor Check: settings-json', () => {
     const result = await run(ctx);
 
     expect(result.status).toBe('FAIL');
-    expect(result.message).toContain('not found');
+    expect(result.message).toContain('cannot establish optional integration');
   });
 
   it('deve retornar FAIL quando settings.json e JSON invalido', async () => {

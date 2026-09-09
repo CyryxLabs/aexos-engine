@@ -12,6 +12,7 @@ const path = require('path');
 const fs = require('fs');
 
 const name = 'ide-sync';
+const { missingClaudeArtifact } = require('../claude-optional');
 
 function readMarkdownAgents(dir, label) {
   if (!fs.existsSync(dir)) {
@@ -83,6 +84,11 @@ async function run(context) {
       message: 'Cannot read source agents directory',
       fixCommand: 'npx @aexos/core install --force',
     };
+  }
+
+  if (!fs.existsSync(agentsCommandDir) && !fs.existsSync(agentsSkillDir)) {
+    const absent = missingClaudeArtifact(context, name, 'Claude agent projections');
+    if (absent.status === 'INFO') return absent;
   }
 
   const commandResult = readMarkdownAgents(agentsCommandDir, 'Claude commands');

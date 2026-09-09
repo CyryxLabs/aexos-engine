@@ -19,13 +19,47 @@ const command = args[0];
 function parseInitExecutionFlags(initArgs) {
   const ci = initArgs.includes('--ci');
   const yes = initArgs.includes('--yes') || initArgs.includes('-y');
-
   return {
     ci,
     yes,
     force: initArgs.includes('--force') || yes || ci,
-    quiet: ci,
+    quiet: initArgs.includes('--quiet') || ci,
   };
+}
+
+function formatInstallerHelp(text, width = process.stdout.columns || 80) {
+  const columns = Math.max(24, width);
+  const wrap = (line, indent = '') => {
+    const words = line.trim().split(/\s+/);
+    const lines = [];
+    let current = indent;
+    for (const word of words) {
+      if (current.trim() && current.length + word.length + 1 > columns) {
+        lines.push(current);
+        current = indent;
+      }
+      current += `${current.trim() ? ' ' : ''}${word}`;
+    }
+    lines.push(current);
+    return lines.join('\n');
+  };
+  return text.split('\n').map((line) => {
+    // Preserve executable commands as single logical lines for copy/paste.
+    if (line.trim().startsWith('npx ') || line.length <= columns) return line;
+    const option = line.match(/^ {2}(\S.*?)(?: {2,})(\S.*)$/);
+    if (option) return `  ${option[1]}\n${wrap(option[2], '    ')}`;
+    return wrap(line, line.match(/^\s*/)[0]);
+  }).join('\n');
+}
+
+function installerRecovery(projectRoot = process.cwd()) {
+  // Never turn terminal control characters in a path into an executable command.
+  // eslint-disable-next-line no-control-regex
+  const safePath = !/[\x00-\x1f\x7f]/.test(projectRoot);
+  const location = !safePath ? 'Open a terminal in the installation target.' : process.platform === 'win32'
+    ? `Set-Location -LiteralPath '${projectRoot.replace(/'/g, "''")}'`
+    : `cd -- '${projectRoot.replace(/'/g, "'\\''")}'`;
+  return [location, 'npx @aexos/core doctor', 'Resolve the reported issue, then retry:', 'npx @aexos/core install'].join('\n');
 }
 
 // Helper: Run initialization wizard
@@ -67,8 +101,11 @@ async function runWizard(options = {}) {
     const { runWizard: executeWizard } = require(wizardPath);
     await executeWizard(options);
   } catch (error) {
-    console.error('❌ Wizard error:', error.message);
-    process.exit(1);
+    if (error.code !== 'AEXOS_INSTALL_CANCELLED') {
+      console.error('Installation failed:', error.message);
+      console.error('\nRecovery\n' + installerRecovery());
+    }
+    process.exit(error.exitCode || 1);
   }
 }
 
@@ -221,16 +258,14 @@ function showInfo() {
   console.log(`Install Location: ${path.join(__dirname, '..')}`);
 
   // Check if .aexos-core exists
-  const cyryxCoreDir = path.join(process.cwd(), '.aexos-core');
+  const cyryxCoreDir = path.join(__dirname, '..', '.aexos-core');
   if (fs.existsSync(cyryxCoreDir)) {
     console.log('\n✓ AEXOS Core installed');
 
     // Count components
     const countFiles = (dir) => {
       try {
-        return fs.readdirSync(dir, { withFileTypes: true })
-          .filter((entry) => entry.isFile() && !entry.name.startsWith('.'))
-          .length;
+        return fs.readdirSync(dir).length;
       } catch {
         return 0;
       }
@@ -773,7 +808,7 @@ async function runUninstall(options = {}) {
 
 // Helper: Show install help
 function showInstallHelp() {
-  console.log(`
+  console.log(formatInstallerHelp(`
 Usage: npx @aexos/core install [options]
 
 Install AEXOS in the current directory.
@@ -799,12 +834,13 @@ Smart Merge (Brownfield):
 Exit Codes:
   0  Installation successful
   1  Installation failed
+  130  Installation cancelled
 
 Examples:
   # Interactive installation
   npx @aexos/core install
 
-  # Force reinstall without prompts
+  # Allow reinstall; review choices interactively
   npx @aexos/core install --force
 
   # Brownfield: merge configs automatically
@@ -818,13 +854,13 @@ Examples:
 
   # Preview what would be installed
   npx @aexos/core install --dry-run
-`);
+`));
 }
 
 // Helper: Create new project
 // Helper: Show init help
 function showInitHelp() {
-  console.log(`
+  console.log(formatInstallerHelp(`
 Usage: npx @aexos/core init <project-name> [options]
 
 Create a new AEXOS project in a new directory named <project-name>.
@@ -833,25 +869,24 @@ use "npx @aexos/core install", which takes no name.
 
 Options:
   --force              Force creation in non-empty directory
-  --yes, -y            Accept safe defaults and overwrite an existing project directory
+  --yes, -y            Accept defaults and allow an existing project directory
   --ci                 Non-interactive CI mode (--yes --quiet)
-  --skip-install       Skip npm dependency installation
-  --template <name>    Use specific template (default: default)
+  --quiet              Minimal output; use defaults without prompts
+  --skip-install       Skip project dependencies; install framework requirements
+  --template <name>     Compatibility option (default: default)
   -t <name>            Shorthand for --template
   -h, --help           Show this help message
 
-Available Templates:
-  default     Full installation with all agents, tasks, and workflows
-  minimal     Essential files only (dev agent + basic tasks)
-  enterprise  Everything + dashboards + team integrations
+Accepted template values: default, minimal, enterprise.
+These currently install the same standard framework content.
 
 Examples:
   npx @aexos/core init my-project
-  npx @aexos/core init my-project --ci --yes
+  npx @aexos/core init my-project --ci
   npx @aexos/core init my-project --template minimal
   npx @aexos/core init my-project --force --skip-install
   npx @aexos/core init . --template enterprise
-`);
+`));
 }
 
 async function initProject() {
@@ -865,8 +900,8 @@ async function initProject() {
   }
 
   // 3. Parse flags
-  const initExecutionFlags = parseInitExecutionFlags(initArgs);
-  const isForce = initExecutionFlags.force;
+  const executionFlags = parseInitExecutionFlags(initArgs);
+  const isForce = executionFlags.force;
   const skipInstall = initArgs.includes('--skip-install');
 
   // Template with argument
@@ -910,7 +945,8 @@ async function initProject() {
   // 5. Handle "." to install in current directory
   const isCurrentDir = projectName === '.';
   const targetPath = isCurrentDir ? process.cwd() : path.resolve(process.cwd(), projectName);
-  const displayName = isCurrentDir ? path.basename(process.cwd()) : projectName;
+  const invocationCwd = process.cwd();
+  let createdDirectory = false;
 
   // 6. Check if directory exists
   if (fs.existsSync(targetPath) && !isCurrentDir) {
@@ -921,23 +957,21 @@ async function initProject() {
       process.exit(1);
     }
     if (contents.length > 0 && isForce) {
-      console.log(`⚠️  Using --force: overwriting existing directory: ${projectName}`);
-    } else {
+      if (!executionFlags.quiet) console.log(`Using existing directory (--force): ${projectName}`);
+    } else if (!executionFlags.quiet) {
       console.log(`✓ Using existing empty directory: ${projectName}`);
     }
   } else if (!fs.existsSync(targetPath)) {
     fs.mkdirSync(targetPath, { recursive: true });
-    console.log(`✓ Created directory: ${projectName}`);
+    createdDirectory = true;
   }
 
-  console.log(`Creating new AEXOS project: ${displayName}`);
-  if (template !== 'default') {
-    console.log(`Template: ${template}`);
+  if (!executionFlags.quiet && template !== 'default') {
+    console.log(`Requested template: ${template} (compatibility alias; standard installation)`);
   }
-  if (skipInstall) {
+  if (!executionFlags.quiet && skipInstall) {
     console.log('Skip install: enabled');
   }
-  console.log('');
 
   // 7. Change to project directory (if not already there)
   if (!isCurrentDir) {
@@ -948,16 +982,18 @@ async function initProject() {
   await runWizard({
     template,
     skipInstall,
-    force: isForce,
-    yes: initExecutionFlags.yes,
-    ci: initExecutionFlags.ci,
-    quiet: initExecutionFlags.quiet,
+    ...executionFlags,
+    invocationCwd,
+    projectRoot: targetPath,
+    createdDirectory,
   });
 }
 
 // Command routing (async main function)
 async function main() {
   switch (command) {
+
+
     case 'workers':
       // Service Discovery CLI - Story 2.7
       try {
@@ -1050,7 +1086,6 @@ async function main() {
         ide: ideIndex >= 0 ? installArgs[ideIndex + 1] : null,
       };
       if (!installOptions.quiet) {
-        console.log('AEXOS Installation\n');
         // CORE-SU.F1 / #773 — Windows npx lock timeout advisory
         try {
           const {
@@ -1134,7 +1169,6 @@ async function main() {
 
     case undefined:
       // No arguments - run wizard directly (npx default behavior)
-      console.log('AEXOS Installation\n');
       await runWizard();
       break;
 
@@ -1148,13 +1182,9 @@ async function main() {
 // Execute main function
 if (require.main === module) {
   main().catch((error) => {
-    console.error('❌ Fatal error:', error.message);
-    process.exit(1);
+    console.error('Error:', error.message);
+    process.exit(error.exitCode || 1);
   });
 }
 
-module.exports = {
-  _testing: {
-    parseInitExecutionFlags,
-  },
-};
+module.exports = { _testing: { parseInitExecutionFlags, formatInstallerHelp, installerRecovery } };

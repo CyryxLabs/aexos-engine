@@ -13,7 +13,8 @@
 const fs = require('fs-extra');
 const path = require('path');
 const yaml = require('js-yaml');
-const { password, select } = require('@clack/prompts');
+const { password, select, isCancel } = require('@clack/prompts');
+const { getTerminalCapabilities, promptPlainQuestions, createCancellationError } = require('../wizard/install-experience');
 const { generateEnvContent, generateEnvExample } = require('./templates/env-template');
 const { generateCoreConfig } = require('./templates/core-config-template');
 const {
@@ -77,11 +78,18 @@ async function resolveFileAction(filePath, options = {}) {
     { value: 'skip', label: 'Skip (keep existing)' },
   );
 
-  let action = await select({
-    message,
-    options: choices,
-    initialValue: isBrownfield && canMerge ? 'merge' : 'backup',
-  });
+  const defaultAction = isBrownfield && canMerge ? 'merge' : 'backup';
+  let action;
+  if (getTerminalCapabilities().plain) {
+    ({ action } = await promptPlainQuestions([{
+      type: 'list', name: 'action', message,
+      choices: choices.map((choice) => ({ name: choice.label, value: choice.value })),
+      default: defaultAction,
+    }]));
+  } else {
+    action = await select({ message, options: choices, initialValue: defaultAction });
+    if (typeof action === 'symbol' || isCancel?.(action)) throw createCancellationError();
+  }
 
   if (action === 'backup') {
     const backupPath = `${filePath}.backup.${Date.now()}`;
@@ -250,7 +258,9 @@ async function configureEnvironment(options = {}) {
     }
 
     const coreConfigPath = path.join(coreConfigDir, 'core-config.yaml');
-    const coreConfigAction = await resolveFileAction(coreConfigPath, {
+    // The core copy ships a template before configuration. It is not an existing
+    // user preference when the wizard proved this path absent before installing.
+    const coreConfigAction = options.coreConfigCreatedByInstaller ? 'overwrite' : await resolveFileAction(coreConfigPath, {
       skipPrompts,
       forceMerge,
       noMerge,
@@ -264,16 +274,12 @@ async function configureEnvironment(options = {}) {
       const existingContent = await fs.readFile(coreConfigPath, 'utf8');
       const merger = getMergeStrategy(coreConfigPath);
       const mergeResult = await merger.merge(coreConfigContent, existingContent);
-      // The copied framework profile belongs to its author. The current install
-      // selection is authoritative; preserve unrelated merged fields and comments.
-      const lines = mergeResult.content.split(/\r?\n/);
-      const start = lines.findIndex((line) => /^ide:/.test(line));
-      let end = start + 1;
-      while (end < lines.length && !/^[^\s#][^:]*:/.test(lines[end])) end++;
-      const installedIde = yaml.dump({ ide: yamlValidation.parsed.ide }).trimEnd();
-      if (start >= 0) lines.splice(start, end - start, installedIde);
-      else lines.push(installedIde);
-      await fs.writeFile(coreConfigPath, lines.join('\n'), { encoding: 'utf8' });
+      // Preserve project settings, but the selected hosts belong to this install,
+      // not to the framework author's copied configuration.
+      const mergedConfig = yaml.load(mergeResult.content);
+      mergedConfig.ide = { ...mergedConfig.ide, ...yamlValidation.parsed.ide };
+      if (options.userProfileChangedByReview) mergedConfig.user_profile = userProfile;
+      await fs.writeFile(coreConfigPath, yaml.dump(mergedConfig, { lineWidth: 120, noRefs: true }), { encoding: 'utf8' });
       results.coreConfigCreated = true;
       console.log('✅ Merged .aexos-core/core-config.yaml');
     } else {

@@ -4,8 +4,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const wizard = require('../../packages/installer/src/wizard');
-const { getInstalledComponentCounts } = wizard._testing;
+const { readInstalledCounts: getInstalledComponentCounts } = require('../../packages/installer/src/wizard/install-experience');
 
 describe('wizard installed component summary', () => {
   let projectRoot;
@@ -52,12 +51,12 @@ describe('wizard installed component summary', () => {
     });
   });
 
-  it('reports zero only when the installed component directory is absent', () => {
+  it('reports unavailable when the installed component directory is absent', () => {
     expect(getInstalledComponentCounts(projectRoot)).toEqual({
-      agents: 0,
-      tasks: 0,
-      workflows: 0,
-      templates: 0,
+      agents: null,
+      tasks: null,
+      workflows: null,
+      templates: null,
     });
   });
 });
