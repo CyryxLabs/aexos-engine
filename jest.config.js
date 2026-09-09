@@ -21,16 +21,20 @@ module.exports = {
     '**/tests/**/*.test.js',
     '**/tests/**/*.spec.js',
     '**/.aexos-core/**/__tests__/**/*.test.js',
-    // Pro tests run via pro-integration.yml CI workflow (not in local npm test)
+    // Private runtime tests require separate provider/runtime acceptance.
     // '**/pro/**/__tests__/**/*.test.js',
   ],
 
   // Ignore patterns - exclude incompatible test frameworks
   testPathIgnorePatterns: [
     '/node_modules/',
-    // Pro submodule tests — run via pro-integration.yml CI workflow, not local npm test
-    // Use anchored regex to only match the pro/ submodule dir, not tests/pro/
+    // Private runtime tests are not covered by public distribution-contract CI.
+    // Use anchored regex to only match the pro/ dir, not public tests/pro/.
     '<rootDir>/pro/',
+    // These two suites exercise private artifact-service source. Run them via
+    // npm run test:private-artifact-contracts; absent runtime fails that command.
+    '<rootDir>/tests/unit/licensing/paid-squad-artifact-service\\.test\\.js$',
+    '<rootDir>/tests/integration/paid-squad-artifact-http\\.test\\.js$',
     // Playwright e2e tests (use ESM imports, run with Playwright not Jest)
     'tools/quality-dashboard/tests/e2e/',
     // Windows-specific tests (only run on Windows CI)

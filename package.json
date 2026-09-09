@@ -81,6 +81,7 @@
     "format": "prettier --write \"**/*.md\"",
     "build": "node bin/utils/validate-publish.js",
     "test": "jest",
+    "test:private-artifact-contracts": "jest --config jest.private-artifact.config.js --runInBand",
     "test:ci": "jest --runInBand --forceExit",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",

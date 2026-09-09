@@ -3,7 +3,8 @@ name: CI
 # Story TD-3: CI/CD Optimization & Test Coverage
 # Issue #182: Docs-only PRs no longer need a separate skip workflow
 # Consolidated CI workflow - single source of truth for validation
-# Uses dorny/paths-filter for job-level skipping (docs-only PRs skip all jobs gracefully)
+# Path-filtered jobs can skip docs-only changes; public distribution contracts
+# and cross-platform artifact machine bindings remain mandatory.
 
 on:
   push:
@@ -26,6 +27,12 @@ permissions:
   pull-requests: read
 
 jobs:
+  # ACL.12: mandatory public contracts also run on docs-only and fork PRs.
+  core-distribution-contract:
+    uses: ./.github/workflows/pro-integration.yml
+    permissions:
+      contents: read
+
   # Path-based change detection for smart job skipping
   changes:
     name: Detect Changes
@@ -336,9 +343,7 @@ jobs:
         continue-on-error: true
 
   pro-machine-id-stability:
-    name: Pro Machine ID Stability (${{ matrix.os }})
-    needs: changes
-    if: ${{ needs.changes.outputs.tests == 'true' || needs.changes.outputs.config == 'true' }}
+    name: Core Artifact Machine Binding (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     strategy:
@@ -349,6 +354,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+        with:
+          submodules: false
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -360,28 +368,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Detect Pro submodule availability
-        id: pro
-        shell: pwsh
-        run: |
-          if (Test-Path "pro/license/license-crypto.js") {
-            "available=true" >> $env:GITHUB_OUTPUT
-          } else {
-            "available=false" >> $env:GITHUB_OUTPUT
-            Write-Host "pro/ submodule is not available with the default CI token."
-            Write-Host "Cross-platform Pro runtime validation runs in the aexos-pro CI matrix."
-          }
+      - name: Run public signed-artifact machine binding contracts
+        run: node node_modules/jest/bin/jest.js --runTestsByPath tests/unit/licensing/paid-squad-artifact.test.js --runInBand --json --outputFile=machine-binding-results.json
 
-      - name: Run machine ID stability tests
-        if: steps.pro.outputs.available == 'true'
-        run: npx jest --runTestsByPath tests/license/machine-id-stability.test.js --runInBand --testPathIgnorePatterns=/node_modules/
+      - name: Require executed tests with no skips
+        run: node scripts/ci/assert-contract-results.js machine-binding-results.json 1
 
-      - name: Record private submodule skip
-        if: steps.pro.outputs.available != 'true'
-        shell: pwsh
-        run: |
-          Write-Host "Skipping aexos-core Pro machine ID job because pro/ is private in default-token CI."
-          Write-Host "See https://github.com/CyryxLabs/aexos-pro/pull/11 for the cross-platform Pro runtime matrix."
+      - name: State private runtime evidence boundary
+        run: echo "Fixture machine-binding contracts only. Private runtime native machine-ID stability is unverified and is not counted as executed coverage."
 
   story-validation:
     name: Story Checkbox Validation
@@ -578,6 +572,8 @@ jobs:
     needs:
       [
         changes,
+        core-distribution-contract,
+        pro-machine-id-stability,
         security-audit,
         lint,
         typecheck,
@@ -596,6 +592,16 @@ jobs:
     if: always()
 
     steps:
+      - name: Require mandatory distribution jobs to succeed
+        env:
+          CONTRACT_RESULT: ${{ needs.core-distribution-contract.result }}
+          MACHINE_BINDING_RESULT: ${{ needs.pro-machine-id-stability.result }}
+        run: |
+          if [ "$CONTRACT_RESULT" != "success" ] || [ "$MACHINE_BINDING_RESULT" != "success" ]; then
+            echo "::error::Mandatory Core distribution and machine-binding contracts must succeed; missing, failed, cancelled or skipped jobs are not acceptance."
+            exit 1
+          fi
+
       - name: Check all jobs
         run: |
           echo "=== AEXOS CI Validation Summary ==="
@@ -627,14 +633,14 @@ jobs:
           # Check for failures (skipped is OK when changes don't affect that area)
           FAILED=false
 
-          # Detect Changes gates every other job. If it does not succeed, all of
-          # them report "skipped" rather than "failure", so none of the checks
+          # Detect Changes gates the path-filtered jobs. If it does not succeed,
+          # they report "skipped" rather than "failure", so none of the checks
           # below can trip and this job would pass having validated nothing.
           # Guard it explicitly, otherwise a green Validation Summary is
           # indistinguishable from a full run — dangerous the moment this becomes
           # a required status check for branch protection.
           if [ "${{ needs.changes.result }}" != "success" ]; then
-            echo "❌ Detect Changes did not succeed (${{ needs.changes.result }}) — every gate below was skipped, nothing was validated"
+            echo "❌ Detect Changes did not succeed (${{ needs.changes.result }}) — path-filtered validation cannot be accepted"
             FAILED=true
           fi
 
