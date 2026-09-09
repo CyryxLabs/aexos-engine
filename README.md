@@ -1,34 +1,88 @@
-<p align="center">
-  <a href="https://aexos.cyryxlabs.com/">
-    <img src=".github/assets/readme/aexos-official-lockup.png" alt="AEXOS — Agentic eXecution &amp; Orchestration System" width="560" />
-  </a>
-</p>
+# AEXOS
 
-<p align="center">
-  <img src="https://img.shields.io/badge/version-5.3.0-19C7C0?style=flat-square&labelColor=11161A" alt="Version 5.3.0" />
-  <img src="https://img.shields.io/badge/node-%3E%3D18.0.0-8C949E?style=flat-square&labelColor=11161A" alt="Node 18 or later" />
-  <img src="https://img.shields.io/badge/agents-168%20in%2021%20teams-0F6B68?style=flat-square&labelColor=11161A" alt="168 agents across 21 teams" />
-  <img src="https://img.shields.io/badge/interface-CLI%20first-19C7C0?style=flat-square&labelColor=11161A" alt="CLI first" />
-  <img src="https://img.shields.io/badge/licence-commercial%20transition-8C949E?style=flat-square&labelColor=11161A" alt="Commercial licensing transition" />
-</p>
+Agentic eXecution & Orchestration System by Cyryx Labs. Project-local agent
+instructions, development workflows and CLI tools for AI-assisted delivery.
 
-<p align="center">
-  <b>AEXOS</b> — Agentic eXecution &amp; Orchestration System, by <b>Cyryx Labs</b>.<br />
-  A governed, CLI-first command layer for 168 specialised AI agents and 21 teams.
-</p>
+**English** · [Português](README.pt-BR.md) · [Español](README.es.md)
 
-<p align="center">
-  <a href="https://aexos.cyryxlabs.com/"><b>Explore the AEXOS product website</b></a>
-</p>
+## Start Here (10 Min)
 
-> [!IMPORTANT]
-> **Commercial transition.** Version `5.3.0`, currently published on npm, remains governed by the
-> licence shipped with that exact release. Cyryx Labs is preparing a future paid-only AEXOS
-> Licensed Edition. Payment enforcement is not represented as released until the signed
-> entitlement service, authenticated artifact delivery, recovery path and exact release candidate
-> have passed their gates. Existing releases are not retroactively relicensed.
+You need Node.js 18 or later, npm 9 or later, internet access to npm, and an AI
+development host of your choice. Select only the host you use; other host
+integrations are optional. GitHub repository access, a global install and a paid
+extension are not prerequisites for Core first value.
 
----
+Check the public version:
+
+```bash
+npm view @aexos/core version
+npx @aexos/core --version
+```
+
+Create a new project:
+
+```bash
+npx @aexos/core init my-project
+cd my-project
+npx @aexos/core doctor
+```
+
+For an existing project, run this from inside that directory instead:
+
+```bash
+npx @aexos/core install
+```
+
+`init` requires a directory name; `install` operates on the current directory.
+Both use the same npm package. Reopen your AI host in the project after installing.
+Activate a Core agent using your host's agent or skills interface, then ask:
+
+```text
+@aexos-master
+*help
+```
+
+The aim is to receive the agent's greeting and available commands. Host activation
+is a separate step from copying files; CLI test results alone do not verify that
+your AI host loaded them. See the [IDE guide](docs/ide-integration.md).
+
+### Public release and source candidate
+
+Verified on **2026-09-08**: npm `latest` was **5.3.0**. The installation
+corrections are under review in [PR #4](https://github.com/CyryxLabs/aexos-engine/pull/4).
+This documentation change does not publish a release or change the package version.
+The wider 6.x development work is separate and is not installed by the npm command.
+
+The clean public 5.3.0 check completed `init` with exit 0 and installed 12 Core
+agent files. Its `doctor` exited 1 with `rules-files`, `claude-md`, `npm-packages`
+and `hooks-claude-count` failures; its banner also incorrectly marked agents
+absent. Its init help still shows the old GitHub command. These observed defects
+are corrected in the local candidate, whose default-init checks passed, but a
+corrected npm release has not been published. Do not interpret that public
+Doctor result alone as proof that all installation files are missing, or expect
+the unpublished fixes from `npx @aexos/core` yet.
+
+### Core and optional paid extensions
+
+Core first value remains free. The accepted distribution design keeps the Core
+framework, 12 software-delivery agents and Security squad in the public Core
+package, with additional paid squads delivered privately after authenticated
+entitlement and artifact verification. That is the intended 6.x package boundary. This documentation branch retains
+the historical 5.3.0 package allowlist; it does not implement that boundary.
+
+Paid delivery is still undergoing end-to-end certification. No live paid
+checkout/download/install journey is certified by these local checks. Each
+published copy remains governed by the license shipped with that copy; this
+documentation introduces no new grant or retroactive restriction.
+
+Next: [Getting started](docs/getting-started.md),
+[installation guide](docs/installation/README.md),
+[troubleshooting](docs/guides/installation-troubleshooting.md),
+[distribution decision](docs/framework/epics/aexos-evolution/adr/ADR-AEX-011-CORE-FREE-PAID-SQUAD-DISTRIBUTION.md).
+
+The maintainer reference below describes the current source checkout. Verify the
+installed version's help before using commands beyond the entry path above.
+
 
 ## Contents
 
@@ -75,23 +129,20 @@ lost, because the agent that implements never sees what the agent that planned u
    implementation detail and architectural guidance, embedded in the story file itself. The
    developer opens one file and knows what to build, how, and why.
 
-**What makes it different from a prompt library.** Three things, and each is enforced rather than
-recommended:
+The framework organizes agent instructions around three principles:
 
-- **The command line is the whole product.** No dashboard is ever required to operate the system.
+- **CLI first.** No dashboard is required for the Core development workflow.
 - **The expertise lives in procedures, not in personalities.** An agent is a router; the method it
   applies is a file you can read and change.
-- **Every squad specialist cites the published method it applies**, so its output can be checked
-  against a source instead of taken on trust.
+- **Squad definitions identify their methods.** Check the agent's actual output against its
+  declared sources; a definition alone does not prove runtime compliance.
 
 ### Observe the organisation without controlling it
 
-The local Virtual Office projects real AEXOS runtime events into a read-only operational view. It
-does not dispatch agents, alter state or require an AI API key.
-
-```bash
-npx @aexos/core office --host 127.0.0.1 --port 4011
-```
+Virtual Office is separate development work for a local operational view. Its
+scene, host observers and navigation have their own integration and acceptance
+requirements. The first-value branch does not add an `office` CLI command;
+do not expect it from the documented public npm installation.
 
 <p align="center">
   <img src=".github/assets/readme/virtual-office-overview.png" alt="AEXOS Virtual Office read-only operational projection" width="82%" />
@@ -151,29 +202,22 @@ which model or which agent runs it.
 
 ### Method, not impersonation
 
-All 52 squad specialists declare a `based_on` field naming the published work their method comes
-from — COSO for risk oversight, the Cadbury Report for governance, and so on. Eight orchestrator
-roles declare `Original (Orchestrator)` rather than borrowing an authority they do not have.
+Squad definitions use `based_on` to identify the published methods they apply —
+for example COSO for risk oversight and the Cadbury Report for governance.
+Original orchestrator definitions identify their role as orchestration.
 
 This is load-bearing. An agent that follows a named method can be audited against the source; an
 agent doing celebrity impersonation has nothing to be verified against. The same discipline governs
 figures: numbers from a source work are read from the publication or left unstated, because a
 coefficient quoted from memory is a defect, not a detail.
 
-### What gets installed
+### Source catalog and installed contents
 
-|                |                                                                              |
-| -------------- | ---------------------------------------------------------------------------- |
-| **21** teams   | 20 domain squads plus AEXOS Core                                             |
-| **168** agents | 12 core roles plus 156 domain specialists                                    |
-| **CLI-first**  | Installation, routing, validation and operation do not depend on a dashboard |
-| **Multi-IDE**  | Generated projections for Claude Code, Codex, Gemini CLI and supported IDEs  |
-| **Governed**   | Authority boundaries, stories, quality gates and model-budget controls       |
-
-The team and agent figures above are generated from the current tree. Reproduce them with
-`node scripts/validate-squads.js` and the generated
-`.aexos-core/data/squad-registry.yaml`. Test totals deliberately are not hard-coded in this README;
-the authoritative result is the current `npm test` run.
+The source checkout contains Core agents and domain squads. Its complete catalog
+does not establish the intended 6.x package contents. The reviewed Core allowlist
+and authenticated paid artifact boundary must be integrated and verified separately. Inspect the
+installed version and its package contents instead of inferring them from source
+agent counts. See the distribution decision linked above.
 
 ## The constitution
 
@@ -187,7 +231,7 @@ It is not a style guide — automatic gates block violations of the non-negotiab
 | **III** | Story-Driven Development | MUST           | Development begins and ends with a story                                            |
 | **IV**  | No Invention             | MUST           | Every statement in a spec traces to a requirement, constraint or research finding   |
 | **V**   | Quality First            | MUST           | Lint, typecheck and tests pass before push                                          |
-| **VI**  | Absolute Imports         | SHOULD         | No relative import paths                                                            |
+| **VI**  | Absolute Imports         | SHOULD         | Prefer aliases; relative imports within a module are allowed                        |
 | **XI**  | Squad-First Portability  | NON-NEGOTIABLE | Artifacts stay runtime-agnostic, never locked to one IDE                            |
 | **XII** | Model Governance         | MUST           | Budget ceilings, routing authority and intent scanning when auto-dispatch is active |
 
@@ -209,77 +253,6 @@ CLI First  →  Observability Second  →  UI Third
 A capability that does not work from the command line does not exist yet. Dashboards observe; they
 never control. And no UI is ever a requirement for operating the system.
 
-## Start Here (10 Min)
-
-If this is your first time with AEXOS, follow this linear path. The target is **first value in ten
-minutes**, defined as a binary: an agent activated, a valid greeting received, and one command
-returning useful output.
-
-### 1. Install from npm
-
-**Into a new project** — `init` creates the directory:
-
-```bash
-npx @aexos/core init my-project
-cd my-project
-```
-
-**Into a directory that already exists** — run it from inside:
-
-```bash
-cd my-existing-project
-npx @aexos/core install
-```
-
-Pick the right one. `init` **requires a project name**; `install` takes no name and writes into
-the current directory. Running `init` with no argument prints an error, does nothing, and exits
-non-zero, so a script can detect it.
-
-Verify the package before installation:
-
-```bash
-npm view @aexos/core version
-npx @aexos/core --version
-```
-
-Both commands should report the same released version. At the time this README was updated, that
-version was `5.3.0`.
-
-> **Bare npx is supported.**
-> `npx @aexos/core` runs the installer in the current directory. Prefer the explicit `init <name>`
-> form for a new directory and `install` for an existing one so scripts and reviewers can see the
-> intended target immediately.
-
-> **After installing, restart your IDE.** Claude Code reads commands and skills once, at session
-> start. Until you reopen it in that directory, `/AEXOS` will match nothing even though the files
-> are already on disk. The namespace is `AEXOS` in capitals — `/aex` finds nothing.
-
-### 2. Pick your IDE and activate one agent
-
-- **Claude Code:** `/agent-name`
-- **Gemini CLI:** `/aexos-menu` → `/aexos-<agent>`
-- **Codex CLI:** `/skills` → `aexos-<agent-id>`
-- **Cursor / Copilot / AntiGravity:** follow the constraints in [`docs/ide-integration.md`](docs/ide-integration.md)
-
-### 3. Confirm the greeting, then run one command
-
-```text
-@aexos-master
-*help
-```
-
-If the agent greets you by persona and `*help` lists commands, you have first value. For
-installation diagnostics and command help, run these from the project directory; no global
-installation is required:
-
-```bash
-npx @aexos/core doctor --json
-npx @aexos/core doctor --help
-npx @aexos/core init --help
-```
-
-Deeper walkthrough: [Getting Started](docs/getting-started.md).
-
 ## Install
 
 ### Prerequisites
@@ -298,17 +271,9 @@ The three contexts are genuinely different, and a command from one will not work
 | Adding AEXOS to a directory that already exists | `cd there && npx @aexos/core install`    |
 | Contributing to AEXOS itself                    | `git clone` → `npm install` → `npm link` |
 
-`@aexos/core` is published on the public npm registry. Nothing needs to be installed first, and
-no repository access is required — the [LICENSE](LICENSE) grants the Core Edition free of charge
-for personal and commercial use, and Section 2 expressly permits installing it from a registry.
-
-That paragraph describes the already-published `5.3.0` artifact. The future paid-only edition will
-use an authenticated bootstrap and signed entitlement flow; it will not silently change the terms
-of an artifact somebody already received.
-
-The earlier names `aexos-core`, `@aexos-squads/core` and `@cyryx-squads/core` were never
-published and return 404. Any documentation still pointing at `npx github:...` predates the
-publish; that form now requires repository access and is not the supported path.
+The npm command is the primary installation path. The public 5.3.0 artifact and
+the unpublished source candidate are distinguished in Start Here. Core first
+value does not require purchasing an extension.
 
 To work on the framework itself, or to get the `aexos` binary on your PATH:
 
@@ -322,72 +287,20 @@ cd your-project && aexos install
 
 ### Installation checks
 
-After the installer completes, run these checks from the target project:
-
-```bash
-aexos --version
-aexos doctor
-npm run sync:ide:check
-```
-
-If the binary is not on `PATH`, use `npx -p @aexos/core aexos <command>`. Restart the IDE after a
-successful install because agent and skill projections are loaded when the IDE session starts.
+Use the npm Doctor command in Start Here. Its public 5.3.0 limitations are
+documented there. Maintainer sync/validation scripts belong to this checkout;
+do not assume a newly initialized project has those npm scripts.
 
 ## Commercial licensing
 
-The target commercial flow is:
+The accepted design is free Core with optional, privately distributed paid squads.
+Paid acquisition requires verified payment evidence, an AEXOS-scoped entitlement,
+and signed artifact validation. Local extraction tests do not certify live
+payment, delivery or renewal. Existing downloaded copies keep their shipped
+license terms; this section does not introduce replacement terms.
 
-```text
-purchase -> verified payment webhook -> signed entitlement -> authenticated artifact
-         -> local signature verification -> bounded offline cache -> AEXOS runtime
-```
-
-The customer will activate with either an account or a license key issued after payment. Redirects
-from a checkout page are never trusted as proof of payment; the commercial backend must process a
-verified, idempotent payment event before issuing an entitlement.
-
-The paid-only release is allowed to expose only recovery-safe commands before activation: license
-status, activation, validation, recovery, deactivation, version, safe diagnostics, user-data
-export and uninstall. A missing, forged, expired or revoked entitlement must fail closed without
-deleting or withholding user-owned project data.
-
-See the [paid licensing PRD](docs/framework/epics/aexos-commercial-licensing/PRD-AEXOS-PAID-LICENSING.md)
-and [entitlement architecture](docs/framework/epics/aexos-commercial-licensing/ARCHITECTURE.md).
-
-The installer is an interactive wizard. It detects an existing installation and updates in place
-rather than overwriting, so re-running it is safe. Useful flags:
-
-```bash
-aexos install --dry-run     # show what would change, touch nothing
-aexos install --yes         # accept defaults, no prompts
-aexos install --ide claude  # configure one IDE explicitly
-aexos install --ci          # non-interactive, for pipelines
-```
-
-### Step 2 — verify
-
-These need the `aexos` binary on your PATH, which `npm link` or a global install provides. Inside a
-project that has AEXOS but no global binary, prefix them with `npx`.
-
-```bash
-aexos doctor       # diagnostics: Node, npm, git, install integrity
-aexos validate     # verify installation integrity file by file
-aexos info         # what is installed, and where
-```
-
-`aexos doctor --fix` and `aexos validate --repair` resolve most problems without reinstalling.
-
-### Step 3 — keep it current
-
-```bash
-aexos update --check     # is there a newer version?
-aexos update --dry-run   # what would change
-aexos update             # apply
-```
-
-Full platform matrix for Linux, macOS and Windows:
-[Installation Guide](docs/installation/README.md). If something goes wrong:
-[Troubleshooting](docs/troubleshooting.md).
+See the [distribution decision](docs/framework/epics/aexos-evolution/adr/ADR-AEX-011-CORE-FREE-PAID-SQUAD-DISTRIBUTION.md).
+This later decision supersedes earlier paid-only distribution proposals.
 
 ## Your first session, step by step
 
@@ -403,8 +316,11 @@ see [the table below](#activating-an-agent-in-your-ide) for the activation synta
 @aexos-master
 ```
 
-You should get a greeting naming the persona (Zeus) and its role. If you do not, the install did
-not complete — run `aexos doctor`.
+Look for a greeting naming the persona (Zeus) and its role. If it does not appear,
+check that your host opened the correct project, loaded its agent configuration
+and used the activation syntax in the IDE guide. Run `npx @aexos/core doctor`
+for installation diagnostics, accounting for the public 5.3.0 limitations in
+Start Here. A missing greeting alone does not establish an incomplete install.
 
 **3. Ask it what it can do.** Every agent responds to `*`-prefixed commands:
 
@@ -419,8 +335,10 @@ request to a domain and routes it:
 I need to decide whether to build this feature or buy it.
 ```
 
-That is a capital allocation question, so it routes to `@ceo-chief`, which triages to
-`@capital-allocator`. You never had to know the handle.
+When the optional CEO squad is installed and registered, this question can route
+to `@ceo-chief` and its capital-allocation specialist. Domain examples in this
+source reference require their respective squads; Core-only projects should
+start with the available software-delivery agents.
 
 **5. Or address a specialist directly**, when you already know who you want:
 
@@ -686,7 +604,7 @@ node scripts/validate-squads.js
 ## CLI reference
 
 All of these need the `aexos` binary, so they assume a global install or `npm link`;
-otherwise prefix with `npx`. See [which install command applies to you](#which-install-command-applies-to-you).
+otherwise use `npx @aexos/core <command>`. See [which install command applies to you](#which-install-command-applies-to-you).
 
 ```bash
 # Lifecycle
@@ -755,14 +673,11 @@ only `@devops` opens pull requests and pushes to the remote.
 
 ## Licence
 
-[AEXOS Licence v1.0](LICENSE) © 2026 Cyryx Labs LLC. All rights reserved.
+[License](LICENSE) © 2026 Cyryx Labs LLC.
 
-The licence in this repository and in each published artifact governs that exact copy. The current
-`5.3.0` Core Edition grant is not retroactively revoked. A future AEXOS Licensed Edition is planned
-as a paid-only product under replacement commercial terms, subject to legal review, signed artifact
-delivery and release certification. Redistributing AEXOS itself — forks, mirrors, or hosted
-products whose value is AEXOS's own functionality — is not permitted under the current licence;
-see Section 3.
+The license shipped in each artifact governs that copy. The free Core/private
+paid-extension distribution decision does not retroactively relicense downloads
+or replace the applicable legal terms.
 
 <p align="center">
   <sub><b>AEXOS</b> by <b>Cyryx Labs</b> · CLI First · Observability Second · UI Third</sub>
