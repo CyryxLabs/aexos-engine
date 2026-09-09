@@ -145,7 +145,8 @@
     "picocolors": "^1.1.1",
     "proper-lockfile": "^4.1.2",
     "semver": "^7.7.2",
-    "validator": "^13.15.15"
+    "validator": "^13.15.15",
+    "tar": "7.5.22"
   },
   "keywords": [
     "ai",
@@ -210,7 +211,7 @@
     ]
   },
   "overrides": {
-    "tar": "^7.5.22",
+    "tar": "$tar",
     "diff": "^8.0.3",
     "fast-uri": "^3.1.5",
     "serialize-javascript": "^7.0.5",

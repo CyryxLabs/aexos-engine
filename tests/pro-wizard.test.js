@@ -310,7 +310,17 @@ describe('stepInstallScaffold', () => {
     );
     fs.writeFileSync(
       path.join(proSourceDir, 'license', 'license-cache.js'),
-      'module.exports = { writeLicenseCache: () => ({ success: true }) };\n',
+      [
+        "const fs = require('node:fs');",
+        "const path = require('node:path');",
+        "const getCachePath = (target) => path.join(target, '.aexos', 'license.cache');",
+        'module.exports = { getCachePath, writeLicenseCache(value, target) {',
+        '  const destination = getCachePath(target);',
+        '  fs.mkdirSync(path.dirname(destination), { recursive: true });',
+        '  fs.writeFileSync(destination, JSON.stringify(value));',
+        '  return { success: true };',
+        '} };',
+      ].join('\n'),
     );
     fs.writeFileSync(path.join(proSourceDir, 'pro-config.yaml'), 'pro:\n  enabled: true\n');
     fs.writeFileSync(
@@ -341,6 +351,8 @@ describe('stepInstallScaffold', () => {
       );
       expect(result.success).toBe(true);
       expect(result.scaffoldResult.copiedFiles).toContain('squads/artifact-squad/agents/agent.md');
+      expect(JSON.parse(fs.readFileSync(path.join(targetDir, '.aexos', 'license.cache'), 'utf8')).key)
+        .toBe(licenseResult.key);
     } finally {
       proSetup._testing.resolveProSourceDir = originalResolver;
       proSetup._testing.acquireProArtifactSourceDir = originalAcquirer;

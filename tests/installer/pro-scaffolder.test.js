@@ -14,6 +14,7 @@ const yaml = require('js-yaml');
 const {
   scaffoldProContent,
   scaffoldFile,
+  installSquadCommands,
   rollbackScaffold,
   generateProVersionJson,
   generateInstalledManifest,
@@ -54,10 +55,27 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
+  jest.restoreAllMocks();
   await fs.remove(tmpDir);
 });
 
 describe('scaffoldProContent', () => {
+  it('keeps its rollback journal until the final cache callback succeeds', async () => {
+    const config = path.join(targetDir, '.aexos-core', 'pro-config.yaml');
+    await fs.writeFile(config, 'original user config');
+    const beforeCommit = jest.fn(async () => {
+      expect(await fs.pathExists(path.join(targetDir, 'pro-version.json'))).toBe(true);
+      throw new Error('late cache failure');
+    });
+    const result = await scaffoldProContent(targetDir, proSourceDir, { force: true, beforeCommit });
+    expect(beforeCommit).toHaveBeenCalledTimes(1);
+    expect(result.success).toBe(false);
+    expect(result.errors).toContain('late cache failure');
+    expect(await fs.readFile(config, 'utf8')).toBe('original user config');
+    expect(await fs.pathExists(path.join(targetDir, 'pro-version.json'))).toBe(false);
+    expect(await fs.pathExists(path.join(targetDir, 'pro-installed-manifest.yaml'))).toBe(false);
+  });
+
   // AC1, AC2, AC3: Copies squads, pro-config.yaml, feature-registry.yaml
   it('should copy all pro content to project (AC1, AC2, AC3)', async () => {
     const result = await scaffoldProContent(targetDir, proSourceDir);
@@ -122,6 +140,22 @@ describe('scaffoldProContent', () => {
       await fs.readFile(path.join(targetDir, '.aexos-core', 'pro-config.yaml'), 'utf8'),
     );
     expect(configContent.pro.enabled).toBe(true);
+  });
+
+  it('preserves user-modified content on repeated scaffolding unless force is explicit', async () => {
+    const relativePath = 'squads/devops-squad/README.md';
+    await fs.writeFile(path.join(proSourceDir, relativePath), 'Publisher content\n');
+    expect((await scaffoldProContent(targetDir, proSourceDir)).success).toBe(true);
+    await fs.writeFile(path.join(targetDir, relativePath), 'User-owned notes\n');
+
+    const repeated = await scaffoldProContent(targetDir, proSourceDir);
+    expect(repeated.success).toBe(true);
+    expect(repeated.skippedFiles).toContain(relativePath);
+    expect(await fs.readFile(path.join(targetDir, relativePath), 'utf8')).toBe('User-owned notes\n');
+
+    const forced = await scaffoldProContent(targetDir, proSourceDir, { force: true });
+    expect(forced.success).toBe(true);
+    expect(await fs.readFile(path.join(targetDir, relativePath), 'utf8')).toBe('Publisher content\n');
   });
 
   // AC6: Cleanup on partial failure
@@ -232,6 +266,187 @@ describe('scaffoldProContent', () => {
       paths: [path.join(targetDir, 'squads', 'devops-squad', 'scripts')],
     });
     expect(resolved).toContain(path.join('js-yaml', 'index.js'));
+  });
+});
+
+describe('preservation and projection ownership', () => {
+  it('restores user content, host projection, config and both receipts after a late forced failure', async () => {
+    const sourceAgent = path.join(proSourceDir, 'squads', 'devops-squad', 'agents', 'lead.md');
+    await fs.outputFile(sourceAgent, 'Publisher agent\n');
+    await fs.outputFile(path.join(proSourceDir, 'squads', 'devops-squad', 'agents', 'new-agent.md'), 'New agent\n');
+    const originals = new Map([
+      ['squads/devops-squad/agents/lead.md', 'User squad agent\n'],
+      ['.codex/agents/lead.md', 'User host agent\n'],
+      ['.aexos-core/core-config.yaml', '# Keep my comments\nproject: mine\n'],
+      ['pro-version.json', '{"previous":"version"}\n'],
+      ['pro-installed-manifest.yaml', '# Previous receipt\nfiles: []\n'],
+    ]);
+    for (const [relative, content] of originals) await fs.outputFile(path.join(targetDir, relative), content);
+    const underlyingDependency = path.join(targetDir, '.aexos-core', 'node_modules', 'js-yaml', 'index.js');
+    await fs.outputFile(underlyingDependency, 'module.exports = {};\n');
+    const originalMode = (await fs.stat(path.join(targetDir, '.codex/agents/lead.md'))).mode;
+    const manifestPath = path.join(targetDir, 'pro-installed-manifest.yaml');
+    const write = fs.writeFile.bind(fs);
+    let failed = false;
+    jest.spyOn(fs, 'writeFile').mockImplementation(async (filename, ...args) => {
+      const result = await write(filename, ...args);
+      if (filename === manifestPath && !failed) {
+        failed = true;
+        throw new Error('Injected late receipt failure');
+      }
+      return result;
+    });
+
+    const result = await scaffoldProContent(targetDir, proSourceDir, { force: true });
+    expect(result.success).toBe(false);
+    expect(result.errors).toContain('Injected late receipt failure');
+    for (const [relative, content] of originals) {
+      expect(await fs.readFile(path.join(targetDir, relative), 'utf8')).toBe(content);
+    }
+    expect((await fs.stat(path.join(targetDir, '.codex/agents/lead.md'))).mode).toBe(originalMode);
+    expect(await fs.pathExists(path.join(targetDir, '.codex/agents/new-agent.md'))).toBe(false);
+    expect(await fs.pathExists(path.join(targetDir, 'node_modules'))).toBe(false);
+    expect(await fs.readFile(underlyingDependency, 'utf8')).toBe('module.exports = {};\n');
+  });
+
+  it('does not delete another writer file when exclusive creation loses a race', async () => {
+    const contested = path.join(targetDir, 'squads', 'devops-squad', 'squad.yaml');
+    const originalCopy = fs.copyFile.bind(fs);
+    jest.spyOn(fs, 'copyFile').mockImplementation(async (source, destination, ...args) => {
+      if (destination === contested) {
+        await fs.writeFile(contested, 'Other writer owns this\n');
+      }
+      return originalCopy(source, destination, ...args);
+    });
+    const result = await scaffoldProContent(targetDir, proSourceDir);
+    expect(result.success).toBe(false);
+    expect(await fs.readFile(contested, 'utf8')).toBe('Other writer owns this\n');
+  });
+
+  it('removes new receipts after a late write failure while preserving unrelated files', async () => {
+    const sentinel = path.join(targetDir, 'user-notes.txt');
+    await fs.writeFile(sentinel, 'Keep unrelated notes\n');
+    const write = fs.writeFile.bind(fs);
+    jest.spyOn(fs, 'writeFile').mockImplementation(async (filename, content, ...args) => {
+      const result = await write(filename, content, ...args);
+      if (typeof filename === 'number' && String(content).includes('totalFiles:')) {
+        throw new Error('New manifest failed after writing');
+      }
+      return result;
+    });
+    const result = await scaffoldProContent(targetDir, proSourceDir);
+    expect(result.success).toBe(false);
+    expect(result.errors).toContain('New manifest failed after writing');
+    expect(await fs.pathExists(path.join(targetDir, 'pro-version.json'))).toBe(false);
+    expect(await fs.pathExists(path.join(targetDir, 'pro-installed-manifest.yaml'))).toBe(false);
+    expect(await fs.readFile(sentinel, 'utf8')).toBe('Keep unrelated notes\n');
+  });
+
+  it('aborts a forced write when the original snapshot cannot be read', async () => {
+    const destination = path.join(targetDir, 'squads', 'devops-squad', 'squad.yaml');
+    await fs.outputFile(destination, 'Original unreadable fixture\n');
+    const read = fs.readFile.bind(fs);
+    const spy = jest.spyOn(fs, 'readFile').mockImplementation((filename, ...args) => {
+      if (filename === destination) return Promise.reject(new Error('Snapshot unavailable'));
+      return read(filename, ...args);
+    });
+    const result = await scaffoldProContent(targetDir, proSourceDir, { force: true });
+    expect(result.success).toBe(false);
+    expect(result.errors).toContain('Snapshot unavailable');
+    spy.mockRestore();
+    expect(await fs.readFile(destination, 'utf8')).toBe('Original unreadable fixture\n');
+  });
+
+  it('rejects a linked destination ancestor without writing outside the project', async () => {
+    const outside = path.join(tmpDir, 'outside');
+    await fs.ensureDir(outside);
+    await fs.symlink(outside, path.join(targetDir, 'squads'), 'junction');
+    const result = await scaffoldProContent(targetDir, proSourceDir, { force: true });
+    expect(result.success).toBe(false);
+    expect(await fs.readdir(outside)).toEqual([]);
+  });
+
+  it('preserves non-regular destinations by default and rejects forced overwrite', async () => {
+    const destination = path.join(targetDir, 'directory-config');
+    await fs.ensureDir(destination);
+    const source = path.join(proSourceDir, 'pro-config.yaml');
+    expect((await scaffoldFile(source, destination, { baseDir: targetDir })).skipped).toBe(true);
+    await expect(scaffoldFile(source, destination, { baseDir: targetDir, force: true })).rejects.toThrow('non-regular');
+    expect((await fs.lstat(destination)).isDirectory()).toBe(true);
+  });
+
+  it('preserves a dangling destination link and rejects forced replacement', async () => {
+    const destination = path.join(targetDir, 'dangling-link');
+    await fs.symlink(path.join(tmpDir, 'missing-link-target'), destination, 'junction');
+    const source = path.join(proSourceDir, 'pro-config.yaml');
+    expect((await scaffoldFile(source, destination, { baseDir: targetDir })).skipped).toBe(true);
+    await expect(scaffoldFile(source, destination, { baseDir: targetDir, force: true })).rejects.toThrow('non-regular');
+    expect((await fs.lstat(destination)).isSymbolicLink()).toBe(true);
+  });
+
+  it('rejects linked source content without copying it', async () => {
+    const outside = path.join(tmpDir, 'external-source');
+    await fs.outputFile(path.join(outside, 'private.txt'), 'Not nominated content\n');
+    await fs.symlink(outside, path.join(proSourceDir, 'squads', 'linked-squad'), 'junction');
+    const result = await scaffoldProContent(targetDir, proSourceDir);
+    expect(result.success).toBe(false);
+    expect(await fs.pathExists(path.join(targetDir, 'squads', 'linked-squad', 'private.txt'))).toBe(false);
+    expect(await fs.readFile(path.join(outside, 'private.txt'), 'utf8')).toBe('Not nominated content\n');
+  });
+
+  it('preserves existing content without requiring a readable hash', async () => {
+    const source = path.join(proSourceDir, 'pro-config.yaml');
+    const destination = path.join(targetDir, 'user-config.yaml');
+    await fs.writeFile(destination, 'User-owned configuration\n');
+    const read = jest.spyOn(fs, 'readFile').mockRejectedValue(new Error('Unreadable for hashing'));
+    const rollbackFiles = [];
+    const result = await scaffoldFile(source, destination, { rollbackFiles, baseDir: targetDir });
+    expect(result.skipped).toBe(true);
+    expect(read).not.toHaveBeenCalled();
+    expect(rollbackFiles).toEqual([]);
+    read.mockRestore();
+    expect(await fs.readFile(destination, 'utf8')).toBe('User-owned configuration\n');
+  });
+
+  it('does not assign deletion rollback ownership to force-overwritten user files', async () => {
+    const source = path.join(proSourceDir, 'pro-config.yaml');
+    const destination = path.join(targetDir, 'user-config.yaml');
+    await fs.writeFile(destination, 'User-owned configuration\n');
+    const rollbackFiles = [];
+    await scaffoldFile(source, destination, { force: true, rollbackFiles, baseDir: targetDir });
+    expect(rollbackFiles).toEqual([]);
+    await rollbackScaffold(rollbackFiles);
+    expect(await fs.pathExists(destination)).toBe(true);
+  });
+
+  it.each([
+    ['.claude/commands/devops-squad', '.claude/commands'],
+    ['.codex/agents', '.codex/agents'],
+    ['.gemini/rules/devops-squad', '.gemini/rules'],
+    ['.cursor/rules', '.cursor/rules'],
+  ])('preserves user agents in %s and tracks only newly created projections', async (destinationDir, activeDir) => {
+    const agentsDir = path.join(targetDir, 'squads', 'devops-squad', 'agents');
+    await fs.ensureDir(agentsDir);
+    await fs.ensureDir(path.join(targetDir, activeDir));
+    await fs.ensureDir(path.join(targetDir, destinationDir));
+    await fs.writeFile(path.join(agentsDir, 'lead.md'), 'Publisher agent\n');
+    await fs.writeFile(path.join(agentsDir, 'new-agent.md'), 'New agent\n');
+    const userAgent = path.join(targetDir, destinationDir, 'lead.md');
+    await fs.writeFile(userAgent, 'User-owned agent\n');
+    const rollbackFiles = [];
+
+    const result = await installSquadCommands(targetDir, { rollbackFiles });
+    expect(result.installed).toBe(1);
+    expect(result.skippedFiles).toContain(`${destinationDir}/lead.md`);
+    expect(await fs.readFile(userAgent, 'utf8')).toBe('User-owned agent\n');
+    expect(rollbackFiles).toEqual([path.join(targetDir, destinationDir, 'new-agent.md')]);
+    await rollbackScaffold(rollbackFiles);
+    expect(await fs.pathExists(rollbackFiles[0])).toBe(false);
+    expect(await fs.readFile(userAgent, 'utf8')).toBe('User-owned agent\n');
+
+    const forced = await installSquadCommands(targetDir, { force: true });
+    expect(forced.installed).toBe(2);
+    expect(await fs.readFile(userAgent, 'utf8')).toBe('Publisher agent\n');
   });
 });
 
