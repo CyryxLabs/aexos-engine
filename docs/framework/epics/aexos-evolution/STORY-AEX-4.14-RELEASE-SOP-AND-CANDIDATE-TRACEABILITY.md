@@ -115,7 +115,10 @@ Security manifest had not been normalized, and the brownfield smoke selected
 only Claude while requiring Codex artifacts. This continuation owns
 `squads/security/squad.yaml` (generated normalization only) and
 `scripts/e2e/installed-skills-smoke.js` (explicit host selection and portable
-installed-CLI invocation). Office changes remain excluded.
+installed-CLI invocation). The dependent generated
+`.aexos-core/data/squad-registry.yaml` and `.aexos-core/install-manifest.yaml`
+are included after the second remote run exposed stale routing keywords.
+Office changes remain excluded.
 
 - [x] Normalize the Security manifest using the existing generator.
 - [x] Preserve the selected-host boundary and explicitly install Codex for its assertions.

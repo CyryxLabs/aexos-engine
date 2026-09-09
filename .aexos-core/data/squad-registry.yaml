@@ -2,7 +2,7 @@
 # Source: squads/*/{squad,config}.yaml via scripts/generate-squad-registry.js
 registry:
   version: 1.0.0
-  generated_at: '2026-09-09T01:17:55.647Z'
+  generated_at: '2026-09-09T23:52:21.951Z'
   generator: scripts/generate-squad-registry.js
   note: >-
     Generated from squads/*/{squad,config}.yaml. Do not hand-edit — create a squad and regenerate.
@@ -947,7 +947,13 @@ squads:
     display_name: Security
     domain: Security assessment and release verdict
     description: ''
-    keywords: []
+    keywords:
+      - security
+      - cybersecurity
+      - appsec
+      - threat-modeling
+      - supply-chain
+      - ai-security
     entry_agent: security-chief
     agent_count: 6
     agents:
