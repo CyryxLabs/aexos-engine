@@ -12,6 +12,7 @@ const path = require('path');
 const fs = require('fs');
 
 const name = 'settings-json';
+const { missingClaudeArtifact } = require('../claude-optional');
 
 function readFrameworkProtection(context) {
   const configPath = path.join(context.projectRoot, '.aexos-core', 'core-config.yaml');
@@ -78,12 +79,7 @@ async function run(context) {
   const settingsPath = path.join(context.projectRoot, '.claude', 'settings.json');
 
   if (!fs.existsSync(settingsPath)) {
-    return {
-      check: name,
-      status: 'FAIL',
-      message: 'settings.json not found',
-      fixCommand: 'npx @aexos/core install --force',
-    };
+    return missingClaudeArtifact(context, name, 'Claude settings.json');
   }
 
   let settings;

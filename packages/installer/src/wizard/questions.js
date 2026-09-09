@@ -9,7 +9,6 @@
 
 const { colors } = require('../utils/aexos-colors');
 const { createInquirerValidator, validateProjectType } = require('./validators');
-const { t, setLanguage: _setLanguage } = require('./i18n');
 
 /**
  * Get user profile question (Story 10.2 - Epic 10: User Profile System)
@@ -22,16 +21,18 @@ function getUserProfileQuestion() {
   return {
     type: 'list',
     name: 'userProfile',
-    message: colors.primary(t('userProfileQuestion')),
+    message: 'How do you want to work?',
     choices: [
       {
-        name:
-          colors.highlight(`🟢 ${t('modoAssistido')}`) +
-          colors.dim(` (${t('recommended')})`),
+        name: 'Assisted - Bob guides the workflow',
+        short: 'Assisted',
+        description: 'Bob guides planning and execution step by step.',
         value: 'bob',
       },
       {
-        name: `🔵 ${t('modoAvancado')}`,
+        name: 'Advanced - control agents directly',
+        short: 'Advanced',
+        description: 'Choose agents and control the workflow directly.',
         value: 'advanced',
       },
     ],
@@ -49,14 +50,18 @@ function getProjectTypeQuestion() {
   return {
     type: 'list',
     name: 'projectType',
-    message: colors.primary(t('projectTypeQuestion')),
+    message: 'What are you setting up?',
     choices: [
       {
-        name: colors.highlight(t('greenfield')) + colors.dim(` (${t('greenfieldDesc')})`),
+        name: 'New project - start from scratch',
+        short: 'New project',
+        description: 'Set up AEXOS for a project you are starting.',
         value: 'greenfield',
       },
       {
-        name: t('brownfield') + colors.dim(` (${t('brownfieldDesc')})`),
+        name: 'Existing project - preserve context',
+        short: 'Existing project',
+        description: 'Add AEXOS to an existing codebase and review configuration changes.',
         value: 'brownfield',
       },
     ],
@@ -225,48 +230,77 @@ function getTechPresetQuestion() {
     {
       type: 'list',
       name: 'selectedTechPreset',
-      message: colors.primary('Select a Tech Preset for architecture patterns:'),
+      message: 'Which architecture preset?',
       choices: [
         {
-          name:
-            colors.highlight('nextjs-react') +
-            colors.dim(' - Next.js 16+, React, TypeScript, Tailwind, Zustand'),
+          name: 'Next.js / React / TypeScript',
+          description: 'Architecture guidance for a Next.js and React project.',
           value: 'nextjs-react',
         },
         {
-          name:
-            colors.highlight('angular-nestjs') +
-            colors.dim(' - Angular 21 (Signals) + NestJS, TypeScript, Prisma, Angular Material'),
+          name: 'Angular / NestJS / TypeScript',
+          description: 'Architecture guidance for Angular and NestJS.',
           value: 'angular-nestjs',
         },
         {
-          name: colors.highlight('go') + colors.dim(' - Go services and microservices'),
+          name: 'Go services',
+          description: 'Architecture guidance for services written in Go.',
           value: 'go',
         },
         {
-          name: colors.highlight('java') + colors.dim(' - Java 21+ with Spring Boot'),
+          name: 'Java / Spring Boot',
+          description: 'Architecture guidance for Java and Spring Boot.',
           value: 'java',
         },
         {
-          name: colors.highlight('rust') + colors.dim(' - High-reliability Rust services'),
+          name: 'Rust services',
+          description: 'Architecture guidance for services written in Rust.',
           value: 'rust',
         },
         {
-          name: colors.highlight('csharp') + colors.dim(' - .NET 9+ ASP.NET Core services'),
+          name: 'C# / ASP.NET Core',
+          description: 'Architecture guidance for C# and ASP.NET Core.',
           value: 'csharp',
         },
         {
-          name: colors.highlight('php') + colors.dim(' - PHP 8.3+ with Laravel'),
+          name: 'PHP / Laravel',
+          description: 'Architecture guidance for PHP and Laravel.',
           value: 'php',
         },
         {
-          name: 'None' + colors.dim(' - Let AEXOS decide based on project'),
+          name: 'None - keep project defaults',
+          short: 'None · keep project defaults',
+          description: 'Keep your current architecture without adding a preset.',
           value: 'none',
         },
       ],
       default: 0,
     },
   ];
+}
+
+function getReviewQuestion() {
+  return {
+    type: 'list', name: 'reviewAction', message: 'Ready to install?',
+    choices: [
+      { name: 'Install with these choices', value: 'install', description: 'Apply the configuration shown in the review above.' },
+      { name: 'Edit choices', value: 'edit', description: 'Return to the choices; your current selections are retained.' },
+      { name: 'Cancel', value: 'cancel', description: 'Exit before writing framework or host configuration files.' },
+    ], default: 'install',
+  };
+}
+
+/** Preserve explicit empty checkboxes as well as ordinary list defaults. */
+function withQuestionDefaults(questions, previous = {}) {
+  return questions.map((question) => {
+    if (!Object.prototype.hasOwnProperty.call(previous, question.name)) return question;
+    const value = previous[question.name];
+    return {
+      ...question,
+      default: value,
+      ...(question.type === 'checkbox' ? { choices: question.choices.map((choice) => ({ ...choice, checked: value.includes(choice.value) })) } : {}),
+    };
+  });
 }
 
 /**
@@ -339,4 +373,6 @@ module.exports = {
   getPackageManagerQuestion,
   buildQuestionSequence,
   getQuestionById,
+  getReviewQuestion,
+  withQuestionDefaults,
 };

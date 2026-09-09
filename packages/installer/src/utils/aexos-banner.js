@@ -73,6 +73,40 @@ const WORDMARK_COMPACT = [
 const WORDMARK_WIDTH = 41;
 const TAGLINE = 'AGENTIC  eXECUTION  &  ORCHESTRATION  SYSTEM';
 
+/**
+ * Terminal interpretation of Cyryx's approved monolith: four bevelled silver
+ * planes around a teal shaft, with the outer planes converging downwards.
+ * Source: 03_Brandboard/Imagery/cyryx_labs_icon_versa_dark_crop.png.
+ * This is static character art, not an indicator of runtime activity.
+ */
+const MONOLITH = [
+  '           │           ',
+  '       ▄█▌ │ ▐█▄       ',
+  '     ▄███▌ │ ▐███▄     ',
+  '   ▄█▌███▌ │ ▐███▐█▄   ',
+  '  ▐██▌███▌ │ ▐███▐██▌  ',
+  '  ▐██▌▀██▌ │ ▐██▀▐██▌  ',
+  '  ▐██▌  ▀▌ │ ▐▀  ▐██▌  ',
+  '  ▐███▄    │    ▄███▌  ',
+  '   ▀████▄  │  ▄████▀   ',
+  '     ▀████▄│▄████▀     ',
+  '       ▀███│███▀       ',
+  '         ▀█│█▀         ',
+  '           ╵           ',
+];
+
+const MONOLITH_COMPACT = [
+  '      ▄▌│▐▄      ',
+  '   ▄▌██▌│▐██▐▄   ',
+  '  ▐█▌██▌│▐██▐█▌  ',
+  '  ▐█▌██▌│▐██▐█▌  ',
+  '  ▐█▌▀█▌│▐█▀▐█▌  ',
+  '  ▐██▄ ▀│▀ ▄██▌  ',
+  '   ▀███▄│▄███▀   ',
+  '     ▀██│██▀     ',
+  '       ▀│▀       ',
+];
+
 // --- Colour plumbing -------------------------------------------------------
 
 // Matching the ESC control character is the point here: chalk emits SGR
@@ -206,8 +240,7 @@ function mix(fromHex, toHex, t) {
  * Build the palette of styling functions for the current colour depth.
  * At depth 0 every function is identity, so callers never branch on colour.
  */
-function palette() {
-  const depth = colorDepth();
+function palette(depth = colorDepth(), ink = chalk) {
   const id = (s) => s;
   if (depth === 0) {
     return {
@@ -219,28 +252,28 @@ function palette() {
   if (depth < 3) {
     return {
       depth,
-      accent: chalk.cyanBright,
-      accentBold: chalk.cyanBright.bold,
-      text: chalk.white,
-      sub: chalk.gray,
-      rule: chalk.gray,
-      ok: chalk.green,
-      warn: chalk.yellow,
-      bad: chalk.red,
-      inverse: chalk.inverse,
+      accent: ink.cyanBright,
+      accentBold: ink.cyanBright.bold,
+      text: ink.white,
+      sub: ink.gray,
+      rule: ink.gray,
+      ok: ink.green,
+      warn: ink.yellow,
+      bad: ink.red,
+      inverse: ink.inverse,
     };
   }
   return {
     depth,
-    accent: chalk.hex(BRAND.tealGlow),
-    accentBold: chalk.hex(BRAND.tealGlow).bold,
-    text: chalk.hex(BRAND.silver),
-    sub: chalk.hex(BRAND.steel),
-    rule: chalk.hex(BRAND.gunmetal),
-    ok: chalk.hex(BRAND.success),
-    warn: chalk.hex(BRAND.warning),
-    bad: chalk.hex(BRAND.error),
-    inverse: chalk.bgHex(BRAND.coreTeal).hex(BRAND.silver).bold,
+    accent: ink.hex(BRAND.tealGlow),
+    accentBold: ink.hex(BRAND.tealGlow).bold,
+    text: ink.hex(BRAND.silver),
+    sub: ink.hex(BRAND.steel),
+    rule: ink.hex(BRAND.gunmetal),
+    ok: ink.hex(BRAND.success),
+    warn: ink.hex(BRAND.warning),
+    bad: ink.hex(BRAND.error),
+    inverse: ink.bgHex(BRAND.coreTeal).hex(BRAND.silver).bold,
   };
 }
 
@@ -251,12 +284,12 @@ const BLOCK_CHARS = new Set(['█', '▀', '▄', '▌', '▐']);
  * `t`; bevel glyphs sit between gunmetal and steel — subordinate to the face,
  * but bright enough to keep the mark's base edge on an onyx background.
  */
-function paintRow(row, t, depth) {
+function paintRow(row, t, depth, ink = chalk, gradient = depth >= 3) {
   if (depth === 0) return row;
   const faceFn =
-    depth >= 3 ? chalk.hex(mix(BRAND.tealGlow, BRAND.coreTeal, t)).bold : chalk.cyanBright.bold;
+    gradient ? ink.hex(mix(BRAND.tealGlow, BRAND.coreTeal, t)).bold : ink.cyanBright.bold;
   const bevelFn =
-    depth >= 3 ? chalk.hex(mix(BRAND.gunmetal, BRAND.steel, 0.3 + t * 0.25)) : chalk.gray;
+    gradient ? ink.hex(mix(BRAND.gunmetal, BRAND.steel, 0.3 + t * 0.25)) : ink.gray;
 
   let out = '';
   let buf = '';
@@ -324,6 +357,71 @@ function frame(rows, { inner, style = 'panel', p }) {
 }
 
 // --- Public API ------------------------------------------------------------
+
+/** Welcome layout contract shared with the installer metadata formatter. */
+function getWelcomeLayout(width = terminalWidth(), height = process.stdout.rows) {
+  // Keep the terminal's final column free: ConPTY otherwise auto-wraps the
+  // closing border before the newline and can scroll the first wordmark rows.
+  const frameWidth = Math.max(24, Math.min(width - 1, 100));
+  const compact = width < 80 || (Number.isFinite(height) && height <= 24);
+  const stacked = width < 60;
+  const artWidth = compact ? 21 : 27;
+  return { width: frameWidth, compact, stacked, artWidth, contentWidth: stacked ? frameWidth - 6 : frameWidth - artWidth - 7 };
+}
+
+/**
+ * Render the approved monolith beside already-wrapped factual metadata.
+ * `rows` contains { text, tone } entries; callers own data provenance/escaping.
+ * colorLevel is an optional deterministic renderer override (0/1/2/3).
+ */
+function renderIllustratedWelcome(rows = [], opts = {}) {
+  try {
+    const layout = getWelcomeLayout(opts.width, opts.height);
+    const depth = opts.colorLevel === undefined ? colorDepth() : Math.max(0, Math.min(opts.colorLevel, 3));
+    const ink = chalk && new chalk.Instance({ level: depth });
+    const p = palette(ink ? depth : 0, ink);
+    if (p.depth === 2) {
+      // Chalk quantizes these brand colors to the supported 256-color palette.
+      p.accentBold = ink.hex(BRAND.tealGlow).bold;
+      p.text = ink.hex(BRAND.silver);
+      p.sub = ink.hex(BRAND.steel);
+      p.rule = ink.hex(BRAND.steel);
+    }
+    if (p.depth >= 3) p.rule = ink.hex(mix(BRAND.gunmetal, BRAND.steel, 0.65));
+    const inner = layout.width - 2;
+    const glyphs = layout.compact ? WORDMARK_COMPACT : WORDMARK;
+    const wordmark = glyphs.map((row, i) => centre(paintRow(row, i / (glyphs.length - 1), p.depth, ink, p.depth >= 2), layout.width));
+    // The stacked 40-column welcome shares the viewport with the first prompt.
+    // Shorten the repeated shaft/taper rows, preserving the same logo silhouette.
+    const artwork = layout.stacked
+      ? MONOLITH_COMPACT.filter((_, row) => row !== 3 && row !== 7)
+      : layout.compact ? MONOLITH_COMPACT : MONOLITH;
+    const silver = p.depth >= 2 ? ink.hex(BRAND.silver) : p.text;
+    const steel = p.depth >= 2 ? ink.hex(BRAND.steel) : p.sub;
+    const art = artwork.map((row) => [...row].map((char) => {
+      if (char === '│' || char === '╵') return p.accentBold(char);
+      return char === '█' || char === '▄' ? silver(char) : steel(char);
+    }).join(''));
+    const content = rows.map(({ text, tone }) => (tone === 'heading' ? p.accentBold : tone === 'muted' ? p.sub : p.text)(text));
+    let body;
+    if (layout.stacked) {
+      body = [...art.map((line) => centre(line, inner)), ...content.map((line) => `  ${line}`)];
+    } else {
+      const artWidth = layout.artWidth;
+      const height = Math.max(art.length, content.length);
+      const artTop = Math.floor((height - art.length) / 2);
+      body = [];
+      for (let i = 0; i < height; i++) {
+        const left = art[i - artTop] || '';
+        const right = content[i] || '';
+        body.push(`  ${left}${' '.repeat(Math.max(0, artWidth - visibleWidth(left)))}${p.rule('│')}  ${right}`);
+      }
+    }
+    return [...wordmark, '', ...frame(body, { inner, style: 'hero', p })].join('\n');
+  } catch {
+    return ['AEXOS / Cyryx Labs', ...rows.map((row) => row.text)].join('\n');
+  }
+}
 
 /**
  * Render the AEXOS hero banner.
@@ -735,6 +833,10 @@ module.exports = {
   BRAND,
   WORDMARK,
   WORDMARK_COMPACT,
+  MONOLITH,
+  MONOLITH_COMPACT,
+  getWelcomeLayout,
+  renderIllustratedWelcome,
   visibleWidth,
   renderBanner,
   printBanner,

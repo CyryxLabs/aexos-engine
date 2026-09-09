@@ -9,6 +9,8 @@ const rulesFiles = require('../../../.aexos-core/core/doctor/checks/rules-files'
 const claudeMd = require('../../../.aexos-core/core/doctor/checks/claude-md');
 const npmPackages = require('../../../.aexos-core/core/doctor/checks/npm-packages');
 const hooksClaude = require('../../../.aexos-core/core/doctor/checks/hooks-claude-count');
+const skillsCount = require('../../../.aexos-core/core/doctor/checks/skills-count');
+const commandsCount = require('../../../.aexos-core/core/doctor/checks/commands-count');
 
 describe('doctor contract for a default fresh-init fixture', () => {
   let projectRoot;
@@ -97,6 +99,23 @@ describe('doctor contract for a default fresh-init fixture', () => {
   it.each([[['claude-code']], [null], ['claude-code'], [['claude-code ']]])('does not hide missing Claude artifacts for selected/invalid profiles %p', async (selected) => {
     fs.writeFileSync(path.join(projectRoot, '.aexos-core/core-config.yaml'), JSON.stringify({ ide: { selected } }));
     for (const check of [claudeMd, rulesFiles, hooksClaude]) {
+      expect((await check.run(context)).status).toBe('FAIL');
+    }
+  });
+
+  it.each([[], ['codex'], ['gemini']])('accepts absent Claude settings/skills/commands for explicit non-Claude selection %p', async (...selected) => {
+    // Jest spreads each array row into arguments.
+    fs.unlinkSync(path.join(projectRoot, '.claude/settings.json'));
+    fs.writeFileSync(path.join(projectRoot, '.aexos-core/core-config.yaml'), JSON.stringify({ ide: { selected } }));
+    for (const check of [settingsJson, skillsCount, commandsCount]) {
+      expect((await check.run(context)).status).toBe('INFO');
+    }
+  });
+
+  it.each([[['claude-code']], [null], ['codex'], [['claude-code ']]])('refuses missing settings/skills/commands for selected or malformed selection %p', async (selected) => {
+    fs.unlinkSync(path.join(projectRoot, '.claude/settings.json'));
+    fs.writeFileSync(path.join(projectRoot, '.aexos-core/core-config.yaml'), JSON.stringify({ ide: { selected } }));
+    for (const check of [settingsJson, skillsCount, commandsCount]) {
       expect((await check.run(context)).status).toBe('FAIL');
     }
   });
