@@ -385,13 +385,14 @@ let authority, origin;
     );
   }
   const subject = hash('qa-account');
+  const accessToken = crypto.randomBytes(32).toString('base64url');
   authority = http.createServer((request, response) => {
     const chunks = [];
     request.on('data', (b) => chunks.push(b));
     request.on('end', () => {
       requests.push({
         origin: 'authority',
-        authorizationMatches: request.headers.authorization === 'Bearer qa-ephemeral-access',
+        authorizationMatches: request.headers.authorization === `Bearer ${accessToken}`,
         path: request.url,
       });
       const query = JSON.parse(Buffer.concat(chunks));
@@ -462,7 +463,7 @@ let authority, origin;
   };
   const licenseResult = {
     key: 'qa-inert-key',
-    accessToken: 'qa-ephemeral-access',
+    accessToken,
     machineId: 'qa-machine-0123456789abcdef',
     cyryxCoreVersion: core.version,
     subjectIdHash: subject,
