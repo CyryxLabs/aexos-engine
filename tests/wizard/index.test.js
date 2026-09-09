@@ -10,6 +10,9 @@ const inquirer = require('inquirer');
 
 // Mock dependencies
 jest.mock('inquirer');
+jest.mock('../../packages/installer/src/wizard/visual-selectors', () => ({
+  createVisualPrompt: () => require('inquirer').prompt,
+}));
 jest.mock('../../packages/installer/src/wizard/feedback');
 
 // Mock Story 1.6 environment configuration (added for wizard integration)
@@ -220,4 +223,3 @@ describeIntegration('wizard/index', () => {
     });
   });
 });
-
