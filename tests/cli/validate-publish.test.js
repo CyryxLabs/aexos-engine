@@ -9,6 +9,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const vm = require('vm');
 const { execSync } = require('child_process');
 
 const SCRIPT_PATH = path.join(__dirname, '..', '..', 'bin', 'utils', 'validate-publish.js');
@@ -21,6 +22,42 @@ describe('Publish Safety Gate (Story INS-4.10 / PRO-13.5)', () => {
 
   beforeAll(() => {
     scriptSource = fs.readFileSync(SCRIPT_PATH, 'utf8');
+  });
+
+  describe('AEX-4.2: Runtime contamination is rejected behaviorally', () => {
+    function runGate(extraFiles) {
+      const exit = jest.fn();
+      const files = Array.from({ length: 60 }, (_, index) => ({ path: `bin/file-${index}.js` }));
+      files.push(...extraFiles.map((filePath) => ({ path: filePath })));
+      vm.runInNewContext(scriptSource, {
+        __dirname: path.dirname(SCRIPT_PATH),
+        require: (name) => {
+          if (name === 'path') return path;
+          if (name === 'fs') return { existsSync: () => true };
+          if (name === 'child_process') return {
+            execSync: () => JSON.stringify([{ files }]),
+            execFileSync: () => '',
+          };
+          throw new Error(`Unexpected publish gate dependency: ${name}`);
+        },
+        console: { log: jest.fn(), error: jest.fn() },
+        process: { env: {}, exit },
+      }, { filename: SCRIPT_PATH, timeout: 1000 });
+      return exit;
+    }
+
+    test.each([
+      '.aexos-core/node_modules/chalk/index.js',
+      'packages/installer/node_modules/fs-extra/package.json',
+      '.aexos/dashboard/producer-token',
+      '.claude/settings.json.office-backup-1788753587773',
+    ])('blocks contaminated tarball entry %s', (filePath) => {
+      expect(runGate([filePath])).toHaveBeenCalledWith(1);
+    });
+
+    test('allows ordinary framework files when dependent validators pass', () => {
+      expect(runGate([])).toHaveBeenCalledWith(0);
+    });
   });
 
   describe('PRO-13.5: Public tarball boundary', () => {
@@ -89,7 +126,13 @@ describe('Publish Safety Gate (Story INS-4.10 / PRO-13.5)', () => {
       );
       const workflow = fs.readFileSync(workflowPath, 'utf8');
       expect(workflow).toContain('Publish safety gate (INS-4.10)');
-      expect(workflow).toContain('node bin/utils/validate-publish.js');
+      expect(workflow).toContain('node scripts/run-sealed-release.js prepare');
+      const runner = fs.readFileSync(path.join(__dirname, '..', '..', 'scripts', 'run-sealed-release.js'), 'utf8');
+      const preparation = fs.readFileSync(path.join(__dirname, '..', '..', 'scripts', 'ci', 'sealed-release.js'), 'utf8');
+      expect(runner).toContain('api.prepareCandidate(');
+      expect(preparation).toContain('validate:publish');
+      const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'package.json'), 'utf8'));
+      expect(pkg.scripts['validate:publish']).toBe('node bin/utils/validate-publish.js');
     });
   });
 

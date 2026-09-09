@@ -27,16 +27,8 @@
           { "type": "style", "hidden": true }
         ]
       }
-    }],
-    ["@semantic-release/changelog", {
-      "changelogFile": "CHANGELOG.md"
-    }],
-    ["@semantic-release/npm", {
-      "npmPublish": true
-    }],
-    ["@semantic-release/exec", {
-      "prepareCmd": "node scripts/sync-version-lockstep.js ${nextRelease.version}"
-    }],
-    "@semantic-release/github"
-  ]
+    }]
+  ],
+  "dryRun": true,
+  "ci": false
 }

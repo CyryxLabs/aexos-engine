@@ -91,7 +91,7 @@
     "lint": "eslint . --cache --cache-location .eslintcache",
     "typecheck": "tsc --noEmit",
     "release": "node scripts/run-semantic-release.js",
-    "release:test": "node scripts/run-semantic-release.js --dry-run --no-ci --allow-failure",
+    "release:test": "node scripts/run-semantic-release.js --dry-run --no-ci",
     "generate:manifest": "node scripts/generate-install-manifest.js",
     "validate:manifest": "node scripts/validate-manifest.js",
     "validate:registry-determinism": "node scripts/validate-registry-determinism.js",
