@@ -49,6 +49,11 @@ describe('pro-detector', () => {
   });
 
   describe('module exports', () => {
+    it('reuses the standalone installer metadata predicate without a second implementation', () => {
+      const metadata = require('../../packages/installer/src/utils/pro-package-metadata');
+      expect(isImplementedPackage).toBe(metadata.isImplementedPackage);
+    });
+
     it('should export all expected functions', () => {
       expect(typeof isProAvailable).toBe('function');
       expect(typeof loadProModule).toBe('function');
@@ -278,7 +283,7 @@ describe('pro-detector', () => {
 
     it('should handle concurrent calls safely', () => {
       fs.existsSync.mockReturnValue(true);
-      fs.readFileSync.mockReturnValue(JSON.stringify({ version: '1.0.0' }));
+      fs.readFileSync.mockReturnValue(JSON.stringify({ name: PRO_PACKAGE_NAME, version: '1.0.0' }));
 
       // Multiple simultaneous calls should not interfere
       const results = Array.from({ length: 10 }, () => getProVersion());
