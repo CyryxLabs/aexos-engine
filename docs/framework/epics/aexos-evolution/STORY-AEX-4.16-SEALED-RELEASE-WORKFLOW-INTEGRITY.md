@@ -45,6 +45,12 @@ is unchanged. Owned additional test: `tests/installer/pro-setup-target-install.t
 
 - [ ] Verify these corrections locally and on remote CodeQL/installer matrix.
 
+CodeQL retained the three payload-execution findings after automatic caching
+was disabled. Hosted prepare/proposal now additionally require protected-main
+dispatch and exact equality between the declared source SHA and `github.sha`;
+payload checkout uses the immutable event SHA. Tests cover the guard and its
+position before checkout. The release SOP records this narrowed hosted contract.
+
 - [x] Inspect actual competing write paths, identify next ID and record bounded source evidence (AC1).
 - [x] Architect specifies the contract and exact owned file list; QA reviews failure/retry coverage before code (AC1).
 - [x] DevOps unifies or retires competing workflow/plugin entry points and binds exact source/artifact identity (AC2).

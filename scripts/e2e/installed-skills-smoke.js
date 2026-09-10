@@ -62,14 +62,17 @@ function run(command, args, options = {}) {
   // npm run supplies the CLI path; invoking it through Node also works on
   // Windows, where spawning a .cmd shim without a shell fails.
   const useNpmCli = command === 'npm' && process.env.npm_execpath;
-  const result = spawnSync(useNpmCli ? process.execPath : command,
-    useNpmCli ? [process.env.npm_execpath, ...args] : args, {
-    cwd,
-    env,
-    encoding: 'utf8',
-    timeout: options.timeout || defaultCommandTimeoutMs,
-    maxBuffer: 1024 * 1024 * 20,
-  });
+  const result = spawnSync(
+    useNpmCli ? process.execPath : command,
+    useNpmCli ? [process.env.npm_execpath, ...args] : args,
+    {
+      cwd,
+      env,
+      encoding: 'utf8',
+      timeout: options.timeout || defaultCommandTimeoutMs,
+      maxBuffer: 1024 * 1024 * 20,
+    },
+  );
 
   if (result.error) {
     fail(`Command failed to start: ${label}`, result.error.message);

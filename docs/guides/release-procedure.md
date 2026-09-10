@@ -63,6 +63,12 @@ The five AEX-4.14 implementation defects are addressed by this bounded implement
 
 ## One controlled future transaction
 
+Hosted preparation and semantic proposals run only from `refs/heads/main`.
+Their explicit `source_sha` must equal the immutable dispatch `github.sha`;
+payload checkout uses that event SHA, not caller-selected code. Prepare an
+older source only after a separately reviewed workflow change, never by
+loosening this guard. This keeps unreviewed payloads out of main-scoped runners.
+
 The hosted procedure is **one authorized manual publisher transaction for one sealed candidate**, with coordinated release/tag bookkeeping. Local implementation tests exercise injected provider responses and actual fixture archives; the hosted steps below remain future work. No publication was executed by this correction.
 
 1. Record the approved intended merge set and version/channel decision. Use normal required review/checks; record the actual merged SHA. Preserve PR #4's scope. This SOP invents no new version.

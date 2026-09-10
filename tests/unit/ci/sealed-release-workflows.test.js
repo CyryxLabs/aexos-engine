@@ -42,9 +42,21 @@ describe('owned entrypoint topology and executable refusal', () => {
   test('all payload/controller checkouts use explicit source/workflow identity without persisted auth', () => {
     for (const file of ['npm-publish.yml', 'semantic-release.yml']) {
       for (const job of Object.values(workflow(file).jobs)) for (const step of steps(job).filter(value => value.uses?.startsWith('actions/checkout@'))) {
-        expect(['${{ github.workflow_sha }}', '${{ inputs.source_sha }}']).toContain(step.with.ref);
+        expect(['${{ github.workflow_sha }}', '${{ github.sha }}']).toContain(step.with.ref);
         expect(step.with['persist-credentials']).toBe(false);
       }
+    }
+  });
+  test('hosted payload execution is bound to the protected main dispatch commit', () => {
+    const prepare = workflow('npm-publish.yml').jobs.prepare;
+    const proposal = workflow('semantic-release.yml').jobs.proposal;
+    for (const job of [prepare, proposal]) {
+      const guard = steps(job).find(step => step.run?.includes('refs/heads/main'));
+      expect(guard).toBeDefined();
+      expect(guard.run).toContain('== "$GITHUB_SHA"');
+      const payload = steps(job).find(step => step.with?.path === 'payload');
+      expect(payload.with.ref).toBe('${{ github.sha }}');
+      expect(steps(job).indexOf(guard)).toBeLessThan(steps(job).indexOf(payload));
     }
   });
   test('legacy tag/release routes refuse before checkout or credentials', () => {

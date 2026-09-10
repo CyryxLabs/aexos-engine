@@ -64,6 +64,7 @@ jobs:
       - name: Require exact payload SHA
         run: |
           [[ "$AEXOS_SOURCE_SHA" =~ ^[a-f0-9]{40}$ ]] || exit 1
+          [[ "$GITHUB_REF" == 'refs/heads/main' && "$AEXOS_SOURCE_SHA" == "$GITHUB_SHA" ]] || exit 1
       - uses: actions/checkout@v6
         with:
           ref: ${{ github.workflow_sha }}
@@ -71,7 +72,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.source_sha }}
+          ref: ${{ github.sha }}
           path: payload
           persist-credentials: false
       - uses: actions/setup-python@v6

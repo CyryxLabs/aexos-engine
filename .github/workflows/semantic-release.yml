@@ -17,6 +17,7 @@ jobs:
           SOURCE_SHA: ${{ inputs.source_sha }}
         run: |
           [[ "$SOURCE_SHA" =~ ^[a-f0-9]{40}$ ]] || exit 1
+          [[ "$GITHUB_REF" == 'refs/heads/main' && "$SOURCE_SHA" == "$GITHUB_SHA" ]] || exit 1
       - uses: actions/checkout@v6
         with:
           ref: ${{ github.workflow_sha }}
@@ -24,7 +25,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.source_sha }}
+          ref: ${{ github.sha }}
           path: payload
           fetch-depth: 0
           persist-credentials: false
