@@ -1,0 +1,122 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# AEXOS Squad Manifest — Security & Cybersecurity Assessment
+# Conforms to .aexos-core/schemas/squad-schema.json (task-first architecture).
+# components/ is derived from disk by scripts/normalize-squad-manifests.js.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+name: security
+version: 1.0.0
+short-title: Security & Cybersecurity Assessment
+description: >-
+  Core Free assessment squad that finds exploitable weaknesses, produces evidence-backed findings
+  and issues PASS, CONCERNS or FAIL. It never implements remediation.
+author: Cyryx Labs LLC
+license: UNLICENSED
+slashPrefix: security
+tags:
+  - security
+  - cybersecurity
+  - appsec
+  - threat-modeling
+  - supply-chain
+  - ai-security
+cyryx:
+  minVersion: 6.0.0
+  type: squad
+components:
+  tasks:
+    - ai-security-review.md
+    - appsec-review.md
+    - arbitrate-security-verdict.md
+    - assess-security.md
+    - offensive-validation.md
+    - platform-security-review.md
+    - scope-security-assessment.md
+    - threat-model.md
+  agents:
+    - ai-security-lead.md
+    - appsec-lead.md
+    - offensive-lead.md
+    - platform-lead.md
+    - security-chief.md
+    - threat-model-lead.md
+  workflows:
+    - wf-security-assessment.yaml
+  checklists:
+    - security-release-gate.md
+  templates:
+    - security-assessment-report-tmpl.md
+  tools: []
+  scripts: []
+config:
+  extends: extend
+dependencies:
+  node: []
+  squads: []
+squad:
+  name: security
+  display_name: Security
+  version: 1.0.0
+  domain: Security assessment and release verdict
+  entry_agent: security-chief
+  boundary: Assessment and verdict only; remediation belongs to delivery agents.
+  keywords:
+    - security
+    - cybersecurity
+    - appsec
+    - threat-modeling
+    - supply-chain
+    - ai-security
+agents:
+  security-chief:
+    persona: Aegis
+    file: agents/security-chief.md
+    tier: 0
+    based_on: Original (Orchestrator)
+    focus: Triage, scope, severity arbitration and final verdict
+  threat-model-lead:
+    persona: Stride
+    file: agents/threat-model-lead.md
+    tier: 1
+    based_on: Adam Shostack, Threat Modeling (2014), and STRIDE
+    focus: Attack surfaces, trust boundaries and abuse cases before code
+  appsec-lead:
+    persona: Bastion
+    file: agents/appsec-lead.md
+    tier: 1
+    based_on: OWASP Top 10 and OWASP Application Security Verification Standard
+    focus: Injection, authentication, authorization, sessions, validation and secrets
+  offensive-lead:
+    persona: Rook
+    file: agents/offensive-lead.md
+    tier: 2
+    based_on: Penetration Testing Execution Standard (PTES)
+    focus: Authorized adversarial validation and exploit chains
+  platform-lead:
+    persona: Provenance
+    file: agents/platform-lead.md
+    tier: 1
+    based_on: SLSA, NIST Secure Software Development Framework and CIS Benchmarks
+    focus: Supply chain, CI/CD, cloud configuration and data protection
+  ai-security-lead:
+    persona: Harness
+    file: agents/ai-security-lead.md
+    tier: 1
+    based_on: OWASP Top 10 for LLM Applications and MITRE ATLAS
+    focus: Prompt injection, tool escalation, exfiltration, blast radius and spend bypass
+handoffs:
+  security-chief:
+    routes_to:
+      - threat-model-lead
+      - appsec-lead
+      - platform-lead
+      - ai-security-lead
+      - offensive-lead
+  specialists:
+    escalate_to: security-chief
+settings:
+  verdicts:
+    - PASS
+    - CONCERNS
+    - FAIL
+  implementation_allowed: false

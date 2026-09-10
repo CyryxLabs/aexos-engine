@@ -56,6 +56,19 @@ describe('Environment Configuration Integration', () => {
   });
 
   describe('configureEnvironment', () => {
+    it.each([[[]], [['codex']], [['claude-code']]])('persists actual IDE selection %j over copied author defaults', async (selectedIDEs) => {
+      const yaml = require('js-yaml');
+      const configPath = path.join(testDir, '.aexos-core/core-config.yaml');
+      await fs.ensureDir(path.dirname(configPath));
+      await fs.writeFile(configPath, 'project:\n  custom: preserved\nide:\n  selected: [claude-code, codex, gemini]\nboundary:\n  frameworkProtection: false\n');
+      await configureEnvironment({ targetDir: testDir, selectedIDEs, skipPrompts: true, forceMerge: true });
+      const config = yaml.load(await fs.readFile(configPath, 'utf8'));
+      expect(config.ide.selected).toEqual(selectedIDEs);
+      expect(config.ide.configs.vscode).toBe(false);
+      expect(config.project.custom).toBe('preserved');
+      expect(config.boundary.frameworkProtection).toBe(false);
+    });
+
     it('should create .env file with skip prompts', async () => {
       const result = await configureEnvironment({
         targetDir: testDir,

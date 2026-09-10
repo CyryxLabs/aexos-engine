@@ -34,6 +34,15 @@ const NOT_SQUADS = new Set(['_example', '.designs']);
 
 /** A directory is a squad only if it carries a manifest. */
 const MANIFEST_NAMES = ['squad.yaml', 'config.yaml'];
+function getCoreSquads() {
+  const manifestPath = resolveCyryxCorePath('.aexos-core', 'data', 'core-package-boundary.json');
+  const boundary = fs.readJsonSync(manifestPath);
+  if (!Array.isArray(boundary.bundledSquads)
+    || !boundary.bundledSquads.every((name) => typeof name === 'string' && /^[a-z][a-z0-9-]*$/.test(name))) {
+    throw new Error('Installed Core package boundary has an invalid squad allowlist. Reinstall @aexos/core.');
+  }
+  return Object.freeze([...boundary.bundledSquads]);
+}
 
 /**
  * Locate the `squads/` directory inside the installed AEXOS package.
@@ -74,13 +83,29 @@ function listSquads(sourceDir) {
  * @param {object} [options]
  * @param {string} [options.sourceDir] - Override the package squad directory.
  * @param {boolean} [options.force=false] - Replace squads that already exist.
+ * @param {string[]} [options.allowedSquads] - Explicit Core squad allowlist.
  * @param {Function} [options.onProgress] - Called with ({squad, status}).
  * @returns {Promise<{success:boolean, copied:string[], skipped:string[], errors:Array}>}
  */
 async function scaffoldCoreSquads(targetDir, options = {}) {
-  const { sourceDir = getSquadSourcePath(), force = false, onProgress = null } = options;
+  const {
+    sourceDir = getSquadSourcePath(),
+    force = false,
+    onProgress = null,
+    allowedSquads,
+  } = options;
 
   const result = { success: false, copied: [], skipped: [], errors: [] };
+
+  let allowed;
+  try {
+    // Resolve at operation time so standalone installer modules can load without
+    // Core, while scaffolding uses the actual selected Core package's authority.
+    allowed = new Set(allowedSquads === undefined ? getCoreSquads() : allowedSquads);
+  } catch (error) {
+    result.errors.push({ squad: null, message: error.message });
+    return result;
+  }
 
   if (!sourceDir) {
     // Not an error: a stripped or partial package legitimately has no squads,
@@ -89,7 +114,7 @@ async function scaffoldCoreSquads(targetDir, options = {}) {
     return result;
   }
 
-  const squads = listSquads(sourceDir);
+  const squads = listSquads(sourceDir).filter((squad) => allowed.has(squad));
   if (squads.length === 0) {
     result.success = true;
     return result;
@@ -168,4 +193,6 @@ module.exports = {
   getSquadSourcePath,
   listSquads,
   NOT_SQUADS,
+  getCoreSquads,
+  get CORE_SQUADS() { return getCoreSquads(); },
 };

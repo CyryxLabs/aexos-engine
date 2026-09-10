@@ -73,9 +73,9 @@ function generateCoreConfig(options = {}) {
 
     // IDE Configuration (from Story 1.4)
     ide: {
-      selected: selectedIDEs.length > 0 ? selectedIDEs : ['claude-code', 'codex'],
+      selected: selectedIDEs,
       configs: {
-        vscode: selectedIDEs.includes('vscode') || selectedIDEs.length === 0, // Legacy compatibility
+        vscode: selectedIDEs.includes('vscode'),
         codex: selectedIDEs.includes('codex'),
         gemini: selectedIDEs.includes('gemini'),
         cursor: selectedIDEs.includes('cursor'),

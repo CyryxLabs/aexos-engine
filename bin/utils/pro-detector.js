@@ -13,6 +13,9 @@
 
 const fs = require('fs');
 const path = require('path');
+const { isImplementedPackage } = require(
+  path.resolve(__dirname, '..', '..', 'packages', 'installer', 'src', 'utils', 'pro-package-metadata.js'),
+);
 
 /**
  * Root directory of the aexos-core project.
@@ -34,24 +37,6 @@ const PRO_PACKAGE_PATH = path.join(PRO_DIR, 'package.json');
  * Canonical npm package name.
  */
 const PRO_PACKAGE_NAME = '@aexos/pro';
-
-/**
- * Return whether a discovered Pro package contains an implemented runtime.
- * Scaffold packages deliberately identify themselves as unavailable so their
- * throwing compatibility exports cannot be mistaken for paid functionality.
- *
- * @param {string} packagePath - Absolute package.json path.
- * @returns {boolean} True for implemented or legacy packages, false for scaffolds.
- */
-function isImplementedPackage(packagePath) {
-  try {
-    const packageData = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
-    const metadata = packageData.aexosPro;
-    return !(metadata && (metadata.scaffold === true || metadata.implemented === false));
-  } catch {
-    return false;
-  }
-}
 
 /**
  * Resolve the installed npm Pro package path.

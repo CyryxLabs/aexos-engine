@@ -19,6 +19,26 @@ describe('configureEnvironment brownfield merge behavior', () => {
     }
   });
 
+  it('replaces a just-copied framework template with the reviewed project values', async () => {
+    const configPath = path.join(tempDir, '.aexos-core', 'core-config.yaml');
+    await fs.writeFile(configPath, yaml.dump({ user_profile: 'bob', project: { type: 'EXISTING_CYRYX' }, authorOnly: true }));
+    const result = await configureEnvironment({ targetDir: tempDir, projectType: 'brownfield', userProfile: 'advanced', selectedIDEs: [], skipPrompts: true, coreConfigCreatedByInstaller: true });
+    expect(result.coreConfigCreated).toBe(true);
+    const config = yaml.load(await fs.readFile(configPath, 'utf8'));
+    expect(config.user_profile).toBe('advanced');
+    expect(config).not.toHaveProperty('authorOnly');
+    expect(config.ide.selected).toEqual([]);
+  });
+
+  it('applies an explicitly reviewed profile change while preserving other project settings', async () => {
+    const configPath = path.join(tempDir, '.aexos-core', 'core-config.yaml');
+    await fs.writeFile(configPath, yaml.dump({ user_profile: 'bob', metrics: { custom: true } }));
+    await configureEnvironment({ targetDir: tempDir, projectType: 'brownfield', userProfile: 'advanced', skipPrompts: true, userProfileChangedByReview: true });
+    const config = yaml.load(await fs.readFile(configPath, 'utf8'));
+    expect(config.user_profile).toBe('advanced');
+    expect(config.metrics).toEqual({ custom: true });
+  });
+
   it('should merge .env.example and core-config.yaml for lowercase brownfield projectType', async () => {
     await fs.writeFile(
       path.join(tempDir, '.env.example'),
@@ -29,6 +49,7 @@ describe('configureEnvironment brownfield merge behavior', () => {
       path.join(tempDir, '.aexos-core', 'core-config.yaml'),
       yaml.dump({
         user_profile: 'bob',
+        ide: { selected: ['claude-code', 'cursor'], customOption: 'keep' },
         metrics: {
           custom: true,
         },
@@ -56,5 +77,8 @@ describe('configureEnvironment brownfield merge behavior', () => {
     expect(coreConfig.user_profile).toBe('bob');
     expect(coreConfig.metrics).toEqual({ custom: true });
     expect(coreConfig.boundary.frameworkProtection).toBe(true);
+    expect(coreConfig.ide.selected).toEqual([]);
+    expect(coreConfig.ide.configs['claude-code']).toBe(false);
+    expect(coreConfig.ide.customOption).toBe('keep');
   });
 });

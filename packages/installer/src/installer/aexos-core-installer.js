@@ -10,7 +10,7 @@
 
 const fs = require('fs-extra');
 const path = require('path');
-const ora = require('ora');
+const { createSpinner: ora } = require('../wizard/feedback');
 const { hashFile } = require('./file-hasher');
 const { loadSourceManifest, updateInstalledManifest } = require('./brownfield-upgrader');
 const { getCyryxCoreVersion, resolveCyryxCorePath } = require('../utils/package-paths');

@@ -397,6 +397,7 @@ async function commandSync(options) {
       console.log(`${colors.yellow}⚠️  ${totalErrors} errors occurred${colors.reset}`);
     }
   }
+  return { success: totalErrors === 0 && results.length > 0, results };
 }
 
 /**
@@ -412,8 +413,10 @@ async function commandValidate(options) {
     return;
   }
 
-  console.log(`${colors.bright}${colors.blue}🔍 IDE Sync Validation${colors.reset}`);
-  console.log('');
+  if (!options.quiet) {
+    console.log(`${colors.bright}${colors.blue}🔍 IDE Sync Validation${colors.reset}`);
+    console.log('');
+  }
 
   // Parse all agents
   const agentsDir = path.join(projectRoot, config.source);
@@ -515,8 +518,10 @@ async function commandValidate(options) {
   const results = validateAllIdes(ideConfigs, config.redirects);
 
   // Output report
-  const report = formatValidationReport(results, options.verbose);
-  console.log(report);
+  if (!options.quiet || !results.summary.pass) {
+    const report = formatValidationReport(results, options.verbose);
+    console.log(report);
+  }
 
   // Exit code
   if (options.strict && !results.summary.pass) {
@@ -524,6 +529,7 @@ async function commandValidate(options) {
     console.log(`${colors.red}Validation failed in strict mode${colors.reset}`);
     process.exit(1);
   }
+  return results;
 }
 
 /**

@@ -14,6 +14,7 @@ const path = require('path');
 const fs = require('fs');
 
 const name = 'skills-count';
+const { missingClaudeArtifact } = require('../claude-optional');
 
 function countSkillFiles(dir) {
   let count = 0;
@@ -72,12 +73,7 @@ async function run(context) {
   const sourceAgentsDir = path.join(context.projectRoot, '.aexos-core', 'development', 'agents');
 
   if (!fs.existsSync(skillsDir)) {
-    return {
-      check: name,
-      status: 'FAIL',
-      message: 'Skills directory not found (.claude/skills/)',
-      fixCommand: 'npx @aexos/core install --force',
-    };
+    return missingClaudeArtifact(context, name, 'Claude skills');
   }
 
   let count;

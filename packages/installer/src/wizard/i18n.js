@@ -59,7 +59,7 @@ const TRANSLATIONS = {
     // Cancellation
     cancelConfirm: 'Cancel installation?',
     cancelled: 'Installation cancelled.',
-    tryAgain: 'Run `npx @aexos/core init` to try again.',
+    tryAgain: 'Run the same command to try again, or use `npx @aexos/core install` in this directory.',
     continuing: 'Continuing installation...',
 
     // Pro Installation Wizard (pro-setup.js)

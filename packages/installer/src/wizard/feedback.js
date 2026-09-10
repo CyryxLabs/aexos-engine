@@ -9,16 +9,8 @@
 const ora = require('ora');
 const cliProgress = require('cli-progress');
 const { colors, status } = require('../utils/aexos-colors');
-const {
-  renderBanner,
-  renderRule,
-  renderPanel,
-  renderChip,
-  renderRoster,
-  renderSquads,
-} = require('../utils/aexos-banner');
-const { getCyryxCoreVersion } = require('../utils/package-paths');
-const { t } = require('./i18n');
+const { renderInstallPanel, renderInstallCompletion, renderInstallWelcome, getTerminalCapabilities, stripTerminalControls, wrapText } = require('./install-experience');
+const activeSpinners = new Set();
 
 /**
  * Create and start a spinner with CYRYX styling
@@ -28,12 +20,33 @@ const { t } = require('./i18n');
  * @returns {Object} Ora spinner instance
  */
 function createSpinner(text, options = {}) {
-  return ora({
+  if (getTerminalCapabilities().plain) {
+    const spinner = {
+      text,
+      start(message) { if (message) this.text = message; console.log(`  ${stripTerminalControls(this.text)}`); return this; },
+      stop() { return this; },
+      succeed(message) { console.log(`  PASS ${stripTerminalControls(message || this.text)}`); return this; },
+      fail(message) { console.log(`  FAIL ${stripTerminalControls(message || this.text)}`); return this; },
+      warn(message) { console.log(`  WARN ${stripTerminalControls(message || this.text)}`); return this; },
+      info(message) { console.log(`  INFO ${stripTerminalControls(message || this.text)}`); return this; },
+    };
+    return spinner;
+  }
+  const spinner = ora({
     text,
     color: 'cyan',
     spinner: 'dots',
     ...options,
+    stream: process.stdout,
+    isEnabled: true,
   });
+  activeSpinners.add(spinner);
+  return spinner;
+}
+
+function stopTerminalActivity() {
+  for (const spinner of activeSpinners) spinner.stop();
+  activeSpinners.clear();
 }
 
 /**
@@ -89,6 +102,9 @@ function showTip(message) {
  * @returns {Object} Progress bar instance
  */
 function createProgressBar(total, options = {}) {
+  if (getTerminalCapabilities().plain) {
+    return { update(value, payload = {}) { console.log(`  ${value}/${total} ${stripTerminalControls(payload.task || '')}`); }, stop() {} };
+  }
   const progressBar = new cliProgress.SingleBar(
     {
       format:
@@ -137,54 +153,15 @@ function completeProgress(progressBar) {
  * overflowed by ~20 columns whenever colour was disabled (NO_COLOR, CI, pipes).
  */
 function showWelcome() {
-  let version = '5.3.0';
-  try {
-    version = getCyryxCoreVersion() || version;
-  } catch (_e) {
-    // Use default version
-  }
-
-  console.log('');
-  console.log(renderBanner({ version }));
-  console.log(colors.dim('   ❖ The command layer for AI-native builders'));
-
-  // The roster is read from the installed agent definitions, so it shows what
-  // this project actually has rather than a hardcoded list. Empty string when
-  // the definitions are not reachable (fresh directory, pre-install) — the
-  // welcome must not depend on it.
-  const roster = renderRoster();
-  if (roster) {
-    console.log('');
-    console.log(roster);
-  }
-
-  // Squads are listed separately and not expanded: they carry far more agents
-  // than the core, and expanding them would bury the handles a user starts from.
-  const squads = renderSquads();
-  if (squads) {
-    console.log('');
-    console.log(squads);
-  }
-
-  console.log('');
+  console.log(renderInstallWelcome());
 }
 
 /**
  * Show completion message with excitement
  */
-function showCompletion() {
+function showCompletion(answers = {}) {
   console.log('');
-  console.log(renderRule(t('installComplete'), { heavy: true }));
-  console.log('');
-  console.log('  ' + renderChip(t('readyToUse'), 'ok'));
-  console.log('');
-  console.log(
-    renderPanel(t('quickStart'), [
-      t('quickStartAgents'),
-      t('quickStartStory'),
-      t('quickStartHelp'),
-    ]),
-  );
+  console.log(renderInstallCompletion(answers));
   console.log('');
 }
 
@@ -195,15 +172,21 @@ function showCompletion() {
  */
 function showSection(title) {
   console.log('');
-  console.log(renderRule(title));
+  console.log(renderInstallPanel(title, [], { plain: true }));
 }
 
 /**
  * Show cancellation message
  */
-function showCancellation() {
-  console.log('\n' + colors.warning(t('cancelled')));
-  console.log(colors.info(t('tryAgain') + '\n'));
+function showCancellation(options = {}) {
+  stopTerminalActivity();
+  const lines = [
+    '\nInstallation cancelled.',
+    options.installationStarted ? 'Installation stopped. Files already written remain in place.' : 'No framework or configuration artifacts were installed.',
+    ...(options.createdDirectory ? ['The target directory created by init remains in place.'] : []),
+    'Run the same command to start again.\n',
+  ];
+  console.log(lines.flatMap((line) => wrapText(line, getTerminalCapabilities().width)).join('\n'));
 }
 
 /**
@@ -246,4 +229,5 @@ module.exports = {
   showSection,
   showCancellation,
   estimateTimeRemaining,
+  stopTerminalActivity,
 };

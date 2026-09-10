@@ -1,0 +1,31 @@
+# ACL.12 prerequisite guard only. This is deliberately not a provider runner.
+# Configure protected-environment reviewers and main-only deployment policy
+# before any future credentialed implementation. No secrets are loaded here.
+name: Paid Provider Certification Prerequisites
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  prerequisites:
+    name: Paid provider acceptance unavailable
+    runs-on: ubuntu-latest
+    environment: aexos-paid-certification
+    steps:
+      - name: Require trusted main context
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          if [ "$REF" != "refs/heads/main" ]; then
+            echo "::error::Paid certification requires the protected main context."
+            exit 1
+          fi
+
+      - name: Refuse certification without actual runner and approved evidence
+        run: |
+          echo "::error::Paid provider certification is unavailable: no actual ACL.5/ACL.6 runner is integrated."
+          echo "::error::Provider credentials, approved exact Core/Pro digest, signing trust, immutable private catalog, and current commercial approvals are unverified."
+          echo "::error::Missing, stale, mismatched, caller-declared, fixture, review or scaffold evidence cannot authorize acceptance. No provider cycles or release were performed."
+          exit 1

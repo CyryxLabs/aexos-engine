@@ -12,6 +12,7 @@ const path = require('path');
 const fs = require('fs');
 
 const name = 'commands-count';
+const { missingClaudeArtifact } = require('../claude-optional');
 
 /**
  * Recursively count .md files in a directory.
@@ -42,12 +43,7 @@ async function run(context) {
   const commandsDir = path.join(context.projectRoot, '.claude', 'commands');
 
   if (!fs.existsSync(commandsDir)) {
-    return {
-      check: name,
-      status: 'FAIL',
-      message: 'Commands directory not found (.claude/commands/)',
-      fixCommand: 'npx @aexos/core install --force',
-    };
+    return missingClaudeArtifact(context, name, 'Claude commands');
   }
 
   const count = countMdFiles(commandsDir);

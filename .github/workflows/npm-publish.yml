@@ -1,852 +1,208 @@
 name: Publish to NPM
-# Story 6.1 - Added concurrency
-# Story 124.7 - Publish @aexos packages
-#
-# ─────────────────────────────────────────────────────────────────────────────
-# AUTHENTICATION: dual-path (OIDC Trusted Publishing + legacy token fallback)
-# ─────────────────────────────────────────────────────────────────────────────
-# As of 2026-08, npm no longer allows the "Bypass 2FA" flag on Granular Access
-# Tokens. The publishing account has 2FA set to "authorization and publishing",
-# so a token WITHOUT bypass cannot publish from CI — npm blocks waiting for an
-# OTP that no runner can supply.
-#
-# The supported path forward is Trusted Publishing (OIDC):
-#   - requires `id-token: write` on the publishing job (declared per-job below)
-#   - requires npm CLI >= 11.5.1  (enforced by the "Ensure npm" step)
-#   - requires Node.js >= 22.14.0 (NODE_VERSION is '24')
-#   - requires a trusted publisher registered on npmjs.com for EACH package
-#     (org: CyryxLabs, repo: AEXOS, workflow: npm-publish.yml)
-#
-# Until every package has its publisher registered, each publish job tries OIDC
-# first and falls back to NPM_TOKEN_AEXOS / NPM_TOKEN. The fallback is
-# expected to fail while 2FA-on-publish is enforced — it exists so that a
-# manually-issued bypass token (or a legacy classic token) still works if one is
-# provisioned out-of-band.
-#
-# REMOVE THE TOKEN FALLBACK when either condition is met (whichever comes first):
-#   (a) trusted publishers are registered for @aexos/core,
-#       @aexos/install, @aexos/pro-cli,
-#       @aexos/installer and aexos-core, and one release has shipped
-#       green via OIDC; or
-#   (b) 2027-01 — at which point NPM_TOKEN_AEXOS and NPM_TOKEN are dead
-#       anyway and the fallback is pure noise.
-# Removal = delete the "(fallback)" steps and their `env:` token blocks.
-
+# AEX-4.16: one serialized writer; immutable prepare and explicit publish runs.
 on:
   release:
     types: [published]
   push:
-    tags:
-      - 'v*.*.*' # Semantic version tags trigger publish
+    tags: ['v*.*.*']
   workflow_dispatch:
     inputs:
-      publish_mode:
-        description: 'Publishing mode'
+      operation:
+        description: 'Prepare a candidate, or publish its reviewed immutable locator'
         required: true
-        default: 'preview'
+        default: prepare
         type: choice
-        options:
-          - preview
-          - stable
-          - beta
-      packages:
-        description: 'Package to publish, or "all"'
+        options: [prepare, publish]
+      source_sha:
+        description: 'Prepare only: exact approved 40-character source commit'
         required: false
-        default: 'all'
+        type: string
+      candidate_spec:
+        description: 'Prepare only: JSON packageKeys, channel, release and dependencies'
+        required: false
+        type: string
+      locator:
+        description: 'Publish only: reviewed exact source/run/attempt/artifact/manifest locator JSON'
+        required: false
+        type: string
+      authentication:
+        description: 'Publish only: one provisioned auth strategy, never automatic fallback'
+        required: true
+        default: oidc
         type: choice
-        options:
-          - all
-          - core
-          - aexos-core
-          - aexos-install
-          - aexos-pro-cli
-          - installer
-
+        options: [oidc, token]
 concurrency:
-  group: npm-publish-${{ github.ref }}
-  cancel-in-progress: false # Never cancel publishing in progress
-
+  group: aexos-public-release
+  cancel-in-progress: false
 permissions:
   contents: read
-
+  actions: read
 env:
-  # Node 24 — Trusted Publishing requires >= 22.14.0.
-  # Safe to bump: ci.yml already runs the full suite on 18/20/22/24/25.
-  # `engines` in package.json stays at >=18 — this is the CI runtime, not the
-  # supported consumer floor. smoke_test_exports keeps its own 20/22/24 matrix.
-  NODE_VERSION: '24'
-  NPM_REGISTRY: 'https://registry.npmjs.org/'
-
+  HUSKY: '0'
+  AEXOS_RELEASE_OPERATION: ${{ inputs.operation }}
+  AEXOS_SOURCE_SHA: ${{ inputs.source_sha }}
+  AEXOS_CANDIDATE_SPEC: ${{ inputs.candidate_spec }}
+  AEXOS_CANDIDATE_LOCATOR: ${{ inputs.locator }}
 jobs:
-  test:
+  retired:
+    if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
+    permissions: {}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run tests
-        run: npm run test:ci
-
-      - name: Run security audit
-        # Note: Using critical level because high vulns are in dev deps (semantic-release, mocha)
-        # These don't ship to production - only used for CI tooling
-        # See: Story SEC-1 for security audit improvements
-        run: npm audit --audit-level=critical --omit=dev || true
-
-  build:
-    needs: test
+      - name: Refuse unsealed event route
+        run: |
+          echo 'Tag/release publishing is retired. Prepare and review an immutable candidate in npm-publish.yml, then explicitly publish its locator.'
+          exit 1
+  prepare:
+    name: Prepare sealed candidate
+    if: github.event_name == 'workflow_dispatch' && inputs.operation == 'prepare'
     runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.package-version.outputs.version }}
-      packages: ${{ steps.detect-packages.outputs.packages }}
+    timeout-minutes: 90
+    env:
+      AEXOS_SOURCE_DIR: ${{ github.workspace }}/payload
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
+      - name: Require exact payload SHA
+        run: |
+          [[ "$AEXOS_SOURCE_SHA" =~ ^[a-f0-9]{40}$ ]] || exit 1
+          [[ "$GITHUB_REF" == 'refs/heads/main' && "$AEXOS_SOURCE_SHA" == "$GITHUB_SHA" ]] || exit 1
+      - uses: actions/checkout@v6
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Get package version
-        id: package-version
+          ref: ${{ github.workflow_sha }}
+          path: controller
+          persist-credentials: false
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          path: payload
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20.20.2'
+          package-manager-cache: false
+      - name: Record Node 20
+        run: echo "AEXOS_NODE_20=$(command -v node)" >> "$GITHUB_ENV"
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22.23.2'
+          package-manager-cache: false
+      - name: Record Node 22
+        run: echo "AEXOS_NODE_22=$(command -v node)" >> "$GITHUB_ENV"
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24.15.0'
+          package-manager-cache: false
+      - name: Record fixed toolchain
         run: |
-          VERSION=$(node -p "require('./package.json').version")
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Detect packages to publish
-        id: detect-packages
-        run: |
-          SELECTED="${{ github.event.inputs.packages }}"
-
-          # Default to all packages on release/tag events
-          if [ -z "$SELECTED" ] || [ "$SELECTED" = "all" ]; then
-            PACKAGES="core,aexos-core,aexos-install,aexos-pro-cli,installer"
-          elif [ "$SELECTED" = "aexos-core" ]; then
-            PACKAGES="aexos-core"
-          else
-            PACKAGES="$SELECTED"
-          fi
-
-          echo "packages=$PACKAGES" >> $GITHUB_OUTPUT
-          echo "📦 Packages to publish: $PACKAGES"
-
-      - name: Build all packages
-        run: |
-          # Create lib directories for packages that need them
-          for pkg in .aexos-core memory security performance telemetry; do
-            if [ -d "$pkg" ]; then
-              mkdir -p "$pkg/lib"
-              echo '{"built": true}' > "$pkg/lib/build.json"
-            fi
-          done
-
-          echo "✅ Build preparation complete"
-
-      - name: Create distribution archive
-        run: |
-          mkdir -p dist
-          tar -czf dist/aexos-core-${{ steps.package-version.outputs.version }}.tar.gz \
-            --exclude=node_modules \
-            --exclude=.git \
-            --exclude=dist \
-            --exclude=tests \
-            --exclude='*.log' \
-            .
-
-      - name: Upload build artifacts
+          echo "AEXOS_NODE_24=$(command -v node)" >> "$GITHUB_ENV"
+          echo "AEXOS_NPM_PATH=$(realpath "$(command -v npm)")" >> "$GITHUB_ENV"
+          echo "AEXOS_PYTHON_PATH=$(command -v python)" >> "$GITHUB_ENV"
+          echo "AEXOS_CANDIDATE_DIR=$RUNNER_TEMP/sealed-candidate" >> "$GITHUB_ENV"
+          echo "AEXOS_RELEASE_EVIDENCE_DIR=$RUNNER_TEMP/sealed-evidence" >> "$GITHUB_ENV"
+          node --version
+          npm --version
+      - name: Install controller dependencies
+        working-directory: controller
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Publish safety gate (INS-4.10), fixed gates, pack and installed verification
+        id: candidate
+        working-directory: controller
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/run-sealed-release.js prepare
+      - name: Persist immutable candidate
+        id: sealed
         uses: actions/upload-artifact@v7
         with:
-          name: build-artifacts
-          path: |
-            dist/
-            .aexos-core/lib/
-            memory/lib/
-            security/lib/
-            performance/lib/
-            telemetry/lib/
-          retention-days: 7
-
+          name: aexos-release-candidate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/sealed-candidate/*
+          if-no-files-found: error
+          retention-days: 90
+          overwrite: false
+      - name: Reviewable candidate locator
+        env:
+          SOURCE: ${{ steps.candidate.outputs.source_sha }}
+          MANIFEST: ${{ steps.candidate.outputs.manifest_sha256 }}
+          ARTIFACT_ID: ${{ steps.sealed.outputs.artifact-id }}
+          ARTIFACT_DIGEST: ${{ steps.sealed.outputs.artifact-digest }}
+        run: |
+          node -e 'const e=process.env; const locator={sourceSha:e.SOURCE,producerRunId:Number(e.GITHUB_RUN_ID),producerRunAttempt:Number(e.GITHUB_RUN_ATTEMPT),artifactId:Number(e.ARTIFACT_ID),artifactDigest:e.ARTIFACT_DIGEST.startsWith("sha256:")?e.ARTIFACT_DIGEST:"sha256:"+e.ARTIFACT_DIGEST,manifestSha256:e.MANIFEST};require("fs").appendFileSync(e.GITHUB_STEP_SUMMARY,"Prepared only; review exact candidate before publication.\n\n```json\n"+JSON.stringify(locator,null,2)+"\n```\n")'
   publish:
-    needs: [test, build]
-    if: ${{ contains(format(',{0},', needs.build.outputs.packages), ',core,') }}
+    name: Publish sealed transaction
+    if: github.event_name == 'workflow_dispatch' && inputs.operation == 'publish'
     runs-on: ubuntu-latest
-    # Job-scoped permissions (least privilege). Declaring `permissions` here
-    # REPLACES the workflow-level block, so `contents: read` must be restated.
-    # `id-token: write` is what lets npm exchange a GitHub OIDC token for a
-    # short-lived publish credential (Trusted Publishing).
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          registry-url: ${{ env.NPM_REGISTRY }}
-
-      - name: Install dependencies
-        run: npm ci
-        env:
-          HUSKY: '0'
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v8
-        with:
-          name: build-artifacts
-
-      - name: Set publishing tag
-        id: publish-tag
-        run: |
-          if [ "${{ github.event.inputs.publish_mode }}" = "stable" ] || [ "${{ github.event_name }}" = "release" ] || [ "${{ github.event_name }}" = "push" ]; then
-            echo "tag=latest" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event.inputs.publish_mode }}" = "beta" ]; then
-            echo "tag=beta" >> $GITHUB_OUTPUT
-          else
-            echo "tag=preview" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Publish safety gate (INS-4.10)
-        run: node bin/utils/validate-publish.js
-
-      - name: Check if core should be published
-        id: should-publish
-        run: |
-          PKG_NAME=$(node -p "require('./package.json').name")
-          VERSION="${{ needs.build.outputs.version }}"
-
-          # Check if package exists in registry
-          if npm view "${PKG_NAME}@${VERSION}" version > /dev/null 2>&1; then
-            echo "Version ${VERSION} already exists for ${PKG_NAME}"
-            echo "should_publish=false" >> $GITHUB_OUTPUT
-          else
-            echo "Package ${PKG_NAME}@${VERSION} not found in registry"
-            echo "should_publish=true" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Ensure npm >= 11.5.1 (Trusted Publishing requirement)
-        if: steps.should-publish.outputs.should_publish == 'true'
-        run: |
-          REQUIRED="11.5.1"
-          CURRENT="$(npm --version)"
-          # sort -V puts the lower version first; if that is not REQUIRED then
-          # CURRENT is below the floor and must be upgraded.
-          if [ "$(printf '%s\n%s\n' "$REQUIRED" "$CURRENT" | sort -V | head -n1)" != "$REQUIRED" ]; then
-            echo "npm ${CURRENT} < ${REQUIRED} — upgrading for OIDC support"
-            npm install -g npm@latest
-          else
-            echo "npm ${CURRENT} already satisfies >= ${REQUIRED}"
-          fi
-          echo "npm in use: $(npm --version) / node $(node --version)"
-
-      # PRIMARY PATH — Trusted Publishing. No token is exported here on purpose:
-      # with no _authToken present, npm 11.5.1+ uses the OIDC id-token from the
-      # runner. Fails cleanly (and cheaply) until the publisher is registered on
-      # npmjs.com, at which point the fallback step below stops running.
-      - name: Publish core to NPM via Trusted Publishing (OIDC)
-        id: oidc-publish
-        if: steps.should-publish.outputs.should_publish == 'true'
-        continue-on-error: true
-        run: |
-          rm -f .npmrc
-          npm publish --tag ${{ steps.publish-tag.outputs.tag }} --access public
-
-      # FALLBACK — legacy token auth. See the header block for the removal
-      # criteria (publisher registered, or 2027-01, whichever comes first).
-      - name: Publish core to NPM via token (fallback)
-        if: steps.should-publish.outputs.should_publish == 'true' && steps.oidc-publish.outcome == 'failure'
-        run: |
-          echo "::warning::Trusted Publishing (OIDC) did not succeed for the core package — falling back to token auth. Register the trusted publisher on npmjs.com to remove this path."
-          publish_status=1
-          for token in "$NPM_TOKEN_AEXOS" "$NPM_TOKEN"; do
-            if [ -z "$token" ]; then
-              continue
-            fi
-            echo "//registry.npmjs.org/:_authToken=${token}" > .npmrc
-            if npm publish --tag ${{ steps.publish-tag.outputs.tag }} --access public; then
-              publish_status=0
-              break
-            else
-              publish_status=$?
-            fi
-          done
-
-          if [ "$publish_status" -ne 0 ]; then
-            rm -f .npmrc
-            echo "::error::Unable to publish scoped core package via OIDC or token. Register a trusted publisher for @aexos/core (CyryxLabs/AEXOS -> npm-publish.yml), or refresh NPM_TOKEN_AEXOS / NPM_TOKEN with owner access."
-            exit "$publish_status"
-          fi
-
-          PKG_NAME=$(node -p "require('./package.json').name")
-          # Only reachable on the token path: `npm access` needs a long-lived
-          # credential. On the OIDC path `npm publish --access public` already
-          # settles visibility, so no equivalent step is needed there.
-          npm access set status=public "${PKG_NAME}" --registry="${NPM_REGISTRY}"
-          rm -f .npmrc
-          echo "✅ Published ${PKG_NAME}@${{ needs.build.outputs.version }} with tag ${{ steps.publish-tag.outputs.tag }}"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN_AEXOS }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_TOKEN_AEXOS: ${{ secrets.NPM_TOKEN_AEXOS }}
-
-      - name: Verify publication
-        if: steps.should-publish.outputs.should_publish == 'true'
-        run: |
-          # Wait for npm registry to propagate (can take up to 60s)
-          PKG_NAME=$(node -p "require('./package.json').name")
-          for i in 1 2 3 4 5 6; do
-            sleep 15
-            if npm view "${PKG_NAME}@${{ needs.build.outputs.version }}" version > /dev/null 2>&1; then
-              echo "✅ Verified: ${PKG_NAME}@${{ needs.build.outputs.version }} is available on NPM"
-              exit 0
-            fi
-            echo "⏳ Waiting for npm registry propagation... (attempt $i/6)"
-          done
-
-          echo "❌ Verification failed: ${PKG_NAME}@${{ needs.build.outputs.version }} not found after 90s"
-          exit 1
-
-  publish_workspace_packages:
-    needs: [test, build]
-    if: ${{ contains(format(',{0},', needs.build.outputs.packages), ',aexos-install,') || contains(format(',{0},', needs.build.outputs.packages), ',aexos-pro-cli,') || contains(format(',{0},', needs.build.outputs.packages), ',installer,') }}
-    runs-on: ubuntu-latest
-    # Job-scoped permissions (least privilege) — see the `publish` job.
-    # Each matrix package needs its OWN trusted publisher registered on npm.
-    permissions:
-      contents: read
-      id-token: write
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - key: aexos-install
-            path: packages/aexos-install
-            smoke_args: --version
-          - key: aexos-pro-cli
-            path: packages/aexos-pro-cli
-            smoke_args: --help
-          - key: installer
-            path: packages/installer
-            smoke_args: --help
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          registry-url: ${{ env.NPM_REGISTRY }}
-
-      - name: Check selection
-        id: selection
-        run: |
-          SELECTED=",${{ needs.build.outputs.packages }},"
-          PACKAGE_KEY="${{ matrix.key }}"
-          if [[ "$SELECTED" == *",$PACKAGE_KEY,"* ]]; then
-            echo "selected=true" >> $GITHUB_OUTPUT
-          else
-            echo "selected=false" >> $GITHUB_OUTPUT
-            echo "Skipping ${PACKAGE_KEY}; selected packages: $SELECTED"
-          fi
-
-      - name: Install dependencies
-        if: steps.selection.outputs.selected == 'true'
-        run: npm ci
-        env:
-          HUSKY: '0'
-
-      - name: Get workspace package metadata
-        if: steps.selection.outputs.selected == 'true'
-        id: pkg
-        run: |
-          PACKAGE_JSON="./${{ matrix.path }}/package.json"
-          NAME=$(node -p "require('${PACKAGE_JSON}').name")
-          VERSION=$(node -p "require('${PACKAGE_JSON}').version")
-          echo "name=$NAME" >> $GITHUB_OUTPUT
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          if [[ "$NAME" != @aexos/* ]]; then
-            echo "::error::Expected an @aexos package name, got $NAME"
-            exit 1
-          fi
-
-      - name: Set publishing tag
-        if: steps.selection.outputs.selected == 'true'
-        id: publish-tag
-        run: |
-          if [ "${{ github.event.inputs.publish_mode }}" = "stable" ] || [ "${{ github.event_name }}" = "release" ] || [ "${{ github.event_name }}" = "push" ]; then
-            echo "tag=latest" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event.inputs.publish_mode }}" = "beta" ]; then
-            echo "tag=beta" >> $GITHUB_OUTPUT
-          else
-            echo "tag=preview" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Check if already published
-        if: steps.selection.outputs.selected == 'true'
-        id: should-publish
-        run: |
-          PKG_NAME="${{ steps.pkg.outputs.name }}"
-          VERSION="${{ steps.pkg.outputs.version }}"
-
-          if npm view "${PKG_NAME}@${VERSION}" version > /dev/null 2>&1; then
-            echo "Version ${VERSION} already exists for ${PKG_NAME}"
-            echo "should_publish=false" >> $GITHUB_OUTPUT
-          else
-            echo "Package ${PKG_NAME}@${VERSION} not found in registry"
-            echo "should_publish=true" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Ensure npm >= 11.5.1 (Trusted Publishing requirement)
-        if: steps.should-publish.outputs.should_publish == 'true'
-        run: |
-          REQUIRED="11.5.1"
-          CURRENT="$(npm --version)"
-          if [ "$(printf '%s\n%s\n' "$REQUIRED" "$CURRENT" | sort -V | head -n1)" != "$REQUIRED" ]; then
-            echo "npm ${CURRENT} < ${REQUIRED} — upgrading for OIDC support"
-            npm install -g npm@latest
-          else
-            echo "npm ${CURRENT} already satisfies >= ${REQUIRED}"
-          fi
-          echo "npm in use: $(npm --version) / node $(node --version)"
-
-      # PRIMARY PATH — Trusted Publishing (no token exported on purpose).
-      - name: Publish workspace package via Trusted Publishing (OIDC)
-        id: oidc-publish
-        if: steps.should-publish.outputs.should_publish == 'true'
-        continue-on-error: true
-        working-directory: ${{ matrix.path }}
-        run: |
-          rm -f .npmrc
-          npm publish --tag ${{ steps.publish-tag.outputs.tag }} --access public
-
-      # FALLBACK — legacy token auth. See the header block for removal criteria.
-      - name: Publish workspace package via token (fallback)
-        if: steps.should-publish.outputs.should_publish == 'true' && steps.oidc-publish.outcome == 'failure'
-        working-directory: ${{ matrix.path }}
-        run: |
-          echo "::warning::Trusted Publishing (OIDC) did not succeed for ${{ steps.pkg.outputs.name }} — falling back to token auth. Register the trusted publisher on npmjs.com to remove this path."
-          publish_status=1
-          for token in "$NPM_TOKEN_AEXOS" "$NPM_TOKEN"; do
-            if [ -z "$token" ]; then
-              continue
-            fi
-            echo "//registry.npmjs.org/:_authToken=${token}" > .npmrc
-            if npm publish --tag ${{ steps.publish-tag.outputs.tag }} --access public; then
-              publish_status=0
-              break
-            else
-              publish_status=$?
-            fi
-          done
-
-          if [ "$publish_status" -ne 0 ]; then
-            rm -f .npmrc
-            echo "::error::Unable to publish ${{ steps.pkg.outputs.name }} via OIDC or token. Register a trusted publisher for it (CyryxLabs/AEXOS -> npm-publish.yml), or refresh NPM_TOKEN_AEXOS / NPM_TOKEN with owner access to the @aexos scope."
-            exit "$publish_status"
-          fi
-
-          # Token path only — `npm access` needs a long-lived credential.
-          npm access set status=public "${{ steps.pkg.outputs.name }}" --registry="${NPM_REGISTRY}"
-          rm -f .npmrc
-          echo "✅ Published ${{ steps.pkg.outputs.name }}@${{ steps.pkg.outputs.version }}"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN_AEXOS }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_TOKEN_AEXOS: ${{ secrets.NPM_TOKEN_AEXOS }}
-
-      - name: Smoke test - verify npx works
-        if: steps.should-publish.outputs.should_publish == 'true'
-        env:
-          PKG_SPEC: ${{ steps.pkg.outputs.name }}@${{ steps.pkg.outputs.version }}
-          SMOKE_ARGS: ${{ matrix.smoke_args }}
-        run: |
-          # Wait for npm registry propagation
-          for i in 1 2 3 4 5 6; do
-            sleep 15
-            if npm view "${PKG_SPEC}" version > /dev/null 2>&1; then
-              SMOKE_DIR=$(mktemp -d)
-              if (cd "${SMOKE_DIR}" && npx --yes "${PKG_SPEC}" ${SMOKE_ARGS} >/dev/null 2>&1); then
-                rm -rf "${SMOKE_DIR}"
-                echo "✅ Smoke test passed: npx --yes ${PKG_SPEC} ${SMOKE_ARGS} works"
-                exit 0
-              fi
-              rm -rf "${SMOKE_DIR}"
-            fi
-            echo "⏳ Waiting for npm propagation... (attempt $i/6)"
-          done
-          echo "❌ Smoke test timeout for ${{ steps.pkg.outputs.name }}"
-          exit 1
-
-  publish_legacy_cyryx_core:
-    # MUST wait for `publish` because compat/aexos-core declares
-    # `@aexos/core@<version>` as a runtime dependency. If this job runs
-    # in parallel, the legacy smoke test races against npm propagation of the
-    # scoped package and times out — making the workflow appear failed even
-    # though both packages were published successfully.
-    needs: [test, build, publish]
-    if: ${{ contains(format(',{0},', needs.build.outputs.packages), ',aexos-core,') && (needs.publish.result == 'success' || needs.publish.result == 'skipped') }}
-    runs-on: ubuntu-latest
-    # Job-scoped permissions (least privilege) — see the `publish` job.
-    # NOTE: `aexos-core` is UNSCOPED and needs its own trusted publisher entry
-    # on npmjs.com, separate from the scoped packages.
-    permissions:
-      contents: read
-      id-token: write
-    outputs:
-      published: ${{ steps.should-publish.outputs.should_publish }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          registry-url: ${{ env.NPM_REGISTRY }}
-
-      - name: Get legacy package metadata
-        id: pkg
-        run: |
-          PACKAGE_JSON="./compat/aexos-core/package.json"
-          NAME=$(node -p "require('${PACKAGE_JSON}').name")
-          VERSION=$(node -p "require('${PACKAGE_JSON}').version")
-          echo "name=$NAME" >> $GITHUB_OUTPUT
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          if [ "$NAME" != "aexos-core" ]; then
-            echo "::error::Expected legacy package name aexos-core, got $NAME"
-            exit 1
-          fi
-
-      - name: Set publishing tag
-        id: publish-tag
-        run: |
-          if [ "${{ github.event.inputs.publish_mode }}" = "stable" ] || [ "${{ github.event_name }}" = "release" ] || [ "${{ github.event_name }}" = "push" ]; then
-            echo "tag=latest" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event.inputs.publish_mode }}" = "beta" ]; then
-            echo "tag=beta" >> $GITHUB_OUTPUT
-          else
-            echo "tag=preview" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Check if already published
-        id: should-publish
-        run: |
-          PKG_NAME="${{ steps.pkg.outputs.name }}"
-          VERSION="${{ steps.pkg.outputs.version }}"
-
-          if npm view "${PKG_NAME}@${VERSION}" version > /dev/null 2>&1; then
-            echo "Version ${VERSION} already exists for ${PKG_NAME}"
-            echo "should_publish=false" >> $GITHUB_OUTPUT
-          else
-            echo "Package ${PKG_NAME}@${VERSION} not found in registry"
-            echo "should_publish=true" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Ensure npm >= 11.5.1 (Trusted Publishing requirement)
-        if: steps.should-publish.outputs.should_publish == 'true'
-        run: |
-          REQUIRED="11.5.1"
-          CURRENT="$(npm --version)"
-          if [ "$(printf '%s\n%s\n' "$REQUIRED" "$CURRENT" | sort -V | head -n1)" != "$REQUIRED" ]; then
-            echo "npm ${CURRENT} < ${REQUIRED} — upgrading for OIDC support"
-            npm install -g npm@latest
-          else
-            echo "npm ${CURRENT} already satisfies >= ${REQUIRED}"
-          fi
-          echo "npm in use: $(npm --version) / node $(node --version)"
-
-      # PRIMARY PATH — Trusted Publishing (no token exported on purpose).
-      - name: Publish legacy aexos-core via Trusted Publishing (OIDC)
-        id: oidc-publish
-        if: steps.should-publish.outputs.should_publish == 'true'
-        continue-on-error: true
-        working-directory: compat/aexos-core
-        run: |
-          rm -f .npmrc
-          npm publish --tag ${{ steps.publish-tag.outputs.tag }} --access public
-
-      # FALLBACK — legacy token auth. See the header block for removal criteria.
-      - name: Publish legacy aexos-core wrapper via token (fallback)
-        if: steps.should-publish.outputs.should_publish == 'true' && steps.oidc-publish.outcome == 'failure'
-        working-directory: compat/aexos-core
-        run: |
-          echo "::warning::Trusted Publishing (OIDC) did not succeed for aexos-core — falling back to token auth. Register the trusted publisher on npmjs.com to remove this path."
-          publish_status=1
-          for token in "$NPM_TOKEN_AEXOS" "$NPM_TOKEN"; do
-            if [ -z "$token" ]; then
-              continue
-            fi
-            echo "//registry.npmjs.org/:_authToken=${token}" > .npmrc
-            if npm publish --tag ${{ steps.publish-tag.outputs.tag }} --access public; then
-              publish_status=0
-              break
-            else
-              publish_status=$?
-            fi
-          done
-          rm -f .npmrc
-          if [ "$publish_status" -ne 0 ]; then
-            echo "::error::Unable to publish aexos-core via OIDC or token. Register a trusted publisher for aexos-core (CyryxLabs/AEXOS -> npm-publish.yml), or refresh NPM_TOKEN with owner access to the legacy package."
-            exit "$publish_status"
-          fi
-          echo "✅ Published aexos-core@${{ steps.pkg.outputs.version }} with tag ${{ steps.publish-tag.outputs.tag }}"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_TOKEN_AEXOS: ${{ secrets.NPM_TOKEN_AEXOS }}
-
-      - name: Smoke test legacy npx
-        if: steps.should-publish.outputs.should_publish == 'true'
-        env:
-          PKG_SPEC: aexos-core@${{ steps.pkg.outputs.version }}
-          SCOPED_SPEC: '@aexos/core@${{ steps.pkg.outputs.version }}'
-        run: |
-          # Two phases: (1) wait for both packages to be visible in npm
-          # registry, (2) actually exercise npx. Total budget: 16 × 15s = 240s
-          # to accommodate slow CDN propagation (the legacy compat wraps the
-          # scoped package, so BOTH must be resolvable before npx works).
-          last_err=""
-          for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16; do
-            sleep 15
-            if ! npm view "${PKG_SPEC}" version > /dev/null 2>&1; then
-              echo "⏳ Waiting for ${PKG_SPEC} propagation... (attempt $i/16)"
-              continue
-            fi
-            if ! npm view "${SCOPED_SPEC}" version > /dev/null 2>&1; then
-              echo "⏳ ${PKG_SPEC} visible but ${SCOPED_SPEC} not yet... (attempt $i/16)"
-              continue
-            fi
-            SMOKE_DIR=$(mktemp -d)
-            if last_err=$(cd "${SMOKE_DIR}" && npx --yes "${PKG_SPEC}" --version 2>&1); then
-              rm -rf "${SMOKE_DIR}"
-              echo "✅ Smoke test passed: npx --yes ${PKG_SPEC} --version works"
-              exit 0
-            fi
-            rm -rf "${SMOKE_DIR}"
-            echo "⏳ npx attempt failed, retrying... (attempt $i/16)"
-            echo "    last npx stderr: $(echo "$last_err" | tail -3)"
-          done
-          echo "❌ Smoke test timeout for ${PKG_SPEC} after 240s"
-          echo "   Last npx stderr: $last_err"
-          exit 1
-
-  smoke_test_exports:
-    # Issue #734 regression guard: validates that @aexos/core exposes
-    # bin/* via package exports. The npx smoke above does NOT detect this
-    # because npm bin shims resolve internally without triggering Node's
-    # package-exports gate. This job forces require() resolution from an
-    # external context across Node 20/22/24 — the matrix that revealed
-    # ERR_PACKAGE_PATH_NOT_EXPORTED affected v5.2.2/.3/.4.
-    needs: [build, publish, publish_legacy_cyryx_core]
-    if: ${{ needs.publish.result == 'success' || needs.publish_legacy_cyryx_core.result == 'success' }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        node: ['20', '22', '24']
-    steps:
-      - name: Setup Node.js ${{ matrix.node }}
-        uses: actions/setup-node@v6
-        with:
-          node-version: ${{ matrix.node }}
-          registry-url: ${{ env.NPM_REGISTRY }}
-
-      - name: Wait for npm propagation
-        env:
-          CORE_SPEC: '@aexos/core@${{ needs.build.outputs.version }}'
-        run: |
-          for i in 1 2 3 4 5 6; do
-            if npm view "${CORE_SPEC}" version > /dev/null 2>&1; then
-              echo "✅ ${CORE_SPEC} available on npm"
-              exit 0
-            fi
-            echo "⏳ Waiting for ${CORE_SPEC} propagation... (attempt $i/6)"
-            sleep 15
-          done
-          echo "❌ ${CORE_SPEC} not visible after 90s — cannot run exports smoke"
-          exit 1
-
-      - name: Force require.resolve() to trigger exports gate
-        env:
-          CORE_SPEC: '@aexos/core@${{ needs.build.outputs.version }}'
-        run: |
-          set -o pipefail
-          SMOKE_DIR=$(mktemp -d)
-          cd "${SMOKE_DIR}"
-          npm init -y >/dev/null 2>&1
-          npm install "${CORE_SPEC}" 2>&1 | tail -3
-          # External require.resolve() forces Node's package-exports gate. If
-          # bin/* is not declared in exports, this fails with ERR_PACKAGE_PATH_NOT_EXPORTED.
-          # Uses resolve() instead of require() to avoid loading the CLI's wizard
-          # in non-TTY runners (Node 24 surfaced ERR_USE_AFTER_CLOSE on readline
-          # close in non-interactive contexts — false positive, not exports drift).
-          # set -o pipefail above ensures node's exit status survives the head pipe.
-          if node -e "require.resolve('@aexos/core/bin/aexos.js')" 2>&1 | head -20; then
-            echo "✅ require.resolve('@aexos/core/bin/aexos.js') succeeds on Node ${{ matrix.node }}"
-          else
-            echo "❌ REGRESSION: require.resolve() blocked by exports field on Node ${{ matrix.node }}"
-            echo "❌ Issue #734 has returned — check exports field in package.json"
-            exit 1
-          fi
-          rm -rf "${SMOKE_DIR}"
-
-  notify:
-    needs: [build, publish, publish_workspace_packages, publish_legacy_cyryx_core, smoke_test_exports]
-    if: always()
-    runs-on: ubuntu-latest
-    steps:
-      - name: Notify completion
-        env:
-          VERSION: ${{ needs.build.outputs.version }}
-          PUBLISH_RESULT: ${{ needs.publish.result }}
-          WORKSPACE_RESULT: ${{ needs.publish_workspace_packages.result }}
-          LEGACY_RESULT: ${{ needs.publish_legacy_cyryx_core.result }}
-          LEGACY_PUBLISHED: ${{ needs.publish_legacy_cyryx_core.outputs.published }}
-          EXPORTS_RESULT: ${{ needs.smoke_test_exports.result }}
-        run: |
-          echo "=== Release pipeline summary for v${VERSION} ==="
-          echo ""
-          echo "Job results:"
-          printf "  %-32s %s\n" "publish (@aexos/core)"   "$PUBLISH_RESULT"
-          printf "  %-32s %s\n" "publish_workspace_packages"    "$WORKSPACE_RESULT"
-          printf "  %-32s %s\n" "publish_legacy_cyryx_core"      "$LEGACY_RESULT (published=$LEGACY_PUBLISHED)"
-          printf "  %-32s %s\n" "smoke_test_exports"            "$EXPORTS_RESULT"
-          echo ""
-
-          # Hard failure: the scoped @aexos/core publish IS THE release.
-          # Workspace packages and legacy compat wrapper are advisory — they
-          # can be republished out-of-band. Smoke tests are validation; if they
-          # fail but publish succeeded, log a regression warning but don't
-          # break the release signal (the artifact is still in the registry).
-          if [ "$PUBLISH_RESULT" = "failure" ] || [ "$PUBLISH_RESULT" = "cancelled" ]; then
-            echo "❌ HARD FAIL: scoped @aexos/core@${VERSION} did not publish."
-            echo "   The release did NOT reach npmjs.org."
-            exit 1
-          fi
-
-          # Soft warnings on partial failures.
-          WARNINGS=()
-          if [ "$WORKSPACE_RESULT" = "failure" ] || [ "$WORKSPACE_RESULT" = "cancelled" ]; then
-            WARNINGS+=("workspace packages did not publish — investigate publish_workspace_packages")
-          fi
-          if [ "$LEGACY_RESULT" = "failure" ] || [ "$LEGACY_RESULT" = "cancelled" ]; then
-            WARNINGS+=("legacy aexos-core wrapper did not publish — check NPM_TOKEN with owner access to legacy package")
-          fi
-          if [ "$EXPORTS_RESULT" = "failure" ]; then
-            WARNINGS+=("smoke_test_exports failed — possible regression of issue #734 (ERR_PACKAGE_PATH_NOT_EXPORTED)")
-          fi
-
-          PUBLISHED=()
-          if [ "$PUBLISH_RESULT" = "success" ]; then
-            PUBLISHED+=("@aexos/core@${VERSION}")
-          fi
-          if [ "$WORKSPACE_RESULT" = "success" ]; then
-            PUBLISHED+=("selected @aexos workspace packages")
-          fi
-          if [ "$LEGACY_PUBLISHED" = "true" ]; then
-            PUBLISHED+=("aexos-core@${VERSION} (legacy wrapper)")
-          fi
-
-          if [ ${#PUBLISHED[@]} -gt 0 ]; then
-            echo "🎉 Successfully published to npmjs.org:"
-            for pkg in "${PUBLISHED[@]}"; do
-              echo "   - $pkg"
-            done
-          elif [ "$PUBLISH_RESULT" = "skipped" ] && [ "$WORKSPACE_RESULT" = "skipped" ] && [ "$LEGACY_RESULT" = "skipped" ]; then
-            echo "⏭️  No packages needed publishing (version selector skipped them all — already up-to-date or excluded)."
-          else
-            echo "⚠️  No packages were actually published. Check job results above."
-          fi
-
-          if [ ${#WARNINGS[@]} -gt 0 ]; then
-            echo ""
-            echo "⚠️  Soft warnings (release shipped but follow-up needed):"
-            for w in "${WARNINGS[@]}"; do
-              echo "   - $w"
-            done
-          fi
-
-  create-release-notes:
-    needs: [build, publish, publish_workspace_packages, publish_legacy_cyryx_core]
-    if: github.event_name == 'release' && (needs.publish.result == 'success' || needs.publish_workspace_packages.result == 'success' || needs.publish_legacy_cyryx_core.outputs.published == 'true')
-    runs-on: ubuntu-latest
+    timeout-minutes: 90
     permissions:
       contents: write
+      actions: read
+      id-token: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Generate release notes
-        run: |
-          cat > release-notes.md << EOF
-          # AEXOS Core v${{ needs.build.outputs.version }}
-
-          ## 📦 NPM Packages
-
-          | Package | NPM Link | Description |
-          |---------|----------|-------------|
-          | @aexos/core | [npmjs.com](https://www.npmjs.com/package/@aexos/core) | AI-Orchestrated System for Full Stack Development |
-          | @aexos/install | [npmjs.com](https://www.npmjs.com/package/@aexos/install) | NPX Installer for AEXOS |
-          | @aexos/pro-cli | [npmjs.com](https://www.npmjs.com/package/@aexos/pro-cli) | AEXOS Pro CLI wrapper |
-          | @aexos/installer | [npmjs.com](https://www.npmjs.com/package/@aexos/installer) | AEXOS installer package |
-
-          ## 🚀 Installation
-
-          \`\`\`bash
-          # Quick install via NPX (recommended for new users)
-          npx -p @aexos/install aexos-install
-
-          # Or global installation
-          npm install -g @aexos/core
-
-          # Or as project dependency
-          npm install @aexos/core
-          \`\`\`
-
-          ## 📋 What's New
-
-          * ✅ Complete Meta-Agent MVP and Framework Distribution
-          * 🔒 Security hardening with penetration testing
-          * ⚡ Performance optimization framework
-          * 📊 Privacy-conscious telemetry system
-          * 📦 Modular NPM package distribution
-
-          ## 🔗 Links
-
-          * [GitHub Repository](https://github.com/CyryxLabs/AEXOS)
-          * [Documentation](https://github.com/CyryxLabs/AEXOS#readme)
-          * [Issues](https://github.com/CyryxLabs/AEXOS/issues)
-          EOF
-
-      - name: Update release with notes
-        uses: actions/github-script@v9
+      - uses: actions/checkout@v6
         with:
-          script: |
-            const fs = require('fs');
-            const releaseNotes = fs.readFileSync('release-notes.md', 'utf8');
-
-            await github.rest.repos.updateRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              release_id: context.payload.release.id,
-              body: releaseNotes
-            });
+          ref: ${{ github.workflow_sha }}
+          path: controller
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20.20.2'
+          package-manager-cache: false
+      - name: Record Node 20
+        run: echo "AEXOS_NODE_20=$(command -v node)" >> "$GITHUB_ENV"
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22.23.2'
+          package-manager-cache: false
+      - name: Record Node 22
+        run: echo "AEXOS_NODE_22=$(command -v node)" >> "$GITHUB_ENV"
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24.15.0'
+          package-manager-cache: false
+      - name: Record fixed toolchain
+        run: |
+          echo "AEXOS_NODE_24=$(command -v node)" >> "$GITHUB_ENV"
+          echo "AEXOS_NPM_PATH=$(realpath "$(command -v npm)")" >> "$GITHUB_ENV"
+          echo "AEXOS_PYTHON_PATH=$(command -v python)" >> "$GITHUB_ENV"
+          echo "AEXOS_RELEASE_EVIDENCE_DIR=$RUNNER_TEMP/sealed-evidence" >> "$GITHUB_ENV"
+          node --version
+          npm --version
+      - name: Install controller dependencies
+        working-directory: controller
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Validate exact candidate and prepare durable intent
+        working-directory: controller
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/run-sealed-release.js preflight
+      - name: Persist immutable intent before release effects
+        id: intent
+        uses: actions/upload-artifact@v7
+        with:
+          name: aexos-release-intent-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/sealed-evidence/intent.json
+          if-no-files-found: error
+          retention-days: 90
+          overwrite: false
+      - name: Reconcile, publish sealed bytes and verify all selected effects
+        working-directory: controller
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          AEXOS_RELEASE_AUTH: ${{ inputs.authentication }}
+          NODE_AUTH_TOKEN: ${{ inputs.authentication == 'token' && secrets.NPM_TOKEN_AEXOS || '' }}
+          AEXOS_INTENT_ARTIFACT_ID: ${{ steps.intent.outputs.artifact-id }}
+          AEXOS_INTENT_ARTIFACT_DIGEST: ${{ steps.intent.outputs.artifact-digest }}
+        run: node scripts/run-sealed-release.js publish
+      - name: Persist terminal outcome without masking transaction failure
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: aexos-release-outcome-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/sealed-evidence/receipt.json
+          if-no-files-found: error
+          retention-days: 90
+          overwrite: false

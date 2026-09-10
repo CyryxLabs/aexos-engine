@@ -65,7 +65,7 @@ describe('IDE Sync Integration (Story INS-4.5)', () => {
     });
 
     test('commandSync called with { quiet: true }', () => {
-      expect(wizardSource).toContain('await commandSync({ quiet: true })');
+      expect(wizardSource).toContain('await commandSync({ quiet: true, ide })');
     });
 
     test('does NOT pass projectRoot or ides as parameters to commandSync', () => {
@@ -97,7 +97,7 @@ describe('IDE Sync Integration (Story INS-4.5)', () => {
   describe('AC4: Validate sync output', () => {
     test('commandValidate called after commandSync', () => {
       // commandValidate should appear after commandSync in the source
-      const syncIndex = wizardSource.indexOf('await commandSync({ quiet: true })');
+      const syncIndex = wizardSource.indexOf('await commandSync({ quiet: true, ide })');
       const validateIndex = wizardSource.indexOf('await commandValidate(');
       expect(syncIndex).toBeGreaterThan(-1);
       expect(validateIndex).toBeGreaterThan(-1);
@@ -108,7 +108,7 @@ describe('IDE Sync Integration (Story INS-4.5)', () => {
       // Both commandSync and commandValidate should be within the same
       // saved cwd / finally block
       const savedCwdIndex = wizardSource.indexOf('const savedCwd = process.cwd()');
-      const syncIndex = wizardSource.indexOf('await commandSync({ quiet: true })');
+      const syncIndex = wizardSource.indexOf('await commandSync({ quiet: true, ide })');
       const validateIndex = wizardSource.indexOf('await commandValidate(');
       const finallyIndex = wizardSource.indexOf('process.chdir(savedCwd)');
 
@@ -118,18 +118,15 @@ describe('IDE Sync Integration (Story INS-4.5)', () => {
       expect(validateIndex).toBeLessThan(finallyIndex);
     });
 
-    test('validation drift logged as WARN not ERROR', () => {
-      expect(wizardSource).toContain("answers.ideSyncValidation = 'drift'");
+    test('validation failure prevents a successful install outcome', () => {
+      expect(wizardSource).toContain("answers.ideSyncValidation = 'failed'");
       // Should use console.warn, not console.error for drift
-      expect(wizardSource).toMatch(/console\.warn\(.*drift/i);
+      expect(wizardSource).toMatch(/console\.warn\(.*IDE sync failed/i);
     });
 
-    test('commandValidate console output suppressed (quiet workaround)', () => {
-      // commandValidate does not support quiet — wizard suppresses console.log
-      expect(wizardSource).toContain('const _origLog = console.log');
-      expect(wizardSource).toContain('console.log = () => {}');
-      // console.log must be restored in a finally block
-      expect(wizardSource).toContain('console.log = _origLog');
+    test('commandValidate uses native quiet support without replacing console.log', () => {
+      expect(wizardSource).toContain('await commandValidate({ quiet: true, ide })');
+      expect(wizardSource).not.toContain('console.log = () => {}');
     });
   });
 

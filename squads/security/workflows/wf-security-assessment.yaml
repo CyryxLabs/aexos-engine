@@ -1,0 +1,79 @@
+workflow:
+  id: wf-security-assessment
+  name: Security Assessment and Release Verdict
+  version: 1.0.0
+  type: assessment
+  description: >-
+    Evidence-first security review that covers all five specialist domains before Aegis issues
+    the deterministic release verdict. Specialist lanes may overlap only after the threat model.
+  entry_agent: security-chief
+  trigger: "*assess"
+  boundary: Assessment and verdict only; no implementation, push, PR, tag or release.
+  sequence:
+    - id: scope
+      name: Scope and authorization
+      agent: security-chief
+      task: scope-security-assessment.md
+      parallel: false
+      creates: assessment_scope
+    - id: threat-model
+      name: Threat model
+      agent: threat-model-lead
+      task: threat-model.md
+      depends_on: [scope]
+      parallel: false
+      creates: threat_findings
+    - id: appsec-assessment
+      name: Application security assessment
+      agent: appsec-lead
+      task: appsec-review.md
+      depends_on: [threat-model]
+      parallel: true
+      creates: appsec_findings
+    - id: platform-assessment
+      name: Platform and supply-chain assessment
+      agent: platform-lead
+      task: platform-security-review.md
+      depends_on: [threat-model]
+      parallel: true
+      creates: platform_findings
+    - id: ai-security-assessment
+      name: Agentic AI security assessment
+      agent: ai-security-lead
+      task: ai-security-review.md
+      depends_on: [threat-model]
+      parallel: true
+      creates: ai_security_findings
+    - id: offensive-validation
+      name: Authorized adversarial validation
+      agent: offensive-lead
+      task: offensive-validation.md
+      depends_on: [appsec-assessment, platform-assessment, ai-security-assessment]
+      parallel: false
+      creates: validated_findings
+    - id: verdict
+      name: Severity arbitration and verdict
+      agent: security-chief
+      task: arbitrate-security-verdict.md
+      depends_on: [offensive-validation]
+      parallel: false
+      creates: security_verdict
+      command: aexos security assess assessment.json
+  handoff_prompts:
+    security-chief_to_threat-model-lead: >-
+      Use the approved scope and authorization record. Map assets, entry points, trust boundaries
+      and abuse cases; do not design or implement the fix.
+    threat-model-lead_to_specialists: >-
+      Use the same threat model and scope. Return evidence-backed findings in your owned domain,
+      including severity, status, owner and retest condition.
+    specialists_to_offensive-lead: >-
+      Validate only the nominated exploit conditions inside the written authorization. Preserve
+      evidence, avoid destructive techniques and do not implement remediation.
+    offensive-lead_to_security-chief: >-
+      Return validated findings and retest results. Aegis owns severity arbitration and must run
+      the deterministic CLI gate without altering its verdict.
+  completion_criteria:
+    - All five specialist domains declared assessed or the workflow halts.
+    - Every finding carries evidence, status and owner.
+    - The deterministic CLI verdict is attached unchanged.
+    - Security performs no remediation.

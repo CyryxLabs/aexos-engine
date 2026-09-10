@@ -9,6 +9,7 @@
 
 const path = require('path');
 const fs = require('fs');
+const { missingClaudeArtifact } = require('../claude-optional');
 
 const name = 'claude-md';
 
@@ -22,12 +23,7 @@ async function run(context) {
   const claudeMdPath = path.join(context.projectRoot, '.claude', 'CLAUDE.md');
 
   if (!fs.existsSync(claudeMdPath)) {
-    return {
-      check: name,
-      status: 'FAIL',
-      message: 'CLAUDE.md not found',
-      fixCommand: 'aexos doctor --fix',
-    };
+    return missingClaudeArtifact(context, name, 'CLAUDE.md');
   }
 
   const content = fs.readFileSync(claudeMdPath, 'utf8');

@@ -13,9 +13,9 @@ const { getIDEKeys } = require('../../../packages/installer/src/config/ide-confi
 
 describe('IDE Selector', () => {
   describe('validateIDESelection', () => {
-    it('should validate at least one IDE selected', () => {
+    it('should accept explicit CLI-only selection', () => {
       const result = validateIDESelection([]);
-      expect(result).toBe('Please select at least one IDE');
+      expect(result).toBe(true);
     });
 
     it('should accept single IDE selection', () => {

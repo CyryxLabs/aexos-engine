@@ -35,7 +35,6 @@ const agentSet = (process.env.AEXOS_E2E_AGENT_SET || 'dev,qa,aexos-master')
 const defaultCommandTimeoutMs = parseTimeoutEnv('AEXOS_E2E_COMMAND_TIMEOUT_MS', 120000);
 const npmInstallTimeoutMs = parseTimeoutEnv('AEXOS_E2E_NPM_INSTALL_TIMEOUT_MS', 420000);
 const npmInstallFlags = ['--no-audit', '--fund=false'];
-const npxBin = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 
 const packDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aexos-pack-'));
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'aexos-installed-skills-'));
@@ -60,13 +59,20 @@ function run(command, args, options = {}) {
     log(`$ ${label} (cwd=${cwd})`);
   }
 
-  const result = spawnSync(command, args, {
-    cwd,
-    env,
-    encoding: 'utf8',
-    timeout: options.timeout || defaultCommandTimeoutMs,
-    maxBuffer: 1024 * 1024 * 20,
-  });
+  // npm run supplies the CLI path; invoking it through Node also works on
+  // Windows, where spawning a .cmd shim without a shell fails.
+  const useNpmCli = command === 'npm' && process.env.npm_execpath;
+  const result = spawnSync(
+    useNpmCli ? process.execPath : command,
+    useNpmCli ? [process.env.npm_execpath, ...args] : args,
+    {
+      cwd,
+      env,
+      encoding: 'utf8',
+      timeout: options.timeout || defaultCommandTimeoutMs,
+      maxBuffer: 1024 * 1024 * 20,
+    },
+  );
 
   if (result.error) {
     fail(`Command failed to start: ${label}`, result.error.message);
@@ -88,7 +94,7 @@ function run(command, args, options = {}) {
 }
 
 function runInstalledCli(args, options = {}) {
-  return run(npxBin, ['--no-install', 'aexos-core', ...args], options);
+  return run(process.execPath, [path.join(projectRoot, packageInstallRelativePath, 'bin', 'aexos.js'), ...args], options);
 }
 
 function assertPathExists(relativePath, type = 'any') {
@@ -215,6 +221,16 @@ async function main() {
       AEXOS_INSTALL_FORCE: '1',
       AEXOS_INSTALL_QUIET: '1',
     },
+  });
+  // A selected-host install must not create unrelated host projections.
+  // Install Codex explicitly before asserting its artifacts below.
+  if (fs.existsSync(path.join(projectRoot, '.codex'))) {
+    fail('Claude-only installation unexpectedly created Codex configuration');
+  }
+  runInstalledCli(['install', '--ci', '--yes', '--merge', '--ide', 'codex'], {
+    cwd: projectRoot,
+    timeout: 240000,
+    env: { CI: '1', AEXOS_INSTALL_FORCE: '1', AEXOS_INSTALL_QUIET: '1' },
   });
   // TODO(Story 124.7): add a hermetic `aexos update` smoke once the scoped
   // package can be resolved from the publish workflow or a local registry.

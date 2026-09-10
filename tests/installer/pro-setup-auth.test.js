@@ -1,10 +1,9 @@
 /**
  * Unit tests for pro-setup.js email auth flow (PRO-11)
  *
- * Most describes run unconditionally. The `pro-setup machine id compatibility`
- * describe requires `pro/license/license-crypto` and skips when the pro/
- * submodule is not initialized (CI deliberately omits per ADR-PRO-001 /
- * Story PRO-5 AC-7; real pro-integration runs in pro-integration.yml).
+ * Public machine identity and activation checks run unconditionally. Only the
+ * comparison with private `pro/license/license-crypto` requires that runtime;
+ * its absence does not skip the public checks or establish private acceptance.
  *
  * @see Story PRO-11 - Email Authentication & Buyer-Based Pro Activation
  * @see AC-7 - Backward compatibility with license key
@@ -22,7 +21,7 @@ let generateRuntimeMachineId;
 try {
   ({ generateMachineId: generateRuntimeMachineId } = require('../../pro/license/license-crypto'));
 } catch {
-  // pro/ submodule not available — `pro-setup machine id compatibility` skips
+  // Private runtime unavailable; only the private derivation comparison skips.
 }
 
 const isProAvailable = Boolean(
@@ -222,18 +221,12 @@ describe('pro-setup npm invocation', () => {
     });
   });
 
-  it('falls back to shell execution for npm.cmd on Windows', () => {
-    const invocation = proSetup._testing.resolveNpmInvocation({
+  it('fails actionably instead of shell execution when Windows npm cannot be located', () => {
+    expect(() => proSetup._testing.resolveNpmInvocation({
       platform: 'win32',
       env: {},
       fileExists: () => false,
-    });
-
-    expect(invocation).toEqual({
-      command: 'npm.cmd',
-      prefixArgs: [],
-      execOptions: { shell: true },
-    });
+    })).toThrow('Cannot find npm-cli.js');
   });
 
   it('uses npm directly on POSIX platforms', () => {
@@ -251,17 +244,16 @@ describe('pro-setup npm invocation', () => {
   });
 });
 
-describe('pro-setup interactive email fallback', () => {
+describe('pro-setup account-first email authentication', () => {
   afterEach(() => {
     proSetup._testing.loadLicenseApi = undefined;
   });
 
-  it('should continue with direct auth when buyer pre-check is unavailable', async () => {
+  it('authenticates without buyer enumeration or silent account creation', async () => {
     const inquirer = require('inquirer');
     const originalPrompt = inquirer.prompt;
     const mockClient = {
       isOnline: jest.fn().mockResolvedValue(true),
-      checkEmail: jest.fn().mockRejectedValue(new Error('Buyer validation service unavailable')),
       login: jest.fn().mockResolvedValue({
         sessionToken: 'session-token',
         emailVerified: true,
@@ -296,23 +288,23 @@ describe('pro-setup interactive email fallback', () => {
       const result = await proSetup._testing.stepLicenseGateWithEmail();
 
       expect(result.success).toBe(true);
-      expect(mockClient.checkEmail).toHaveBeenCalledWith('buyer@example.com');
       expect(mockClient.login).toHaveBeenCalledWith('buyer@example.com', 'Password123');
       expect(mockClient.activateByAuth).toHaveBeenCalled();
+      expect(mockClient.signup).toBeUndefined();
     } finally {
       inquirer.prompt = originalPrompt;
     }
   });
 });
 
-(isProAvailable ? describe : describe.skip)('pro-setup machine id compatibility', () => {
+describe('pro-setup machine id compatibility', () => {
   it('should generate a 64-char machine id for backend requests', () => {
     const machineId = proSetup._testing.generateMachineId();
 
     expect(machineId).toMatch(/^[a-f0-9]{64}$/i);
   });
 
-  it('should match the Pro runtime machine id derivation', () => {
+  (isProAvailable ? it : it.skip)('should match the Pro runtime machine id derivation', () => {
     const wizardMachineId = proSetup._testing.generateMachineId();
     const runtimeMachineId = generateRuntimeMachineId();
 
@@ -513,10 +505,25 @@ describe('InlineLicenseClient current auth contract', () => {
     await closeMockServer();
   });
 
-  it('normalizes login accessToken to sessionToken for existing wizard flows', async () => {
+  it('discovers public auth config and sends credentials directly to Supabase Auth', async () => {
+    let requests = 0;
     await createMockServer((req, res) => {
+      requests += 1;
+      if (requests === 1) {
+        expect(req.method).toBe('GET');
+        expect(req.url).toBe('/api/v1/auth/config');
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          provider: 'supabase',
+          authUrl: `${baseUrl}/auth/v1`,
+          anonKey: 'public-anon-key',
+        }));
+        return;
+      }
+
       expect(req.method).toBe('POST');
-      expect(req.url).toBe('/api/v1/auth/login');
+      expect(req.url).toBe('/auth/v1/token?grant_type=password');
+      expect(req.headers.apikey).toBe('public-anon-key');
 
       let body = '';
       req.on('data', (chunk) => (body += chunk));
@@ -529,9 +536,9 @@ describe('InlineLicenseClient current auth contract', () => {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(
           JSON.stringify({
-            accessToken: 'live-access-token',
-            refreshToken: 'refresh-token',
-            emailVerified: true,
+            access_token: 'live-access-token',
+            refresh_token: 'refresh-token',
+            user: { email_confirmed_at: '2026-08-27T00:00:00.000Z' },
           }),
         );
       });
@@ -545,23 +552,29 @@ describe('InlineLicenseClient current auth contract', () => {
     expect(result.emailVerified).toBe(true);
   });
 
-  it('uses POST /verify-status with accessToken body and normalizes emailVerified', async () => {
+  it('checks verification directly through Supabase /user with bearer auth', async () => {
+    let requests = 0;
     await createMockServer((req, res) => {
-      expect(req.method).toBe('POST');
-      expect(req.url).toBe('/api/v1/auth/verify-status');
-
-      let body = '';
-      req.on('data', (chunk) => (body += chunk));
-      req.on('end', () => {
-        expect(JSON.parse(body)).toEqual({ accessToken: 'live-access-token' });
+      requests += 1;
+      if (requests === 1) {
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(
-          JSON.stringify({
-            email: 'user@example.com',
-            emailVerified: true,
-          }),
-        );
-      });
+        res.end(JSON.stringify({
+          provider: 'supabase',
+          authUrl: `${baseUrl}/auth/v1`,
+          anonKey: 'public-anon-key',
+        }));
+        return;
+      }
+
+      expect(req.method).toBe('GET');
+      expect(req.url).toBe('/auth/v1/user');
+      expect(req.headers.apikey).toBe('public-anon-key');
+      expect(req.headers.authorization).toBe('Bearer live-access-token');
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        email: 'user@example.com',
+        email_confirmed_at: '2026-08-27T00:00:00.000Z',
+      }));
     });
 
     const client = new proSetup._testing.InlineLicenseClient(baseUrl);
@@ -658,11 +671,31 @@ describe('resolveProSourceDir', () => {
   const gitmodulesPath = path.resolve(__dirname, '../../.gitmodules');
   const npmProDir = path.join('/tmp/aexos-project', 'node_modules', '@aexos', 'pro');
 
+  function mockImplementedSource(sourceDir, available = () => true) {
+    jest.spyOn(fs, 'readFileSync').mockImplementation((target) => {
+      if (available() && target === path.join(sourceDir, 'package.json')) {
+        return JSON.stringify({ name: '@aexos/pro', version: '0.4.2' });
+      }
+      throw new Error('Package unavailable');
+    });
+    jest.spyOn(fs, 'statSync').mockImplementation((target) => ({
+      isDirectory: () => available() && target === path.join(sourceDir, 'squads'),
+      isFile: () => available() && target === path.join(sourceDir, 'pro-config.yaml'),
+    }));
+  }
+
+  beforeEach(() => {
+    jest.spyOn(childProcess, 'execFileSync').mockImplementation(() => {
+      throw new Error('Unexpected Git bootstrap');
+    });
+  });
+
   afterEach(() => {
     jest.restoreAllMocks();
   });
 
-  it('prefers bundled pro content when available', () => {
+  it('uses implemented bundled pro content when no target package is available', () => {
+    mockImplementedSource(bundledProDir);
     jest.spyOn(fs, 'existsSync').mockImplementation((target) => target === bundledSquadsDir);
 
     const result = proSetup._testing.resolveProSourceDir('/tmp/aexos-project');
@@ -672,6 +705,7 @@ describe('resolveProSourceDir', () => {
 
   it('bootstraps the pro submodule in source checkouts when needed', () => {
     let squadsVisible = false;
+    mockImplementedSource(bundledProDir, () => squadsVisible);
 
     jest.spyOn(fs, 'existsSync').mockImplementation((target) => {
       if (target === bundledSquadsDir) {
@@ -702,6 +736,7 @@ describe('resolveProSourceDir', () => {
   });
 
   it('falls back to target node_modules @aexos/pro when bundled content is unavailable', () => {
+    mockImplementedSource(npmProDir);
     jest.spyOn(fs, 'existsSync').mockImplementation((target) => target === npmProDir);
 
     const result = proSetup._testing.resolveProSourceDir('/tmp/aexos-project');
@@ -710,6 +745,7 @@ describe('resolveProSourceDir', () => {
   });
 
   it('returns bootstrapError when git submodule initialization fails', () => {
+    mockImplementedSource(bundledProDir, () => false);
     jest.spyOn(fs, 'existsSync').mockImplementation((target) => {
       if (target === bundledProDir || target === gitmodulesPath) {
         return true;

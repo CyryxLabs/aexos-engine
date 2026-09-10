@@ -9,6 +9,7 @@
 
 const inquirer = require('inquirer');
 const path = require('path');
+const { createVisualPrompt } = require(path.join(__dirname, 'visual-selectors'));
 const fse = require('fs-extra');
 const { execSync } = require('child_process');
 const { colors } = require('../utils/aexos-colors');
@@ -17,10 +18,13 @@ const {
   getProjectTypeQuestion,
   getIDEQuestions,
   getTechPresetQuestion,
+  getReviewQuestion,
+  withQuestionDefaults,
 } = require('./questions');
 const { setLanguage, t } = require('./i18n');
 const yaml = require('js-yaml');
-const { showWelcome, showCompletion, showCancellation } = require('./feedback');
+const { showWelcome, showCompletion, showCancellation, stopTerminalActivity } = require('./feedback');
+const { showInstallStep, readInstalledCounts, getInstallOutcome, getTerminalCapabilities, renderInstallPlan, promptPlainQuestions, createCancellationError } = require('./install-experience');
 const { requireCyryxCoreModule } = require('../utils/package-paths');
 const {
   generateIDEConfigs,
@@ -29,28 +33,14 @@ const {
   generateCodexSkills,
   copyExtraCommandFiles,
 } = require('./ide-config-generator');
-const {
-  configureEnvironment,
-} = require('../config/configure-environment');
-const {
-  installDependencies,
-} = require('../installer/dependency-installer');
-const {
-  installCyryxCore,
-  hasPackageJson,
-} = require('../installer/aexos-core-installer');
-const {
-  scaffoldCoreSquads,
-  regenerateSquadRegistry,
-} = require('../installer/squad-scaffolder');
-const {
-  findLegacyInstalls,
-  removeFootprint,
-} = require('../installer/install-footprint');
+const { configureEnvironment } = require('../config/configure-environment');
+const { installDependencies } = require('../installer/dependency-installer');
+const { installCyryxCore, hasPackageJson } = require('../installer/aexos-core-installer');
+const { scaffoldCoreSquads, regenerateSquadRegistry } = require('../installer/squad-scaffolder');
+const { findLegacyInstalls, removeFootprint } = require('../installer/install-footprint');
 const { enforceCommercialInstallGate } = require('../licensing/commercial-license-gate');
 const {
   validateInstallation,
-  displayValidationReport,
   provideTroubleshooting,
 } = require('./validation');
 
@@ -59,7 +49,13 @@ function loadIdeSync() {
 }
 
 function loadCodexSkillsSync() {
-  return requireCyryxCoreModule('.aexos-core', 'infrastructure', 'scripts', 'codex-skills-sync', 'index');
+  return requireCyryxCoreModule(
+    '.aexos-core',
+    'infrastructure',
+    'scripts',
+    'codex-skills-sync',
+    'index',
+  );
 }
 
 function loadLLMRoutingInstaller() {
@@ -197,9 +193,7 @@ async function getExistingLanguage(projectDir = process.cwd()) {
 
       if (settings && settings.language) {
         // Reverse map: Claude Code language name → wizard code
-        const reverseMap = Object.fromEntries(
-          Object.entries(LANGUAGE_MAP).map(([k, v]) => [v, k]),
-        );
+        const reverseMap = Object.fromEntries(Object.entries(LANGUAGE_MAP).map(([k, v]) => [v, k]));
         const langValue = String(settings.language).toLowerCase().trim();
         return reverseMap[langValue] || null;
       }
@@ -212,52 +206,15 @@ async function getExistingLanguage(projectDir = process.cwd()) {
 }
 
 /**
- * Handle Ctrl+C gracefully
+ * One cancellation path, with no second prompt on a closing input stream.
  */
-let cancellationRequested = false;
-let sigintHandlerAdded = false;
-
-function setupCancellationHandler() {
-  // Prevent adding multiple listeners (MaxListeners warning fix)
-  if (sigintHandlerAdded) {
-    return;
-  }
-
-  // Increase limit to prevent warning during testing
-  process.setMaxListeners(15);
-
-  const handleSigint = async () => {
-    if (cancellationRequested) {
-      // Second Ctrl+C - force exit
-      console.log('\nForce exit');
-      process.exit(0);
-    }
-
-    cancellationRequested = true;
-
-    console.log('\n');
-    const { t: translate } = require('./i18n');
-    const { confirmCancel } = await inquirer.prompt([
-      {
-        type: 'confirm',
-        name: 'confirmCancel',
-        message: translate('cancelConfirm'),
-        default: false,
-      },
-    ]);
-
-    if (confirmCancel) {
-      showCancellation();
-      process.exit(0);
-    } else {
-      cancellationRequested = false;
-      console.log(translate('continuing') + '\n');
-      // Note: inquirer will resume automatically
-    }
+function setupCancellationHandler(context) {
+  const handleSigint = () => {
+    showCancellation(context);
+    process.exit(130);
   };
-
   process.on('SIGINT', handleSigint);
-  sigintHandlerAdded = true;
+  return () => process.removeListener('SIGINT', handleSigint);
 }
 
 /**
@@ -271,10 +228,28 @@ function setupCancellationHandler() {
  * console.log(answers.projectType); // 'greenfield' or 'brownfield'
  */
 async function runWizard(options = {}) {
+  const cancellationContext = { createdDirectory: options.createdDirectory, installationStarted: false };
+  const cleanupCancellation = setupCancellationHandler(cancellationContext);
+  const canPrompt = options.interactive !== undefined ? Boolean(options.interactive) : Boolean(process.stdin.isTTY && process.stdout.isTTY);
+  const nonInteractive = Boolean(options.quiet || options.ci || options.yes || !canPrompt);
+  const plain = getTerminalCapabilities().plain;
+  const visualPrompt = !plain && !nonInteractive ? createVisualPrompt(inquirer) : inquirer.prompt;
+  const prompt = (questions) => {
+    if (plain && !nonInteractive) return promptPlainQuestions(questions);
+    const pending = visualPrompt(questions);
+    // Inquirer normally re-sends SIGINT via process.kill, which exits with 1
+    // on Windows before our handler can report it. Close the UI and reject.
+    const ui = pending.ui;
+    if (!ui?.rl) return pending;
+    ui.rl.removeListener('SIGINT', ui.onForceClose);
+    return new Promise((resolve, reject) => {
+      const cancel = () => { ui.close(); reject(createCancellationError()); };
+      ui.rl.once('SIGINT', cancel);
+      pending.then((value) => { ui.rl.removeListener('SIGINT', cancel); resolve(value); },
+        (error) => { ui.rl.removeListener('SIGINT', cancel); reject(error); });
+    });
+  };
   try {
-    // Setup graceful cancellation
-    setupCancellationHandler();
-
     // Show welcome message with AEXOS branding
     if (!options.quiet) {
       showWelcome();
@@ -299,6 +274,7 @@ async function runWizard(options = {}) {
     });
 
     let answers = {};
+    if (!options.quiet) showInstallStep(0, plain ? ['Select how this workspace will run.'] : []);
 
     // A terminal that cannot be prompted is not a reason to crash. Without this
     // the wizard reached inquirer, the closed stdin tore the readline down
@@ -308,20 +284,10 @@ async function runWizard(options = {}) {
     // `options.interactive` lets a caller state the answer outright — an
     // embedder driving the wizard programmatically should not have to fake a
     // terminal. Absent that, detect one.
-    const canPrompt =
-      options.interactive !== undefined
-        ? Boolean(options.interactive)
-        : Boolean(process.stdin.isTTY && process.stdout.isTTY);
-    const nonInteractive = options.quiet || !canPrompt;
-
     if (nonInteractive && !options.quiet) {
       // Say so. Silent defaults are worse than no defaults: the user gets a
       // configured project and never learns which choices were made for them.
-      console.log(
-        '\n  No interactive terminal detected — installing with defaults.' +
-          '\n  Re-run in a terminal to choose language, IDEs and project type,' +
-          '\n  or pass --ci to make this explicit.\n',
-      );
+      console.log('\n  Using safe defaults and supplied options; no prompts.\n');
     }
 
     if (nonInteractive) {
@@ -334,7 +300,7 @@ async function runWizard(options = {}) {
         language: options.language || existingLang || 'en',
         userProfile: options.userProfile || existingProfile || 'advanced', // Story 10.2
         projectType: options.projectType || 'brownfield', // Default to brownfield for safety
-        selectedIDEs: options.ide ? [options.ide] : [],   // Support single IDE flag if added later
+        selectedIDEs: options.ide ? [options.ide] : [], // Support single IDE flag if added later
         selectedTechPreset: 'none',
         ...options, // Merge any other options
       };
@@ -358,42 +324,51 @@ async function runWizard(options = {}) {
 
       if (existingProfile) {
         // Idempotent: Use existing profile, don't re-ask
-        console.log(`\n✓ ${t('userProfileSkipped')}: ${existingProfile}\n`);
+        console.log(`\nPASS ${t('userProfileSkipped')}: ${existingProfile}\n`);
         userProfileAnswer = { userProfile: existingProfile };
       } else {
         // New installation: Ask for user profile
-        userProfileAnswer = await inquirer.prompt([getUserProfileQuestion()]);
+        userProfileAnswer = await prompt(withQuestionDefaults([getUserProfileQuestion()], options));
       }
 
       // Phase 2: Build remaining questions with i18n applied
-      const remainingQuestions = [
+      if (plain) {
+        console.log('  Hosts receive local files only. Leave all unchecked for CLI only.');
+        console.log('  Enter host numbers, or 0 for none. Presets guide architecture.');
+      }
+      const remainingQuestions = withQuestionDefaults([
         getProjectTypeQuestion(),
         ...getIDEQuestions(),
         ...getTechPresetQuestion(),
-      ];
-
-      // Performance tracking (AC: < 100ms per question)
-      const startTime = Date.now();
+      ], { ...options, ...(options.ide ? { selectedIDEs: [options.ide] } : {}) });
 
       // Run wizard with remaining questions
-      const remainingAnswers = await inquirer.prompt(remainingQuestions);
+      const remainingAnswers = await prompt(remainingQuestions);
 
       // Merge all answers (including user profile from Story 10.2)
-      answers = { ...languageAnswer, ...userProfileAnswer, ...remainingAnswers };
+      answers = { ...options, ...languageAnswer, ...userProfileAnswer, ...remainingAnswers };
 
-      // Log performance metrics
-      const duration = Date.now() - startTime;
-      const totalQuestions = remainingQuestions.length + 2; // +1 for language, +1 for user profile
-      const avgTimePerQuestion = totalQuestions > 0 ? duration / totalQuestions : 0;
-
-      if (avgTimePerQuestion > 100) {
-        console.warn(
-          `Warning: Average question response time (${avgTimePerQuestion.toFixed(0)}ms) exceeds 100ms target`,
-        );
-      }
+      // Human response time is not a rendering-performance measurement.
     }
 
     answers.commercialLicense = commercialLicense;
+    answers.projectRoot = process.cwd();
+    answers.nonInteractive = nonInteractive;
+
+    if (!options.dryRun && !nonInteractive) {
+      for (;;) {
+        console.log(`\n${renderInstallPlan(answers)}\n`);
+        const { reviewAction } = await prompt([getReviewQuestion()]);
+        if (reviewAction === 'cancel') throw createCancellationError();
+        if (reviewAction === 'install') break;
+        if (reviewAction !== 'edit') throw new Error('Installation was not confirmed. Run the command again.');
+        const edited = await prompt(withQuestionDefaults([
+          getUserProfileQuestion(), getProjectTypeQuestion(), ...getIDEQuestions(), ...getTechPresetQuestion(),
+        ], answers));
+        if (edited.userProfile !== answers.userProfile) answers.userProfileChangedByReview = true;
+        answers = { ...answers, ...edited };
+      }
+    }
 
     if (options.dryRun) {
       const preview = {
@@ -415,16 +390,15 @@ async function runWizard(options = {}) {
       };
 
       if (!options.quiet) {
-        console.log('\n🧪 Dry run mode');
-        console.log('   No files will be modified.');
-        console.log(`   Project type: ${preview.projectType}`);
-        console.log(`   IDEs: ${preview.selectedIDEs.length > 0 ? preview.selectedIDEs.join(', ') : 'none'}`);
-        console.log(`   Tech preset: ${preview.selectedTechPreset}`);
+        console.log(`\n${renderInstallPlan(answers, { dryRun: true })}`);
+        console.log('\nDry run complete. No installation files were modified.');
       }
 
       return preview;
     }
 
+    cancellationContext.installationStarted = true;
+    const coreConfigExisted = await fse.pathExists(path.join(process.cwd(), '.aexos-core', 'core-config.yaml'));
     // Story 1.4: Install AEXOS core framework (agents, tasks, workflows, templates)
     // An install from an earlier generation of this framework stays exactly
     // where it is unless something removes it, and the editors keep reading it.
@@ -434,7 +408,7 @@ async function runWizard(options = {}) {
       const legacy = findLegacyInstalls(process.cwd());
       if (legacy.items.length) {
         console.log(
-          `\n⚠️  Found a previous ${legacy.brands.join(' and ')} installation ` +
+          `\nWARN Found a previous ${legacy.brands.join(' and ')} installation ` +
             `(${legacy.items.length} item${legacy.items.length === 1 ? '' : 's'}).`,
         );
         console.log('   Your editor reads both, so its commands will appear alongside AEXOS.\n');
@@ -449,11 +423,9 @@ async function runWizard(options = {}) {
         // someone's behalf without asking — they may have edited them.
         let remove = false;
         if (nonInteractive) {
-          console.log(
-            '\n   Left in place. Remove them with: aexos uninstall --legacy\n',
-          );
+          console.log('\n   Left in place. Remove them with: aexos uninstall --legacy\n');
         } else {
-          ({ remove } = await inquirer.prompt([
+          ({ remove } = await prompt([
             {
               type: 'confirm',
               name: 'remove',
@@ -465,16 +437,22 @@ async function runWizard(options = {}) {
 
         if (remove) {
           const { removed, failed } = removeFootprint(process.cwd(), legacy.items);
-          console.log(`   ✓ Removed ${removed.length} item(s)`);
-          for (const f of failed) console.warn(`   ⚠️  ${f.path}: ${f.message}`);
+          console.log(`   PASS Removed ${removed.length} item(s)`);
+          for (const f of failed) console.warn(`   WARN ${f.path}: ${f.message}`);
         }
       }
     } catch (error) {
+
+      if (error.code === 'AEXOS_INSTALL_CANCELLED') throw error;
       // Never block the install on this — it is housekeeping, not a step.
-      console.warn(`\n⚠️  Could not check for a previous installation: ${error.message}`);
+      console.warn(`\nWARN Could not check for a previous installation: ${error.message}`);
     }
 
-    console.log('\n📦 Installing AEXOS core framework...');
+    if (!options.quiet) showInstallStep(1, [
+      `Target: ${process.cwd()}`,
+      `Hosts: ${answers.selectedIDEs?.join(', ') || 'CLI only'}`,
+    ]);
+    console.log('\nInstalling AEXOS core framework...');
     let cyryxCoreResult = null;
     try {
       cyryxCoreResult = await installCyryxCore({
@@ -486,22 +464,18 @@ async function runWizard(options = {}) {
       });
 
       if (cyryxCoreResult.success) {
-        console.log(`✅ AEXOS core installed (${cyryxCoreResult.installedFolders.length} folders)`);
-        console.log(
-          `   - Agents: ${cyryxCoreResult.installedFolders.includes('agents') ? '✓' : '⨉'}`,
-        );
-        console.log(`   - Tasks: ${cyryxCoreResult.installedFolders.includes('tasks') ? '✓' : '⨉'}`);
-        console.log(
-          `   - Workflows: ${cyryxCoreResult.installedFolders.includes('workflows') ? '✓' : '⨉'}`,
-        );
-        console.log(
-          `   - Templates: ${cyryxCoreResult.installedFolders.includes('templates') ? '✓' : '⨉'}`,
-        );
+        console.log(`PASS AEXOS core installed (${cyryxCoreResult.installedFolders.length} folders)`);
+        answers.installedCounts = readInstalledCounts(process.cwd());
+        for (const [name, count] of Object.entries(answers.installedCounts)) {
+          console.log(`   ${name}: ${count === null ? 'missing' : count}`);
+        }
       }
-      answers.cyryxCoreInstalled = true;
+      answers.cyryxCoreInstalled = cyryxCoreResult.success === true;
       answers.cyryxCoreResult = cyryxCoreResult;
     } catch (error) {
-      console.error('\n⚠️  AEXOS core installation failed:', error.message);
+
+      if (error.code === 'AEXOS_INSTALL_CANCELLED') throw error;
+      console.error('\nWARN AEXOS core installation failed:', error.message);
       answers.cyryxCoreInstalled = false;
     }
 
@@ -509,12 +483,12 @@ async function runWizard(options = {}) {
     // installer above never reaches them. Without this step the squads AEXOS
     // ships exist only in the framework repository and no installed project
     // can see them.
-    console.log('\n🛡️  Installing AEXOS squads...');
+    console.log('\nInstalling AEXOS squads...');
     try {
       const squadResult = await scaffoldCoreSquads(process.cwd());
 
       if (squadResult.copied.length) {
-        console.log(`✅ ${squadResult.copied.length} squad(s) installed`);
+        console.log(`PASS ${squadResult.copied.length} squad(s) installed`);
       }
       if (squadResult.skipped.length) {
         // Existing squads are never overwritten: `squads/` also holds the
@@ -525,7 +499,7 @@ async function runWizard(options = {}) {
         );
       }
       for (const err of squadResult.errors) {
-        console.warn(`   ⚠️  ${err.squad}: ${err.message}`);
+        console.warn(`   WARN ${err.squad}: ${err.message}`);
       }
 
       // Copying is not enough — @aexos-master routes by reading the registry.
@@ -533,21 +507,23 @@ async function runWizard(options = {}) {
       if (registry.success) {
         console.log(`   Registry: ${registry.count} squad(s) routable via @aexos-master`);
       } else {
-        console.warn(`   ⚠️  Squad registry not generated: ${registry.error}`);
+        console.warn(`   WARN Squad registry not generated: ${registry.error}`);
         console.warn('      Squads are installed but the orchestrator cannot route to them.');
         console.warn('      Fix with: node scripts/generate-squad-registry.js');
       }
 
       answers.squadsInstalled = squadResult.copied.length;
     } catch (error) {
+
+      if (error.code === 'AEXOS_INSTALL_CANCELLED') throw error;
       // Never fatal: a project without squads is still a working AEXOS install.
-      console.warn('\n⚠️  Squad installation failed:', error.message);
+      console.warn('\nWARN Squad installation failed:', error.message);
       answers.squadsInstalled = 0;
     }
 
     // Install Tech Preset if selected
     if (answers.selectedTechPreset && answers.selectedTechPreset !== 'none') {
-      console.log('\n📐 Configuring Tech Preset...');
+      console.log('\nConfiguring Tech Preset...');
 
       try {
         // Find tech-presets source directory
@@ -578,7 +554,7 @@ async function runWizard(options = {}) {
             const targetResolved = path.resolve(targetPresetFile);
 
             if (sourceResolved === targetResolved) {
-              console.log('   ℹ️  Tech preset already in place (framework-dev mode)');
+              console.log('   INFO Tech preset already in place (framework-dev mode)');
             } else {
               // Copy the selected preset
               await fse.copy(presetFile, targetPresetFile);
@@ -625,22 +601,24 @@ async function runWizard(options = {}) {
               }
             }
 
-            console.log(`   ✅ Tech Preset: ${answers.selectedTechPreset}`);
+            console.log(`   PASS Tech Preset: ${answers.selectedTechPreset}`);
             console.log(
               `   📁 Location: .aexos-core/data/tech-presets/${answers.selectedTechPreset}.md`,
             );
             answers.techPresetInstalled = true;
             answers.techPresetResult = { preset: answers.selectedTechPreset, success: true };
           } else {
-            console.log(`   ⚠️  Preset file not found: ${answers.selectedTechPreset}`);
+            console.log(`   WARN Preset file not found: ${answers.selectedTechPreset}`);
             answers.techPresetInstalled = false;
           }
         } else {
-          console.log('   ⚠️  Tech presets directory not found');
+          console.log('   WARN Tech presets directory not found');
           answers.techPresetInstalled = false;
         }
       } catch (error) {
-        console.error(`   ⚠️  Tech Preset error: ${error.message}`);
+
+        if (error.code === 'AEXOS_INSTALL_CANCELLED') throw error;
+        console.error(`   WARN Tech Preset error: ${error.message}`);
         answers.techPresetInstalled = false;
       }
     } else {
@@ -652,6 +630,7 @@ async function runWizard(options = {}) {
 
     // Story 1.4: Generate IDE configs if IDEs were selected
     let ideConfigResult = null;
+    if (!options.quiet) showInstallStep(2, ['Configure selected hosts and project settings.']);
     if (answers.selectedIDEs && answers.selectedIDEs.length > 0) {
       // generateIDEConfigs signature: (selectedIDEs, wizardState, options)
       // - wizardState: answers from the wizard (templateVars source)
@@ -663,14 +642,15 @@ async function runWizard(options = {}) {
         noMerge: options.noMerge,
         ci: options.ci,
         yes: options.yes,
-        skipPrompts: options.skipPrompts,
+        skipPrompts: nonInteractive || options.skipPrompts,
+        prompt,
       };
       ideConfigResult = await generateIDEConfigs(answers.selectedIDEs, answers, ideOptions);
 
       if (ideConfigResult.success) {
-        showSuccessSummary(ideConfigResult);
+        showSuccessSummary(ideConfigResult, { compact: true });
       } else {
-        console.error('\n⚠️  Some IDE configurations could not be created:');
+        console.error('\nWARN Some IDE configurations could not be created:');
         if (ideConfigResult.errors) {
           ideConfigResult.errors.forEach((err) => {
             console.error(`  - ${err.ide || 'Unknown'}: ${err.error}`);
@@ -681,126 +661,121 @@ async function runWizard(options = {}) {
       // Legacy per-squad IDE copy path removed; sync pipeline handles IDE propagation.
     }
 
-    // Story INS-4.3: Wire settings.json boundary generator after .aexos-core/ copy
-    console.log('\n🔒 Generating boundary rules...');
-    try {
-      const settingsGenerator = requireCyryxCoreModule(
-        '.aexos-core',
-        'infrastructure',
-        'scripts',
-        'generate-settings-json',
-      );
-      settingsGenerator.generate(process.cwd());
-      const settingsContent = await fse.readFile(path.join(process.cwd(), '.claude', 'settings.json'), 'utf8').catch(() => '{}');
-      const settingsParsed = JSON.parse(settingsContent);
-      const denyCount = (settingsParsed.permissions && settingsParsed.permissions.deny) ? settingsParsed.permissions.deny.length : 0;
-      console.log(`✅ settings.json: generated (${denyCount} deny rules)`);
-      answers.settingsGenerated = true;
-      answers.settingsDenyCount = denyCount;
-    } catch (error) {
-      console.warn(`⚠️  settings.json generation failed: ${error.message} — run 'aexos doctor --fix' post-install`);
-      answers.settingsGenerated = false;
-    }
+    if ((answers.selectedIDEs || []).includes('claude-code')) {
+      // Story INS-4.3: Copy skills (Gap #11)
+      console.log('\nCopying skills...');
+      try {
+        const skillsResult = await copySkillFiles(process.cwd());
+        if (skillsResult.skipped) {
+          console.log('   INFO Skills: source not found (skipped)');
+        } else {
+          console.log(`PASS Skills: ${skillsResult.count} copied`);
+        }
+        answers.skillsCopied = skillsResult.count;
+        answers.skillsSkipped = skillsResult.skipped;
+      } catch (error) {
 
-    // Story INS-4.3: Copy skills (Gap #11)
-    console.log('\n📚 Copying skills...');
-    try {
-      const skillsResult = await copySkillFiles(process.cwd());
-      if (skillsResult.skipped) {
-        console.log('   ℹ️  Skills: source not found (skipped)');
-      } else {
-        console.log(`✅ Skills: ${skillsResult.count} copied`);
+        if (error.code === 'AEXOS_INSTALL_CANCELLED') throw error;
+        console.warn(`WARN Skills copy failed: ${error.message}`);
+        answers.skillsCopied = 0;
+        answers.settingsGenerated = false;
       }
-      answers.skillsCopied = skillsResult.count;
-      answers.skillsSkipped = skillsResult.skipped;
-    } catch (error) {
-      console.warn(`⚠️  Skills copy failed: ${error.message}`);
-      answers.skillsCopied = 0;
     }
 
     // Local-first Codex flow: generate project-local /skills activators automatically
     if ((answers.selectedIDEs || []).includes('codex')) {
-      console.log('\n🧠 Generating Codex skills...');
+      console.log('\nGenerating Codex skills...');
       try {
         const codexSkillsResult = generateCodexSkills(process.cwd());
         if (codexSkillsResult.skipped) {
-          console.log('   ℹ️  Codex skills: canonical agent source not found (skipped)');
+          console.log('   INFO Codex skills: canonical agent source not found (skipped)');
         } else {
-          console.log(`✅ Codex skills: ${codexSkillsResult.count} generated`);
+          console.log(`PASS Codex skills: ${codexSkillsResult.count} generated`);
         }
         answers.codexSkillsGenerated = codexSkillsResult.count;
         answers.codexSkillsSkipped = codexSkillsResult.skipped;
+
       } catch (error) {
-        console.warn(`⚠️  Codex skills generation failed: ${error.message}`);
+
+        if (error.code === 'AEXOS_INSTALL_CANCELLED') throw error;
+        console.warn(`WARN Codex skills generation failed: ${error.message}`);
+        answers.codexSkillsSkipped = true;
         answers.codexSkillsGenerated = 0;
       }
     }
 
-    // Story INS-4.3: Copy extra commands (Gap #12)
-    console.log('\n📋 Copying extra commands...');
-    try {
-      const commandsResult = await copyExtraCommandFiles(process.cwd());
-      if (commandsResult.skipped) {
-        console.log('   ℹ️  Extra commands: source not found (skipped)');
-      } else {
-        console.log(`✅ Commands: ${commandsResult.count} extras copied`);
-      }
-      answers.extraCommandsCopied = commandsResult.count;
-      answers.extraCommandsSkipped = commandsResult.skipped;
-    } catch (error) {
-      console.warn(`⚠️  Extra commands copy failed: ${error.message}`);
-      answers.extraCommandsCopied = 0;
-    }
-
-    // Story INS-4.5: IDE Sync — transform agents/skills/commands for each configured IDE
-    console.log('\n🔄 Running IDE sync...');
-    const targetProjectRoot = process.cwd();
-    const savedCwd = process.cwd();
-    try {
-      const { commandSync, commandValidate } = loadIdeSync();
-      process.chdir(targetProjectRoot);
-      await commandSync({ quiet: true });
-      answers.ideSyncStatus = 'synced';
-      console.log('✅ IDE sync: synced');
-
-      // Validate sync output (commandValidate does not support quiet — suppress its console output)
-      const _origLog = console.log;
-      console.log = () => {};
+    if ((answers.selectedIDEs || []).includes('claude-code')) {
+      // Story INS-4.3: Copy extra commands (Gap #12)
+      console.log('\nCopying extra commands...');
       try {
-        await commandValidate({ quiet: true });
-        answers.ideSyncValidation = 'pass';
-      } catch (_validateError) {
-        answers.ideSyncValidation = 'drift';
-      } finally {
-        console.log = _origLog;
+        const commandsResult = await copyExtraCommandFiles(process.cwd());
+        if (commandsResult.skipped) {
+          console.log('   INFO Extra commands: source not found (skipped)');
+        } else {
+          console.log(`PASS Commands: ${commandsResult.count} extras copied`);
+        }
+        answers.extraCommandsCopied = commandsResult.count;
+        answers.extraCommandsSkipped = commandsResult.skipped;
+      } catch (error) {
+
+        if (error.code === 'AEXOS_INSTALL_CANCELLED') throw error;
+        console.warn(`WARN Extra commands copy failed: ${error.message}`);
+        answers.extraCommandsCopied = 0;
+        answers.settingsGenerated = false;
       }
-      if (answers.ideSyncValidation === 'drift') {
-        console.warn('⚠️  IDE sync validation: drift detected — run \'aexos doctor --fix\' post-install');
-      }
-    } catch (syncError) {
-      console.warn(`⚠️  IDE sync failed: ${syncError.message} — run 'aexos doctor --fix' post-install`);
-      answers.ideSyncStatus = 'failed';
-      answers.ideSyncValidation = 'skipped';
-    } finally {
-      process.chdir(savedCwd);
     }
 
-    // ACORE-SKILLS.7: Generate Codex local skills in installed projects.
-    console.log('\n🧩 Running Codex skills sync...');
-    try {
-      const { syncSkills: syncCodexSkills } = loadCodexSkillsSync();
-      const codexSkillsResult = syncCodexSkills({
-        sourceDir: path.join(targetProjectRoot, '.aexos-core', 'development', 'agents'),
-        localSkillsDir: path.join(targetProjectRoot, '.codex', 'skills'),
-        dryRun: false,
-      });
-      answers.codexSkillsStatus = 'synced';
-      answers.codexSkillsGenerated = codexSkillsResult.generated;
-      console.log(`✅ Codex skills: ${codexSkillsResult.generated} generated`);
-    } catch (codexSkillsError) {
-      console.warn(`⚠️  Codex skills sync failed: ${codexSkillsError.message} — run 'npm run sync:skills:codex' post-install`);
-      answers.codexSkillsStatus = 'failed';
-      answers.codexSkillsGenerated = 0;
+    // Sync only explicitly selected hosts, never the source package defaults.
+    const targetProjectRoot = process.cwd();
+    answers.ideSyncStatus = 'not-applicable';
+    answers.ideSyncValidation = 'not-applicable';
+    if ((answers.selectedIDEs || []).length > 0) {
+      console.log('\n🔄 Running selected IDE sync...');
+      const savedCwd = process.cwd();
+      try {
+        const { commandSync, commandValidate } = loadIdeSync();
+        process.chdir(targetProjectRoot);
+        for (const ide of answers.selectedIDEs) {
+          const syncResult = await commandSync({ quiet: true, ide });
+          if (syncResult?.success !== true) throw new Error(`${ide} projection sync failed`);
+          const validation = await commandValidate({ quiet: true, ide });
+          if (validation?.summary?.pass !== true) {
+            throw new Error(`${ide} projection validation failed`);
+          }
+        }
+        answers.ideSyncStatus = 'synced';
+        answers.ideSyncValidation = 'pass';
+        console.log('PASS Selected IDE sync: verified');
+      } catch (syncError) {
+        console.warn(`WARN Selected IDE sync failed: ${syncError.message}`);
+        answers.ideSyncStatus = 'failed';
+        answers.ideSyncValidation = 'failed';
+      } finally {
+        process.chdir(savedCwd);
+      }
+    }
+    if ((answers.selectedIDEs || []).includes('codex')) {
+      // ACORE-SKILLS.7: Generate Codex local skills in installed projects.
+      console.log('\n🧩 Running Codex skills sync...');
+      try {
+        const { syncSkills: syncCodexSkills } = loadCodexSkillsSync();
+        const codexSkillsResult = syncCodexSkills({
+          sourceDir: path.join(targetProjectRoot, '.aexos-core', 'development', 'agents'),
+          localSkillsDir: path.join(targetProjectRoot, '.codex', 'skills'),
+          dryRun: false,
+        });
+        answers.codexSkillsStatus = 'synced';
+        answers.codexSkillsGenerated = codexSkillsResult.generated;
+        console.log(`PASS Codex skills: ${codexSkillsResult.generated} generated`);
+
+      } catch (codexSkillsError) {
+        console.warn(
+          `WARN Codex skills sync failed: ${codexSkillsError.message} — run 'npm run sync:skills:codex' post-install`,
+        );
+        answers.codexSkillsStatus = 'failed';
+        answers.codexSkillsGenerated = 0;
+        answers.codexSkillsSkipped = true;
+      }
     }
 
     // Story INS-4.6: Entity Registry Bootstrap — populate entity-registry.yaml on install
@@ -809,16 +784,24 @@ async function runWizard(options = {}) {
     // NODE_PATH ensures spawned scripts can resolve packages from .aexos-core/node_modules/
     console.log('\n📇 Bootstrapping entity registry...');
     try {
-      const registryScript = path.join(process.cwd(), '.aexos-core', 'development', 'scripts', 'populate-entity-registry.js');
+      const registryScript = path.join(
+        process.cwd(),
+        '.aexos-core',
+        'development',
+        'scripts',
+        'populate-entity-registry.js',
+      );
       if (fse.existsSync(registryScript)) {
         // INS-4.12 AC3: Guard — skip bootstrap if .aexos-core deps are not installed
         const cyryxCoreNodeModules = path.join(process.cwd(), '.aexos-core', 'node_modules');
         if (!fse.existsSync(cyryxCoreNodeModules)) {
-          console.warn('⚠️  .aexos-core/node_modules/ not found — skipping entity registry bootstrap');
+          console.warn(
+            'WARN .aexos-core/node_modules/ not found — skipping entity registry bootstrap',
+          );
           console.warn('   Run: cd .aexos-core && npm install --production');
           answers.entityRegistryStatus = 'skipped-no-deps';
         } else {
-        // INS-4.12 AC2: Set NODE_PATH so spawned scripts resolve deps from .aexos-core/node_modules/
+          // INS-4.12 AC2: Set NODE_PATH so spawned scripts resolve deps from .aexos-core/node_modules/
           const parentNodeModules = path.join(process.cwd(), 'node_modules');
           const nodePath = [cyryxCoreNodeModules, parentNodeModules].join(path.delimiter);
           const startMs = Date.now();
@@ -832,7 +815,12 @@ async function runWizard(options = {}) {
           const elapsedMs = Date.now() - startMs;
 
           // Read entity count from generated registry
-          const registryPath = path.join(process.cwd(), '.aexos-core', 'data', 'entity-registry.yaml');
+          const registryPath = path.join(
+            process.cwd(),
+            '.aexos-core',
+            'data',
+            'entity-registry.yaml',
+          );
           let entityCount = 0;
           if (fse.existsSync(registryPath)) {
             const registryContent = fse.readFileSync(registryPath, 'utf8');
@@ -840,22 +828,28 @@ async function runWizard(options = {}) {
             entityCount = countMatch ? parseInt(countMatch[1], 10) : 0;
           }
 
-          console.log(`✅ Entity registry: populated (${entityCount} entities, ${(elapsedMs / 1000).toFixed(1)}s)`);
+          console.log(
+            `PASS Entity registry: populated (${entityCount} entities, ${(elapsedMs / 1000).toFixed(1)}s)`,
+          );
           answers.entityRegistryStatus = 'populated';
           answers.entityRegistryCount = entityCount;
           answers.entityRegistryMs = elapsedMs;
         } // end else (deps exist)
       } else {
-        console.log('   ℹ️  Entity registry script not found (skipped)');
+        console.log('   INFO Entity registry script not found (skipped)');
         answers.entityRegistryStatus = 'skipped';
       }
     } catch (error) {
-      console.warn(`⚠️  Entity registry bootstrap failed: ${error.message} — run 'aexos doctor' post-install`);
+
+      if (error.code === 'AEXOS_INSTALL_CANCELLED') throw error;
+      console.warn(
+        `WARN Entity registry bootstrap failed: ${error.message} — run 'aexos doctor' post-install`,
+      );
       answers.entityRegistryStatus = 'failed';
     }
 
     // Story 1.6: Environment Configuration
-    console.log('\n📝 Configuring environment...');
+    console.log('\nConfiguring environment...');
 
     try {
       const envResult = await configureEnvironment({
@@ -864,13 +858,15 @@ async function runWizard(options = {}) {
         selectedIDEs: answers.selectedIDEs || [],
         mcpServers: answers.mcpServers || [],
         userProfile: answers.userProfile || 'advanced', // Story 10.2: User Profile
-        skipPrompts: options.quiet || false, // Skip prompts in quiet mode
+        skipPrompts: nonInteractive, // One prompt policy for every installation phase
+        coreConfigCreatedByInstaller: !coreConfigExisted && answers.cyryxCoreInstalled === true,
+        userProfileChangedByReview: answers.userProfileChangedByReview === true,
         forceMerge: options.forceMerge, // Story 9.4: Smart Merge support
         noMerge: options.noMerge, // Story 9.4: Smart Merge support
       });
 
       // Story ACT-12: Write language to Claude Code settings.json
-      if (answers.language) {
+      if (answers.language && answers.selectedIDEs?.includes('claude-code')) {
         const langWritten = await writeClaudeSettings(answers.language);
         if (langWritten) {
           console.log('  - Language written to .claude/settings.json');
@@ -880,7 +876,7 @@ async function runWizard(options = {}) {
       }
 
       if (envResult.envCreated && envResult.coreConfigCreated) {
-        console.log('\n✅ Environment configuration complete!');
+        console.log('\nPASS Environment configuration complete!');
         console.log('  - .env file created');
         console.log('  - .env.example file created');
         console.log('  - .aexos-core/core-config.yaml created');
@@ -893,11 +889,14 @@ async function runWizard(options = {}) {
       answers.envConfigured = true;
       answers.envResult = envResult;
     } catch (error) {
-      console.error('\n⚠️  Environment configuration failed:');
+
+      if (error.code === 'AEXOS_INSTALL_CANCELLED') throw error;
+      console.error('\nWARN Environment configuration failed:');
       console.error(`  ${error.message}`);
+      if (nonInteractive) throw new Error(`Environment configuration failed: ${error.message}`);
 
       // Ask user if they want to continue without env config
-      const { continueWithoutEnv } = await inquirer.prompt([
+      const { continueWithoutEnv } = await prompt([
         {
           type: 'confirm',
           name: 'continueWithoutEnv',
@@ -911,7 +910,41 @@ async function runWizard(options = {}) {
       }
 
       answers.envConfigured = false;
-      console.log('\n⚠️  Continuing without environment configuration...');
+      console.log('\nWARN Continuing without environment configuration...');
+    }
+
+    // Generate rules from the final target configuration, after review/merge.
+    if ((answers.selectedIDEs || []).includes('claude-code')) {
+      // Story INS-4.3: Wire settings.json boundary generator after .aexos-core/ copy
+      console.log('\nGenerating boundary rules...');
+      try {
+        const settingsGenerator = requireCyryxCoreModule(
+          '.aexos-core',
+          'infrastructure',
+          'scripts',
+          'generate-settings-json',
+        );
+        settingsGenerator.generate(process.cwd());
+        const settingsContent = await fse
+          .readFile(path.join(process.cwd(), '.claude', 'settings.json'), 'utf8')
+          .catch(() => '{}');
+        const settingsParsed = JSON.parse(settingsContent);
+        const denyCount =
+          settingsParsed.permissions && settingsParsed.permissions.deny
+            ? settingsParsed.permissions.deny.length
+            : 0;
+        console.log(`PASS settings.json: generated (${denyCount} deny rules)`);
+        answers.settingsGenerated = true;
+        answers.settingsDenyCount = denyCount;
+      } catch (error) {
+
+        if (error.code === 'AEXOS_INSTALL_CANCELLED') throw error;
+        console.warn(
+          `WARN settings.json generation failed: ${error.message} — run 'aexos doctor --fix' post-install`,
+        );
+        answers.settingsGenerated = false;
+      }
+
     }
 
     // Story 1.7: Dependency Installation
@@ -920,17 +953,22 @@ async function runWizard(options = {}) {
     const projectPath = process.cwd();
     const packageJsonExists = await hasPackageJson(projectPath);
 
-    if (!packageJsonExists) {
+    if (options.skipInstall) {
+      console.log('\n  INFO Project dependency installation skipped (--skip-install).');
+      answers.depsInstalled = true;
+      answers.depsResult = { success: true, skipped: true, reason: 'skip-install' };
+      answers.packageManager = detectPackageManager();
+    } else if (!packageJsonExists) {
       // Greenfield project - no package.json, skip dependency installation
-      console.log('\n📦 Dependency installation...');
-      console.log('   ℹ️  No package.json found (greenfield project)');
-      console.log('   💡 Dependencies will be installed when you add a package.json');
+      console.log('\nDependency installation...');
+      console.log('   INFO No package.json found (greenfield project)');
+      console.log('   Dependencies will be installed when you add a package.json');
       answers.depsInstalled = true; // Mark as success since there's nothing to install
       answers.depsResult = { success: true, skipped: true, reason: 'no-package-json' };
       answers.packageManager = detectPackageManager();
     } else {
       // Brownfield project or existing project - has package.json
-      console.log('\n📦 Installing dependencies...');
+      console.log('\nInstalling dependencies...');
 
       // Auto-detect package manager (no longer asked as question)
       const detectedPM = detectPackageManager();
@@ -944,24 +982,24 @@ async function runWizard(options = {}) {
 
         if (depsResult.success) {
           if (depsResult.offlineMode) {
-            console.log('✅ Using existing dependencies (offline mode)');
+            console.log('PASS Using existing dependencies (offline mode)');
           } else {
-            console.log(`✅ Dependencies installed with ${depsResult.packageManager}!`);
+            console.log(`PASS Dependencies installed with ${depsResult.packageManager}!`);
           }
           answers.depsInstalled = true;
           answers.depsResult = depsResult;
         } else {
-          console.error('\n⚠️  Dependency installation failed:');
+          console.error('\nWARN Dependency installation failed:');
           console.error(`  ${depsResult.errorMessage}`);
           console.error(`  Solution: ${depsResult.solution}`);
 
-          if (options.quiet || options.ci || process.env.CI === '1') {
+          if (nonInteractive || process.env.CI === '1') {
             answers.depsInstalled = false;
             answers.depsResult = depsResult;
-            console.log('\n⚠️  Skipping dependency retry in non-interactive mode.');
+            console.log('\nWARN Skipping dependency retry in non-interactive mode.');
           } else {
             // Ask user if they want to retry
-            const { retryDeps } = await inquirer.prompt([
+            const { retryDeps } = await prompt([
               {
                 type: 'confirm',
                 name: 'retryDeps',
@@ -978,25 +1016,29 @@ async function runWizard(options = {}) {
               });
 
               if (retryResult.success) {
-                console.log(`\n✅ Dependencies installed with ${retryResult.packageManager}!`);
+                console.log(`\nPASS Dependencies installed with ${retryResult.packageManager}!`);
                 answers.depsInstalled = true;
                 answers.depsResult = retryResult;
               } else {
                 console.log(
-                  '\n⚠️  Installation still failed. You can run `npm install` manually later.',
+                  '\nWARN Installation still failed. You can run `npm install` manually later.',
                 );
                 answers.depsInstalled = false;
                 answers.depsResult = retryResult;
               }
             } else {
-              console.log('\n⚠️  Skipping dependency installation. Run manually with `npm install`.');
+              console.log(
+                '\nWARN Skipping dependency installation. Run manually with `npm install`.',
+              );
               answers.depsInstalled = false;
               answers.depsResult = depsResult;
             }
           }
         }
       } catch (error) {
-        console.error('\n⚠️  Dependency installation error:', error.message);
+
+        if (error.code === 'AEXOS_INSTALL_CANCELLED') throw error;
+        console.error('\nWARN Dependency installation error:', error.message);
         answers.depsInstalled = false;
       }
     }
@@ -1023,12 +1065,12 @@ async function runWizard(options = {}) {
     //
     //     if (mcpResult.success) {
     //       const successCount = Object.values(mcpResult.installedMCPs).filter(r => r.status === 'success').length;
-    //       console.log(`\n✅ MCPs installed successfully! (${successCount}/${answers.selectedMCPs.length})`);
+    //       console.log(`\nPASS MCPs installed successfully! (${successCount}/${answers.selectedMCPs.length})`);
     //       console.log(`   Configuration: ${mcpResult.configPath}`);
     //     } else {
-    //       console.error('\n⚠️  Some MCPs failed to install:');
+    //       console.error('\nWARN Some MCPs failed to install:');
     //       mcpResult.errors.forEach(err => console.error(`  - ${err}`));
-    //       console.log('\n💡 Check .aexos/install-errors.log for details');
+    //       console.log('\nCheck .aexos/install-errors.log for details');
     //     }
     //
     //     // Store MCP result for validation
@@ -1036,7 +1078,8 @@ async function runWizard(options = {}) {
     //     answers.mcpResult = mcpResult;
     //
     //   } catch (error) {
-    //     console.error('\n⚠️  MCP installation error:', error.message);
+
+    //     console.error('\nWARN MCP installation error:', error.message);
     //     answers.mcpsInstalled = false;
     //   }
     // }
@@ -1044,14 +1087,11 @@ async function runWizard(options = {}) {
     // Story 6.7: LLM Routing Installation
     console.log('\nInstalling LLM Routing commands...');
     try {
-      const {
-        installLLMRouting,
-        isLLMRoutingInstalled,
-      } = loadLLMRoutingInstaller();
+      const { installLLMRouting, isLLMRoutingInstalled } = loadLLMRoutingInstaller();
 
       // Check if already installed
       if (isLLMRoutingInstalled()) {
-        console.log('   ℹ️  LLM Routing already installed');
+        console.log('   INFO LLM Routing already installed');
         answers.llmRoutingInstalled = true;
         answers.llmRoutingResult = { success: true, alreadyInstalled: true };
       } else {
@@ -1062,21 +1102,23 @@ async function runWizard(options = {}) {
         });
 
         if (llmResult.success) {
-          console.log('\n✅ LLM Routing installed!');
+          console.log('\nPASS LLM Routing installed!');
           console.log('   • claude-max  → Uses Claude Max subscription');
-          console.log('   • claude-free → Uses DeepSeek (~$0.14/M tokens)');
-          console.log('\n   💡 For claude-free, add DEEPSEEK_API_KEY to your .env');
+          console.log('   • claude-free → Uses a configured DeepSeek API key');
+          console.log('\n   For claude-free, add DEEPSEEK_API_KEY to your .env');
           answers.llmRoutingInstalled = true;
           answers.llmRoutingResult = llmResult;
         } else {
-          console.error('\n⚠️  LLM Routing installation had errors:');
+          console.error('\nWARN LLM Routing installation had errors:');
           llmResult.errors.forEach((err) => console.error(`   - ${err}`));
           answers.llmRoutingInstalled = false;
           answers.llmRoutingResult = llmResult;
         }
       }
     } catch (error) {
-      console.error('\n⚠️  LLM Routing error:', error.message);
+
+      if (error.code === 'AEXOS_INSTALL_CANCELLED') throw error;
+      console.error('\nWARN LLM Routing error:', error.message);
       answers.llmRoutingInstalled = false;
     }
 
@@ -1089,20 +1131,20 @@ async function runWizard(options = {}) {
     } else if (!options.skipPro) {
       try {
         const { runProWizard } = require('./pro-setup');
-        const isCI = process.env.CI === 'true' || !process.stdout.isTTY;
+        const isCI = nonInteractive || process.env.CI === 'true';
         const hasProKey = !!process.env.AEXOS_PRO_KEY;
 
         const proOptions = { targetDir: process.cwd() };
 
         if (isCI && hasProKey) {
           // CI mode: auto-run if AEXOS_PRO_KEY is set
-          console.log('\n🔑 Pro license key detected, running Pro setup...');
+          console.log('\nPro license key detected, running Pro setup...');
           const proResult = await runProWizard({ ...proOptions, quiet: true });
           answers.proInstalled = proResult.success;
           answers.proResult = proResult;
         } else if (!isCI && !options.quiet) {
           // Interactive mode: ask which edition to install
-          const { edition } = await inquirer.prompt([
+          const { edition } = await prompt([
             {
               type: 'list',
               name: 'edition',
@@ -1110,10 +1152,14 @@ async function runWizard(options = {}) {
               choices: [
                 {
                   name: 'Community (free) — agents, workflows, squads, full CLI',
+                  short: 'Community · free',
+                  description: 'Use the free agents, workflows and CLI included in this package.',
                   value: 'community',
                 },
                 {
                   name: 'Pro (requires account) — premium squads, minds, priority support',
+                  short: 'Pro · account required',
+                  description: 'Continue to the existing Pro account setup.',
                   value: 'pro',
                 },
               ],
@@ -1127,9 +1173,9 @@ async function runWizard(options = {}) {
             answers.proResult = proResult;
 
             if (!proResult.success && proResult.error) {
-              console.error(`\n⚠️  Pro activation failed: ${proResult.error}`);
+              console.error(`\nWARN Pro activation failed: ${proResult.error}`);
 
-              const { fallback } = await inquirer.prompt([
+              const { fallback } = await prompt([
                 {
                   type: 'confirm',
                   name: 'fallback',
@@ -1139,24 +1185,26 @@ async function runWizard(options = {}) {
               ]);
 
               if (!fallback) {
-                console.log('\n👋 Installation cancelled. Run again when ready.');
-                return answers;
+                throw createCancellationError();
               }
 
-              console.log('\n📦 Continuing with Community edition...\n');
+              console.log('\nContinuing with Community edition...\n');
             }
           } else {
             answers.proInstalled = false;
           }
         }
       } catch (error) {
-        console.error(`\n⚠️  Pro setup error: ${error.message}`);
+
+        if (error.code === 'AEXOS_INSTALL_CANCELLED') throw error;
+        console.error(`\nWARN Pro setup error: ${error.message}`);
         answers.proInstalled = false;
       }
     }
 
     // Story 1.8: Installation Validation
-    console.log('\n🔍 Validating installation...\n');
+    if (!options.quiet) showInstallStep(3, ['Check installed files, configuration and dependencies.']);
+    console.log('\nValidating installation...\n');
 
     try {
       const expectedSkillDirs = [];
@@ -1189,32 +1237,49 @@ async function runWizard(options = {}) {
         },
       );
 
-      // Display validation report
-      await displayValidationReport(validation);
+      // A single outcome follows the phase; preserve errors without competing banners.
+      for (const error of validation.errors || []) {
+        console.error(`  FAIL ${error.component || 'Verification'}: ${error.message}`);
+        if (error.solution) console.error(`  Recovery: ${error.solution}`);
+      }
 
       // Offer troubleshooting if there are errors
-      if (validation.errors && validation.errors.length > 0) {
+      if (!nonInteractive && !plain && validation.errors && validation.errors.length > 0) {
         await provideTroubleshooting(validation.errors);
       }
 
       // Store validation result
       answers.validationResult = validation;
     } catch (error) {
-      console.error('\n⚠️  Validation failed:', error.message);
+
+      if (error.code === 'AEXOS_INSTALL_CANCELLED') throw error;
+      console.error('\nWARN Validation failed:', error.message);
       console.log('Installation may be incomplete. Check logs in .aexos/ directory.');
     }
 
     // Show completion
-    showCompletion();
+    answers.ideConfigResult = ideConfigResult;
+    answers.installOutcome = getInstallOutcome(answers);
+    showCompletion(answers);
+    if (!answers.installOutcome.success) {
+      throw new Error(`Installation incomplete: ${answers.installOutcome.failures.join(', ')}. Run npx @aexos/core doctor for repair guidance.`);
+    }
 
     return answers;
   } catch (error) {
+    if (error.code === 'AEXOS_INSTALL_CANCELLED') {
+      showCancellation(cancellationContext);
+      throw error;
+    }
     if (error.isTtyError) {
       console.error("Error: Prompt couldn't be rendered in the current environment");
     } else {
       console.error('Wizard error:', error.message);
     }
     throw error;
+  } finally {
+    cleanupCancellation();
+    stopTerminalActivity?.();
   }
 }
 

@@ -11,7 +11,7 @@
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
-const ora = require('ora');
+const { createSpinner: ora } = require('../wizard/feedback');
 
 /**
  * Allowed package managers (Security: Command injection prevention)
