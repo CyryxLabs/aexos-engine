@@ -80,16 +80,19 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: '20.20.2'
+          package-manager-cache: false
       - name: Record Node 20
         run: echo "AEXOS_NODE_20=$(command -v node)" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v6
         with:
           node-version: '22.23.2'
+          package-manager-cache: false
       - name: Record Node 22
         run: echo "AEXOS_NODE_22=$(command -v node)" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v6
         with:
           node-version: '24.15.0'
+          package-manager-cache: false
       - name: Record fixed toolchain
         run: |
           echo "AEXOS_NODE_24=$(command -v node)" >> "$GITHUB_ENV"
@@ -146,16 +149,19 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: '20.20.2'
+          package-manager-cache: false
       - name: Record Node 20
         run: echo "AEXOS_NODE_20=$(command -v node)" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v6
         with:
           node-version: '22.23.2'
+          package-manager-cache: false
       - name: Record Node 22
         run: echo "AEXOS_NODE_22=$(command -v node)" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v6
         with:
           node-version: '24.15.0'
+          package-manager-cache: false
       - name: Record fixed toolchain
         run: |
           echo "AEXOS_NODE_24=$(command -v node)" >> "$GITHUB_ENV"

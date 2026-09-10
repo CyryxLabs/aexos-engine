@@ -18,6 +18,17 @@ const contextEnv = () => ({
 });
 
 describe('owned entrypoint topology and executable refusal', () => {
+  test('caller-selected payloads cannot populate shared dependency caches', () => {
+    for (const file of ['npm-publish.yml', 'semantic-release.yml']) {
+      const setup = Object.values(workflow(file).jobs).flatMap(steps)
+        .filter(step => step.uses?.startsWith('actions/setup-node@'));
+      expect(setup.length).toBeGreaterThan(0);
+      for (const step of setup) {
+        expect(step.with['package-manager-cache']).toBe(false);
+        expect(step.with.cache).toBeUndefined();
+      }
+    }
+  });
   test('sole public workflow uses a literal global lock and explicit prepare default', () => {
     const value = workflow('npm-publish.yml');
     expect(value.concurrency).toEqual({ group: 'aexos-public-release', 'cancel-in-progress': false });

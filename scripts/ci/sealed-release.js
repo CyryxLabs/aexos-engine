@@ -324,7 +324,8 @@ function exportSpecifiers(pkg) {
       const [prefix, suffix] = target.split('*');
       const matches = fileNames.filter(file => file.startsWith(prefix) && file.endsWith(suffix));
       ensure(matches.length > 0, 'export pattern matches no archive file');
-      for (const file of matches) add(key.replace('*', file.slice(prefix.length, suffix ? -suffix.length : undefined)), file);
+      const [keyPrefix, keySuffix] = key.split('*');
+      for (const file of matches) add(`${keyPrefix}${file.slice(prefix.length, suffix ? -suffix.length : undefined)}${keySuffix}`, file);
     } else {
       ensure(fileNames.includes(target), 'export target missing from archive');
       specifiers.add(key === '.' ? pkg.name : `${pkg.name}/${key.slice(2)}`);

@@ -44,7 +44,9 @@ const NPM_INSTALL_TIMEOUT_MS = 180 * 1000;
 const FIXTURE_VERSION = '0.0.0-test-fixture';
 
 function makeTempDir(prefix) {
-  return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+  // macOS exposes /var through a system symlink. This fixture tests npm
+  // fallback, not rejection of linked installation ancestors.
+  return fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), prefix));
 }
 
 function removeDir(dir) {
@@ -316,7 +318,7 @@ describe('acquireProArtifactSourceDir — graceful fallback when target install 
         },
       );
 
-      expect(result.success).toBe(true);
+      expect(result).toMatchObject({ success: true });
       expect(result.installedProSourceDir).toBeNull();
       expect(result.proSourceDir).toBeTruthy();
       expect(result.proSourceDir).toContain('node_modules');

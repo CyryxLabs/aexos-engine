@@ -35,6 +35,16 @@ Primary npm onboarding remains `npx @aexos/core`. Core is free and public; paid 
 
 ## Tasks and ownership
 
+2026-09-10 remote follow-up: CodeQL identified implicit setup-node package-manager
+caching across caller-selected payloads and ambiguous single-star replacement.
+This continuation disables automatic dependency caching in the two release
+workflows and constructs export specifiers from their validated single-star
+segments. The macOS installer fixture canonicalizes its temporary parent to
+avoid testing a system symlink in a success-path test; product link rejection
+is unchanged. Owned additional test: `tests/installer/pro-setup-target-install.test.js`.
+
+- [ ] Verify these corrections locally and on remote CodeQL/installer matrix.
+
 - [x] Inspect actual competing write paths, identify next ID and record bounded source evidence (AC1).
 - [x] Architect specifies the contract and exact owned file list; QA reviews failure/retry coverage before code (AC1).
 - [x] DevOps unifies or retires competing workflow/plugin entry points and binds exact source/artifact identity (AC2).
