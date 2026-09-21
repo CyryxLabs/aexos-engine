@@ -1,6 +1,6 @@
 metadata:
   version: 1.0.0
-  lastUpdated: '2026-09-21T21:48:29.356Z'
+  lastUpdated: '2026-09-21T22:49:08.101Z'
   entityCount: 859
   checksumAlgorithm: sha256
   resolutionRate: 100
@@ -2827,13 +2827,14 @@ entities:
       keywords:
         - integrate
         - squad
-      usedBy: []
+      usedBy:
+        - ux-design-expert
       dependencies: []
       externalDeps: []
       plannedDeps:
         - task-runner.js
         - execute-task.js
-      lifecycle: experimental
+      lifecycle: production
       adaptability:
         score: 0.8
         constraints: []
@@ -15534,6 +15535,7 @@ entities:
         - calculate-roi
         - ux-ds-scan-artifact
         - run-design-system-pipeline
+        - integrate-squad
         - execute-checklist
         - front-end-spec-tmpl.yaml
         - tokens-schema-tmpl.yaml
@@ -15548,7 +15550,6 @@ entities:
         - browser
       externalDeps: []
       plannedDeps:
-        - integrate-Squad
         - component-react-tmpl.tsx
         - shock-report-tmpl.html
         - token-exports-css-tmpl.css
@@ -15558,8 +15559,8 @@ entities:
         score: 0.3
         constraints: []
         extensionPoints: []
-      checksum: sha256:c2d1ff30dada286e73aaa66dc02b280c8ab75792ea93ea8400930ca8c3d5a2e1
-      lastVerified: '2026-09-21T20:40:17.541Z'
+      checksum: sha256:c69fe6960746e26d140f2b154585852e86082f62b1ef2c118a8e00d6c70c3ded
+      lastVerified: '2026-09-21T22:49:07.982Z'
     MEMORY:
       path: .aexos-core/development/agents/analyst/MEMORY.md
       layer: L3
@@ -15943,7 +15944,7 @@ entities:
         constraints: []
         extensionPoints: []
       checksum: sha256:<self-reference>
-      lastVerified: '2026-09-21T21:48:29.356Z'
+      lastVerified: '2026-09-21T22:49:08.101Z'
     learned-patterns:
       path: .aexos-core/data/learned-patterns.yaml
       layer: L3

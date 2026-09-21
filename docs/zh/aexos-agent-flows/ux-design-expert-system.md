@@ -147,7 +147,7 @@ flowchart TB
 | 文件 | 命令 | 目的 |
 |------|------|------|
 | `.aexos-core/development/tasks/ux-ds-scan-artifact.md` | `*scan {path\|url}` | 分析HTML/React以提取模式 |
-| `.aexos-core/development/tasks/integrate-Squad.md` | `*integrate {squad}` | 与扩展小组连接 |
+| `.aexos-core/development/tasks/integrate-squad.md` | `*integrate {squad}` | 与扩展小组连接 |
 
 ---
 

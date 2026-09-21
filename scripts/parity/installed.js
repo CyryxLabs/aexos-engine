@@ -123,7 +123,7 @@ function main() {
     defaultConsumer = project;
     defaultPackageRoot = installedRoot;
     assert(!fs.lstatSync(installedRoot).isSymbolicLink(), 'Installed package must not be a checkout link');
-    assert(fs.realpathSync(installedRoot).startsWith(workRoot + path.sep));
+    assert(fs.realpathSync(installedRoot).startsWith(fs.realpathSync(workRoot) + path.sep));
     const cli = path.join(installedRoot, 'bin/aexos.js');
     const help = run('installed-help', [cli, '--help'], project);
     assert(/AEXOS/.test(help));

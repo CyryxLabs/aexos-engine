@@ -102,6 +102,19 @@ describe('Layer2PRAutomation', () => {
   });
 
   describe('runCodeRabbit', () => {
+    test.each(['wsl', 'native'])('honors explicit %s execution without host assumptions', async mode => {
+      layer.coderabbit.installation_mode = mode;
+      layer.runCommand = jest.fn().mockResolvedValue({ exitCode: 0, stdout: '', stderr: '', duration: 1 });
+      expect((await layer.runCodeRabbit()).pass).toBe(true);
+      if (mode === 'wsl') {
+        expect(spawnSyncSpy).toHaveBeenCalledWith('wsl', ['-l'], { encoding: 'utf8' });
+        expect(layer.runCommand.mock.calls[0][0]).toMatch(/^wsl bash/);
+      } else {
+        expect(spawnSyncSpy).not.toHaveBeenCalled();
+        expect(layer.runCommand.mock.calls[0][0]).not.toMatch(/^wsl/);
+      }
+    });
+
     it('should pass when no CRITICAL issues', async () => {
       layer.runCommand = jest.fn().mockResolvedValue({
         exitCode: 0,
@@ -112,7 +125,11 @@ describe('Layer2PRAutomation', () => {
 
       const result = await layer.runCodeRabbit();
 
-      expect(spawnSyncSpy).toHaveBeenCalledWith('wsl', ['-l'], { encoding: 'utf8' });
+      if (process.platform === 'win32') {
+        expect(spawnSyncSpy).toHaveBeenCalledWith('wsl', ['-l'], { encoding: 'utf8' });
+      } else {
+        expect(spawnSyncSpy).not.toHaveBeenCalledWith('wsl', ['-l'], { encoding: 'utf8' });
+      }
       expect(result.pass).toBe(true);
       expect(result.issues.critical).toBe(0);
       expect(result.issues.high).toBe(1);

@@ -58,6 +58,68 @@ describe('updater recovery parity', () => {
     await fs.remove(projectRoot);
   });
 
+  async function npmBinFixture() {
+    const modules = path.join(projectRoot, '.aexos-core/node_modules');
+    const target = path.join(modules, 'glob/bin.js');
+    const link = path.join(modules, '.bin/glob');
+    await fs.outputFile(target, 'original executable');
+    await fs.writeJson(path.join(modules, 'glob/package.json'), { name: 'glob', bin: { glob: 'bin.js' } });
+    await fs.ensureDir(path.dirname(link));
+    await fs.symlink('../glob/bin.js', link, 'file');
+    return { modules, target, link };
+  }
+
+  test('round trips declared relative npm executable links without dereferencing them', async () => {
+    const { target, link } = await npmBinFixture();
+    const originalLink = await fs.readlink(link);
+    const updater = createUpdater(projectRoot);
+    await updater.createBackup();
+    const snapshot = path.join(updater.backupDir, 'framework/node_modules/.bin/glob');
+    expect((await fs.lstat(snapshot)).isSymbolicLink()).toBe(true);
+    expect(await fs.readlink(snapshot)).toBe(originalLink);
+    await fs.writeFile(target, 'changed executable');
+    await fs.unlink(link);
+    const recovery = await updater.rollback();
+    expect(recovery.frameworkRestored).toBe(true);
+    expect(await fs.readlink(link)).toBe(originalLink);
+    expect(await fs.readFile(link, 'utf8')).toBe('original executable');
+  });
+
+  test.each([false, true])('restores changed legitimate npm bin links (missing new target: %s)', async (missing) => {
+    const { modules, link } = await npmBinFixture();
+    const originalLink = await fs.readlink(link);
+    const updater = createUpdater(projectRoot);
+    await updater.createBackup();
+    await fs.writeJson(path.join(modules, 'glob/package.json'), { name: 'glob', bin: { glob: 'cli.js' } });
+    if (!missing) await fs.outputFile(path.join(modules, 'glob/cli.js'), 'new executable');
+    await fs.unlink(link);
+    await fs.symlink('../glob/cli.js', link, 'file');
+    const recovery = await updater.rollback();
+    expect(recovery.frameworkRestored).toBe(true);
+    expect(await fs.readlink(link)).toBe(originalLink);
+    expect(await fs.readFile(link, 'utf8')).toBe('original executable');
+  });
+
+  test.each(['escape', 'absolute', 'undeclared', 'linked-target', 'linked-ancestor'])(
+    'rejects unsafe npm executable link: %s', async (kind) => {
+      const { modules, target, link } = await npmBinFixture();
+      if (kind === 'undeclared') {
+        await fs.writeJson(path.join(modules, 'glob/package.json'), { name: 'glob', bin: { other: 'bin.js' } });
+      } else if (kind === 'linked-target') {
+        await fs.unlink(target);
+        await fs.symlink(path.join(projectRoot, '.aexos-core/owner-notes.md'), target, 'file');
+      } else if (kind === 'linked-ancestor') {
+        await fs.move(path.join(modules, 'glob'), path.join(projectRoot, 'linked-package'));
+        await fs.symlink(path.join(projectRoot, 'linked-package'), path.join(modules, 'glob'), 'junction');
+      } else {
+        await fs.unlink(link);
+        await fs.symlink(kind === 'absolute' ? target : '../../../owner-notes.md', link, 'file');
+      }
+      await expect(createUpdater(projectRoot).createBackup()).rejects.toThrow(/symbolic link/);
+      expect(await fs.readFile(path.join(projectRoot, '.aexos-core/runtime/engine.js'), 'utf8')).toBe('old-runtime');
+    },
+  );
+
   test('retains the durable recovery state when its atomic replacement fails', async () => {
     const updater = createUpdater(projectRoot);
     await updater.createBackup();

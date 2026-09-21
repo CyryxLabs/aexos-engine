@@ -142,7 +142,7 @@ flowchart TB
 | File | Command | Purpose |
 |---------|---------|-----------|
 | `.aexos-core/development/tasks/ux-ds-scan-artifact.md` | `*scan {path\|url}` | Analyze HTML/React to extract patterns |
-| `.aexos-core/development/tasks/integrate-Squad.md` | `*integrate {squad}` | Connect with an expansion squad |
+| `.aexos-core/development/tasks/integrate-squad.md` | `*integrate {squad}` | Connect with an expansion squad |
 
 ### Templates
 
@@ -394,7 +394,7 @@ flowchart TB
 | Command | Task File | Input | Output |
 |---------|-----------|---------|-------|
 | `*scan {path\|url}` | `ux-ds-scan-artifact.md` | Artifact | scan-summary.md, design-tokens.yaml |
-| `*integrate {squad}` | `integrate-Squad.md` | Squad name | Integration config |
+| `*integrate {squad}` | `integrate-squad.md` | Squad name | Integration config |
 | `*help` | N/A | N/A | List of commands by phase |
 | `*status` | N/A | N/A | Current workflow state |
 | `*guide` | N/A | N/A | Complete agent guide |

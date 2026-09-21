@@ -9,6 +9,7 @@
 const DevContextLoader = require('../../.aexos-core/development/scripts/dev-context-loader');
 const SessionContextLoader = require('../../.aexos-core/core/session/context-loader');
 const { createGreetingProject } = require('../helpers/isolated-greeting-project');
+const fs = require('fs');
 const path = require('path');
 
 describe('Agent Activation Performance (Integration)', () => {
@@ -105,19 +106,43 @@ describe('Agent Activation Performance (Integration)', () => {
     }, 60000);
 
     test('@dev cached activation is significantly faster', async () => {
-      const cold = [], warm = [];
-      for (let i = 0; i < 20; i++) {
-        const start = performance.now();
+      // Use a realistic large context so filesystem/parser work is measurable above
+      // sub-millisecond scheduler noise on Node 18 CI runners.
+      const fixturePath = path.join(project.root, 'docs/fixture-context.md');
+      const lines = ['# Consumer context', ...Array.from({ length: 20000 }, (_, i) => `Operational requirement ${i + 1}.`)];
+      fs.writeFileSync(fixturePath, lines.join('\n'));
+      await devLoader.clearCache();
+
+      const readSpy = jest.spyOn(fs.promises, 'readFile');
+      const writeSpy = jest.spyOn(fs.promises, 'writeFile');
+      try {
         await devLoader.load({ fullLoad: false, skipCache: true });
-        cold.push(performance.now() - start);
-        const cachedStart = performance.now();
-        const cached = await devLoader.load({ fullLoad: false });
-        warm.push(performance.now() - cachedStart);
-        expect(cached.cacheHits).toBe(1);
+        expect(readSpy.mock.calls.some(([file]) => path.resolve(file) === fixturePath)).toBe(true);
+        expect(writeSpy.mock.calls.some(([file]) => path.basename(file).startsWith('devcontext_'))).toBe(true);
+
+        readSpy.mockClear();
+        writeSpy.mockClear();
+        const cachedProbe = await devLoader.load({ fullLoad: false });
+        expect(cachedProbe.cacheHits).toBe(1);
+        expect(readSpy.mock.calls.some(([file]) => path.resolve(file) === fixturePath)).toBe(false);
+        expect(writeSpy.mock.calls.some(([file]) => path.basename(file).startsWith('devcontext_'))).toBe(false);
+
+        const cold = [], warm = [];
+        for (let i = 0; i < 20; i++) {
+          const start = performance.now();
+          await devLoader.load({ fullLoad: false, skipCache: true });
+          cold.push(performance.now() - start);
+          const cachedStart = performance.now();
+          const cached = await devLoader.load({ fullLoad: false });
+          warm.push(performance.now() - cachedStart);
+          expect(cached.cacheHits).toBe(1);
+        }
+        const median = values => [...values].sort((a, b) => a - b)[Math.floor(values.length / 2)];
+        expect(median(warm)).toBeLessThan(median(cold) * 0.5);
+      } finally {
+        readSpy.mockRestore();
+        writeSpy.mockRestore();
       }
-      const median = values => values.sort((a,b) => a-b)[Math.floor(values.length / 2)];
-      // Compare medians with sub-millisecond resolution, avoiding Date.now rounding.
-      expect(median(warm)).toBeLessThan(median(cold) * 0.5);
     }, 60000);
   });
 

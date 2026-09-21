@@ -97,7 +97,7 @@ Parse `## Mission:` from your spawn prompt and match:
 | Mission Keyword | Task File | Extra Resources |
 |----------------|-----------|-----------------|
 | `develop-story` (default) | `dev-develop-story.md` | `story-dod-checklist.md`, `component-quality-checklist.md` (checklists) |
-| `integrate` | `integrate-Squad.md` | — |
+| `integrate` | `integrate-squad.md` | — |
 | `execute-checklist` | `execute-checklist.md` | Target checklist passed in prompt |
 
 **Path resolution**: Tasks at `.aexos-core/development/tasks/`, checklists at `.aexos-core/product/checklists/`, templates at `.aexos-core/product/templates/`, data at `.aexos-core/product/data/` and `.aexos-core/data/`.

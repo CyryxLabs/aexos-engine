@@ -139,7 +139,7 @@ ux-design-expert:
 | `*a11y-check` | accessibility-wcag-checklist.md (checklist) | Phase 5: Quality | Optional |
 | `*calculate-roi` | calculate-roi.md | Phase 5: Quality | No |
 | `*scan {path\|url}` | ux-ds-scan-artifact.md | Universal | Yes |
-| `*integrate {squad}` | integrate-Squad.md (MISSING - see Section 6) | Universal | Yes |
+| `*integrate {squad}` | integrate-squad.md (MISSING - see Section 6) | Universal | Yes |
 
 ---
 
@@ -687,16 +687,16 @@ flowchart TD
 
 ### `*integrate {squad}`
 
-**Task file:** `.aexos-core/development/tasks/integrate-Squad.md` (MISSING)
+**Task file:** `.aexos-core/development/tasks/integrate-squad.md` (MISSING)
 
 **Dependencies loaded:**
 | File | Type | Status |
 |------|------|--------|
-| `integrate-Squad.md` | Task | MISSING |
+| `integrate-squad.md` | Task | MISSING |
 | `integrate-squad.md` | Task | EXISTS (possible intended file) |
 | `integration-patterns.md` | Data | EXISTS (product/data/) |
 
-**Note:** The agent definition references `integrate-Squad.md` but only `integrate-squad.md` exists on disk. This may cause a runtime error or the task loader may fall back.
+**Note:** The agent definition references `integrate-squad.md` but only `integrate-squad.md` exists on disk. This may cause a runtime error or the task loader may fall back.
 
 ---
 
@@ -781,7 +781,7 @@ graph TD
     end
 
     subgraph "Task Files - MISSING"
-        TM1[integrate-Squad.md]
+        TM1[integrate-squad.md]
     end
 
     subgraph "Templates (product/templates/)"
@@ -925,7 +925,7 @@ graph TD
 
 | File | Type | Referenced By | Impact |
 |------|------|---------------|--------|
-| `integrate-Squad.md` | Task | `*integrate {squad}` | Command non-functional; `integrate-squad.md` exists as possible substitute |
+| `integrate-squad.md` | Task | `*integrate {squad}` | Command non-functional; `integrate-squad.md` exists as possible substitute |
 
 ### Notes on Dependency Locations
 
