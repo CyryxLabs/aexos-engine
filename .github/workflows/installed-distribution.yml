@@ -1,0 +1,78 @@
+name: Installed Distribution
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: installed-distribution-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  installed:
+    name: Installed (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Resolve public legacy artifact and npm CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/aexos-published"
+          npm pack @aexos/core@5.3.0 --pack-destination "$RUNNER_TEMP/aexos-published" --json > "$RUNNER_TEMP/aexos-published/pack.json"
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+          const crypto = require('crypto');
+          const cp = require('child_process');
+          const base = path.join(process.env.RUNNER_TEMP, 'aexos-published');
+          const packed = JSON.parse(fs.readFileSync(path.join(base, 'pack.json'), 'utf8'))[0];
+          const artifact = path.join(base, packed.filename);
+          const hash = crypto.createHash('sha256').update(fs.readFileSync(artifact)).digest('hex');
+          if (hash !== '7943bc9ecfcbd6ccb2ff9cd0550f5d4ed172c6defdb3ce9c5a024c589b647b26') throw new Error('Published baseline integrity mismatch');
+          const globalRoot = cp.execFileSync('npm', ['root', '-g'], { encoding: 'utf8' }).trim();
+          const npmCli = path.join(globalRoot, 'npm/bin/npm-cli.js');
+          if (!fs.existsSync(npmCli)) throw new Error('Cannot resolve installed npm CLI');
+          fs.appendFileSync(process.env.GITHUB_ENV, `AEXOS_PARITY_NPM_CLI=${npmCli}\nAEXOS_PARITY_PUBLISHED_TARBALL=${artifact}\n`);
+          NODE
+      - name: Execute installed artifact journeys
+        run: node scripts/parity/installed.js
+      - name: Preserve commands, outcomes and tested artifacts
+        if: always()
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+          const file = 'docs/parity/evidence/installed.json';
+          if (!fs.existsSync(file)) process.exit(0);
+          const report = JSON.parse(fs.readFileSync(file, 'utf8'));
+          const target = 'distribution-evidence';
+          fs.mkdirSync(target, { recursive: true });
+          fs.copyFileSync(file, path.join(target, 'installed.json'));
+          for (const step of report.steps || []) {
+            if (step.log_path && fs.existsSync(step.log_path)) fs.copyFileSync(step.log_path, path.join(target, path.basename(step.log_path)));
+          }
+          for (const artifact of [report.artifact, ...(report.additional_artifacts || [])].filter(Boolean)) {
+            if (fs.existsSync(artifact.path)) fs.copyFileSync(artifact.path, path.join(target, `${artifact.sha256.slice(0, 12)}-${path.basename(artifact.path)}`));
+          }
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: installed-${{ matrix.os }}-${{ github.sha }}
+          path: distribution-evidence/
+          if-no-files-found: warn
+          retention-days: 14

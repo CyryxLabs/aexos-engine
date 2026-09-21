@@ -1,0 +1,59 @@
+{
+  "branches": ["main"],
+  "plugins": [
+    ["@semantic-release/commit-analyzer", {
+      "preset": "conventionalcommits",
+      "releaseRules": [
+        { "type": "feat", "release": "minor" },
+        { "type": "fix", "release": "patch" },
+        { "type": "perf", "release": "patch" },
+        { "type": "revert", "release": "patch" },
+        { "breaking": true, "release": "major" }
+      ]
+    }],
+    ["@semantic-release/release-notes-generator", {
+      "preset": "conventionalcommits",
+      "presetConfig": {
+        "types": [
+          { "type": "feat", "section": "Features" },
+          { "type": "fix", "section": "Bug Fixes" },
+          { "type": "perf", "section": "Performance" },
+          { "type": "revert", "section": "Reverts" },
+          { "type": "docs", "section": "Documentation", "hidden": false },
+          { "type": "chore", "section": "Maintenance", "hidden": false },
+          { "type": "refactor", "section": "Refactoring", "hidden": false },
+          { "type": "test", "section": "Tests", "hidden": true },
+          { "type": "ci", "section": "CI/CD", "hidden": true },
+          { "type": "style", "hidden": true }
+        ]
+      }
+    }],
+    ["@semantic-release/changelog", {
+      "changelogFile": "CHANGELOG.md"
+    }],
+    ["@semantic-release/npm", {
+      "npmPublish": false
+    }],
+    ["@semantic-release/exec", {
+      "prepareCmd": "node scripts/sync-version-lockstep.js ${nextRelease.version}"
+    }],
+    ["@semantic-release/git", {
+      "assets": [
+        "package.json",
+        "package-lock.json",
+        ".aexos-core/package.json",
+        ".aexos-core/framework-config.yaml",
+        ".aexos-core/core-config.yaml",
+        ".aexos-core/install-manifest.yaml",
+        "compat/aexos-core/package.json",
+        "packages/aexos-install/package.json",
+        "packages/aexos-pro-cli/package.json",
+        "packages/gemini-aexos-extension/package.json",
+        "packages/installer/package.json",
+        "CHANGELOG.md"
+      ],
+      "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+    }],
+    "@semantic-release/github"
+  ]
+}

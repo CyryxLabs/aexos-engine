@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AEXOS — Agentic eXecution &amp; Orchestration System</title>
+    <meta
+      name="description"
+      content="A CLI-first framework that orchestrates 64 specialised AI agents across nine squads. Every specialist is anchored to a published, named method and cites it, so its recommendations can be audited against the source."
+    />
+
+    <meta property="og:title" content="AEXOS — Agentic eXecution &amp; Orchestration System" />
+    <meta
+      property="og:description"
+      content="Sixty-four agents, nine squads, one command layer. Every specialist cites the published method it applies."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://github.com/CyryxLabs/AEXOS" />
+    <!--
+      Social cards must be raster: no major platform rasterises SVG for a preview,
+      so pointing og:image at the banner SVG produced a blank card. This is the
+      same wordmark geometry at the 1.91:1 ratio crawlers want — JPEG rather than
+      PNG because the teal wash is a gradient, which costs 252KB as PNG and 46KB
+      here with no visible difference.
+    -->
+    <meta property="og:image" content="https://raw.githubusercontent.com/CyryxLabs/AEXOS/main/public/assets/aexos-social.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="AEXOS — Agentic eXecution & Orchestration System, by Cyryx Labs" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#050607" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <header class="topbar">
+      <div class="shell topbar-inner">
+        <a class="brand" href="#top" aria-label="AEXOS home">
+          <span class="brand-glyph" aria-hidden="true"></span>
+          <span class="brand-name">AEXOS</span>
+          <span class="brand-by">Cyryx Labs</span>
+        </a>
+
+        <nav class="nav" aria-label="Sections">
+          <a href="#premise">Premise</a>
+          <a href="#model">Model</a>
+          <a href="#squads">Squads</a>
+          <a href="#attribution">Attribution</a>
+          <a href="#gates">Gates</a>
+          <a href="#install">Install</a>
+        </nav>
+
+        <a class="btn btn-ghost" href="https://github.com/CyryxLabs/AEXOS" target="_blank" rel="noopener">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+          </svg>
+          Repository
+        </a>
+      </div>
+    </header>
+
+    <main id="main">
+      <!-- ─── HERO ────────────────────────────────────────────────────────── -->
+      <section class="hero" id="top">
+        <div class="shell">
+          <p class="eyebrow">Cyryx Labs · v5.3.0 · Proprietary</p>
+
+          <!-- The wordmark is the page title, so it carries the h1 rather than
+               sitting above a heading that repeats it. -->
+          <h1 class="wordmark-title">
+            <img class="wordmark" src="assets/aexos-wordmark.svg" alt="AEXOS" width="588" height="139" />
+          </h1>
+
+          <p class="expansion">Agentic e<span class="x">X</span>ecution &amp; Orchestration System</p>
+
+          <p class="thesis">
+            Sixty-four specialised agents across nine squads, driven from one command layer.
+            Every specialist is anchored to a published, named method — and cites it.
+          </p>
+
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#install">Install</a>
+            <a class="btn btn-secondary" href="#squads">See the squads</a>
+          </div>
+
+          <div class="panel term" data-panel="bash — aexos">
+            <div class="scroll">
+              <pre><code><span class="ln"><span class="pr">$</span> <span class="cmd">npx @aexos/core install</span></span>
+<span class="ln dim">  Installing AEXOS core framework…</span>
+<span class="ln"><span class="ok">✓</span> <span class="dim">Core installed</span>  <span class="dim">12 agents · 213 tasks · 14 workflows</span></span>
+<span class="ln"><span class="ok">✓</span> <span class="dim">Squads installed</span>  <span class="dim">9 squads · 52 agents · 78 tasks</span></span>
+<span class="ln"><span class="ok">✓</span> <span class="dim">Registry</span>  <span class="dim">9 squads routable via</span> <span class="tl">@aexos-master</span></span></code></pre>
+            </div>
+            <button class="copy" data-copy="npx @aexos/core install">Copy<span class="sr">&nbsp;install command</span></button>
+          </div>
+
+          <ul class="metrics" aria-label="Project figures">
+            <li><b>9</b><span>squads</span></li>
+            <li><b>64</b><span>agents</span></li>
+            <li><b>291</b><span>tasks</span></li>
+            <li><b>33</b><span>workflows</span></li>
+            <li><b>9,306</b><span>tests</span></li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ─── PREMISE ─────────────────────────────────────────────────────── -->
+      <section class="band" id="premise">
+        <div class="shell">
+          <h2 class="cap">The premise</h2>
+          <p class="lede">
+            The command line is where the intelligence lives. Everything else observes it.
+          </p>
+
+          <ol class="ladder">
+            <li>
+              <span class="rank">01</span>
+              <h3>CLI first</h3>
+              <p>Execution, decisions and automation. A capability that does not work here does not exist yet.</p>
+            </li>
+            <li>
+              <span class="rank">02</span>
+              <h3>Observability second</h3>
+              <p>Dashboards watch what the CLI is doing. They never drive it, and are never required to operate it.</p>
+            </li>
+            <li>
+              <span class="rank">03</span>
+              <h3>UI third</h3>
+              <p>Point management and visualisation, where a screen genuinely beats a command.</p>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- ─── MODEL ───────────────────────────────────────────────────────── -->
+      <section class="band alt" id="model">
+        <div class="shell">
+          <h2 class="cap">The expertise is in the procedure</h2>
+          <p class="lede">
+            Workflows are composed of connected <em>tasks</em>, not connected agents. A task declares
+            its inputs, its outputs and the checklist it must pass. The agent is a router; swap it
+            and the method is unchanged.
+          </p>
+
+          <dl class="model">
+            <div>
+              <dt>Agent</dt>
+              <dd>A role with a persona, a scope of authority and a list of procedures it may run.</dd>
+            </div>
+            <div>
+              <dt>Task</dt>
+              <dd>An executable procedure with declared inputs, outputs and an exit checklist. The method lives here.</dd>
+            </div>
+            <div>
+              <dt>Template</dt>
+              <dd>The shape of the document the task produces.</dd>
+            </div>
+            <div>
+              <dt>Checklist</dt>
+              <dd>The validation a task must pass before it counts as done.</dd>
+            </div>
+            <div>
+              <dt>Data</dt>
+              <dd>The knowledge base a task reads from — reference tables, signal lists, decision models.</dd>
+            </div>
+            <div>
+              <dt>Workflow</dt>
+              <dd>A sequence of connected tasks, with the conditions for moving between them.</dd>
+            </div>
+          </dl>
+
+          <p class="note">
+            A validated task is binding: it runs as configured, with its dependencies respected,
+            regardless of who executes it — an agent, a worker or a human.
+          </p>
+        </div>
+      </section>
+
+      <!-- ─── SQUADS ──────────────────────────────────────────────────────── -->
+      <section class="band" id="squads">
+        <div class="shell">
+          <h2 class="cap">Nine squads, sixty-four agents</h2>
+          <p class="lede">
+            Twelve core agents cover the software lifecycle. Nine squads extend it into the rest of a
+            company. Each squad has one front door; the chief distributes internally.
+          </p>
+
+          <div class="panel roster" data-panel="SQUADS">
+            <div class="scroll"><table>
+              <thead>
+                <tr><th scope="col">Entry</th><th scope="col">Squad</th><th scope="col" class="num">Agents</th><th scope="col">Domain</th></tr>
+              </thead>
+              <tbody>
+                <tr><td class="handle">@ceo-chief</td><td>CEO</td><td class="num">5</td><td>Strategy, capital allocation, organisation</td></tr>
+                <tr><td class="handle">@board-chief</td><td>Board</td><td class="num">5</td><td>Governance, risk oversight, succession</td></tr>
+                <tr><td class="handle">@products-chief</td><td>Products</td><td class="num">7</td><td>Discovery, positioning, monetisation, proof</td></tr>
+                <tr><td class="handle">@marketing-chief</td><td>Marketing</td><td class="num">7</td><td>Brand, demand, offer, funnel, measurement</td></tr>
+                <tr><td class="handle">@sales-chief</td><td>Sales</td><td class="num">5</td><td>Qualification, method, negotiation, pipeline</td></tr>
+                <tr><td class="handle">@ops-chief</td><td>Operations</td><td class="num">5</td><td>Reliability, flow, continuous improvement, incident</td></tr>
+                <tr><td class="handle">@cs-chief</td><td>Customer Success</td><td class="num">5</td><td>Onboarding, retention, advocacy, voice</td></tr>
+                <tr><td class="handle">@admin-chief</td><td>Business Administration</td><td class="num">5</td><td>Finance, people, legal ops, process</td></tr>
+                <tr><td class="handle">@claude-mastery-chief</td><td>Claude Code Mastery</td><td class="num">8</td><td>Hooks, MCP, config, swarm, integration</td></tr>
+              </tbody>
+            </table></div>
+          </div>
+
+          <p class="note">
+            Squads are routed by a generated registry, not by hardcoded names. Adding one requires no
+            change to the orchestrator — creating the squad is what registers it.
+          </p>
+        </div>
+      </section>
+
+      <!-- ─── ATTRIBUTION ─────────────────────────────────────────────────── -->
+      <section class="band alt" id="attribution">
+        <div class="shell">
+          <h2 class="cap">Method, not impersonation</h2>
+          <p class="lede">
+            Every specialist applies a published method and names it. That is load-bearing, not
+            decorative: an agent that follows a named method can be audited against the source, while
+            an agent doing celebrity impersonation has nothing to be verified against.
+          </p>
+
+          <div class="cards">
+            <article class="card">
+              <h3>Cited, not channelled</h3>
+              <p>
+                An agent declares the work its method comes from. Ask why it recommended something and
+                the answer traces to a page you can open.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Honest where there is no text</h3>
+              <p>
+                Where a role rests on a discipline with no canonical work, it says so instead of
+                manufacturing an authority. A wrong attribution is worse than none.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Numbers are not recalled</h3>
+              <p>
+                Figures from the source works are read from the publication or left unstated. A
+                coefficient quoted from memory is a defect, not a detail.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Evidence has a class</h3>
+              <p>
+                A practitioner heuristic supports construction and sequencing. Only measured data
+                supports a magnitude. Stating one in the voice of the other is a blocking error.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─── GATES ───────────────────────────────────────────────────────── -->
+      <section class="band" id="gates">
+        <div class="shell">
+          <h2 class="cap">The framework validates itself</h2>
+          <p class="lede">
+            A contract with no gate stops being a contract. These run in CI, and warnings are treated
+            as failures — each one names a missing field, a stale reference or a deprecated shape.
+          </p>
+
+          <div class="panel checks" data-panel="CI">
+            <ul>
+              <li><span class="ok">✓</span> Squad manifests validate against the JSON schema</li>
+              <li><span class="ok">✓</span> Every dependency an agent declares resolves on disk</li>
+              <li><span class="ok">✓</span> Every shipped YAML parses</li>
+              <li><span class="ok">✓</span> Manifest identity agrees with the definitions it describes</li>
+              <li><span class="ok">✓</span> Generated registries are byte-reproducible</li>
+              <li><span class="ok">✓</span> Agent definitions, IDE sync and skill export stay in step</li>
+              <li><span class="ok">✓</span> Install manifest hash matches the tree</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─── INSTALL ─────────────────────────────────────────────────────── -->
+      <section class="band alt" id="install">
+        <div class="shell">
+          <h2 class="cap">Install</h2>
+          <p class="lede">Node 18 or later. The installer scaffolds the core, the squads and the routing registry.</p>
+
+          <div class="steps">
+            <div class="step">
+              <p class="step-cap">Install into a project</p>
+              <div class="panel term small" data-panel="bash">
+                <div class="scroll"><pre><code><span class="pr">$</span> npx @aexos/core install</code></pre></div>
+                <button class="copy" data-copy="npx @aexos/core install">Copy<span class="sr">&nbsp;npx @aexos/core install</span></button>
+              </div>
+            </div>
+
+            <div class="step">
+              <p class="step-cap">Check the installation</p>
+              <div class="panel term small" data-panel="bash">
+                <div class="scroll"><pre><code><span class="pr">$</span> aexos doctor</code></pre></div>
+                <button class="copy" data-copy="aexos doctor">Copy<span class="sr">&nbsp;aexos doctor</span></button>
+              </div>
+            </div>
+
+            <div class="step">
+              <p class="step-cap">Open the orchestrator</p>
+              <div class="panel term small" data-panel="agent">
+                <div class="scroll"><pre><code><span class="tl">@aexos-master</span></code></pre></div>
+                <button class="copy" data-copy="@aexos-master">Copy<span class="sr">&nbsp;@aexos-master</span></button>
+              </div>
+            </div>
+          </div>
+
+          <p class="note">
+            Ask the orchestrator for something and it reads the registry, matches the domain and routes
+            to the squad that owns it. Push, release and MCP configuration stay the exclusive authority
+            of one agent, by design.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <div class="shell foot-inner">
+        <span class="foot-brand">AEXOS</span>
+        <span class="foot-meta">© <span id="yr">2026</span> Cyryx Labs LLC · Proprietary · All rights reserved</span>
+        <a href="https://github.com/CyryxLabs/AEXOS" target="_blank" rel="noopener">github.com/CyryxLabs/AEXOS</a>
+      </div>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>

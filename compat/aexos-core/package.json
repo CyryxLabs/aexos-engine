@@ -1,0 +1,36 @@
+{
+  "name": "aexos-core",
+  "version": "1.0.0",
+  "description": "Compatibility wrapper for @aexos/core.",
+  "license": "SEE LICENSE IN LICENSE",
+  "bin": {
+    "aexos": "bin/aexos-core.js",
+    "aexos-core": "bin/aexos-core.js",
+    "aexos-minimal": "bin/aexos-minimal.js",
+    "aexos-graph": "bin/aexos-graph.js",
+    "aexos-delegate": "bin/aexos-delegate.js"
+  },
+  "files": [
+    "bin/",
+    "README.md"
+  ],
+  "dependencies": {
+    "@aexos/core": "1.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CyryxLabs/aexos-engine.git",
+    "directory": "compat/aexos-core"
+  },
+  "bugs": {
+    "url": "https://github.com/CyryxLabs/aexos-engine/issues"
+  },
+  "homepage": "https://github.com/CyryxLabs/aexos-engine#readme",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}

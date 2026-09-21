@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "purpose": "Comparison and explicit adaptation only. Never perform repository-wide content replacement.",
+  "path_tokens": {".aiox-core": ".aexos-core", ".aiox": ".aexos", "aiox": "aexos", "AIOX": "AEXOS"},
+  "package_identity": {"@aiox-squads/core": "@aexos/core", "@aiox-master": "@aexos-master"},
+  "preserve": ["provider model identifiers", "external API and protocol identifiers", "published dependency names", "licenses and required attribution", "authorized service endpoints"],
+  "content_rule": "No blanket normalization of content. Exact bytes are recorded; differing content remains unclassified until contract review and tests."
+}

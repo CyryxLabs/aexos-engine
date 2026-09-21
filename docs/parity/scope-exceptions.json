@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "exceptions": [
+    {
+      "id": "OWNER-EXCLUDE-PRIVATE-PRO",
+      "upstream_path": "pro",
+      "upstream_commit": "4ef6530ff03b83aea953e4a426f95e012b8b70c5",
+      "gitlink": "191de3dcdbc099254c54bcfa29db59c2f81528d3",
+      "authorized_by": "owner",
+      "authorization": "Nao - pode ignorar essa parte e prosseguir",
+      "scope": "Inaccessible private submodule content only. Public Pro interfaces, denial behavior, licenses and AEXOS extensions remain required.",
+      "effect": "Retained in source inventory, excluded from this round's required capability denominator; no claim of private Pro parity."
+    }
+  ]
+}

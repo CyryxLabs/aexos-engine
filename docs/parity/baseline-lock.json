@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "frozen_at": "2026-09-21T02:37:03.539Z",
+  "upstream": {
+    "repository": "https://github.com/SynkraAI/aiox-core.git",
+    "ref": "main",
+    "commit": "4ef6530ff03b83aea953e4a426f95e012b8b70c5",
+    "tree": "13752e068667d43f1fc0054074c7b4e74193b1ec",
+    "entries": 3023
+  },
+  "candidate": {
+    "repository": "https://github.com/CyryxLabs/aexos-engine.git",
+    "commit": "5342f5a7c1ab6212087da2011265c11f1002503f",
+    "tree": "397ae0ca602ca2e23f1f076bd36a3dbfbb3b4f5d",
+    "initial_status": "clean isolated clone before story and implementation"
+  },
+  "origin_baseline": "unknown",
+  "environment": {
+    "platform": "win32",
+    "arch": "x64",
+    "node": "v24.19.0",
+    "git": "git version 2.51.0.windows.1",
+    "npm": "10.9.2"
+  },
+  "locks": {
+    "upstream": "2c4e5bdeb67e5c558d8de9c61b162f525199886815de46491835fde4ff6c31eb",
+    "candidate": "00cbc73c79bfa6d3b348c34453e42c9572e49dbd6905d3866713f172165ac09a"
+  },
+  "safety": {
+    "upstream_read_only": true,
+    "submodules_initialized": false,
+    "external_model_calls_authorized": false,
+    "remote_writes_authorized": false
+  }
+}

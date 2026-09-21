@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .aexos-core/infrastructure/templates/grok-hooks/enforce-git-push-authority.cjs",
+            "timeout": 10
+          }
+        ],
+        "matcher": "Bash|run_terminal_command"
+      }
+    ]
+  }
+}

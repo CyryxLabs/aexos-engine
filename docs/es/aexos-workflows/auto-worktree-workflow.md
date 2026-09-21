@@ -1,0 +1,44 @@
+<!--
+  AEXOS localization provenance: adapted from https://github.com/SynkraAI/aiox-core/blob/4ef6530ff03b83aea953e4a426f95e012b8b70c5/docs/es/aiox-workflows/auto-worktree-workflow.md
+  Upstream localized content retained under the MIT license: https://github.com/SynkraAI/aiox-core/blob/4ef6530ff03b83aea953e4a426f95e012b8b70c5/LICENSE
+  Status: adapted for AEXOS identity and paths; not behaviorally verified.
+-->
+# Auto Worktree Workflow
+
+> [PT](../../aexos-workflows/auto-worktree-workflow.md) | [EN](../../en/aexos-workflows/auto-worktree-workflow.md) | **ES**
+
+---
+
+> **Nota:** Esta es una version resumida. Para la documentacion completa, consulte la [version en portugues](../../aexos-workflows/auto-worktree-workflow.md).
+
+---
+
+## Vision General
+
+Workflow para gestion automatica de git worktrees, incluyendo:
+
+- Creacion de worktrees por story
+- Aislamiento de trabajo
+- Merge automatizado
+- Limpieza de worktrees
+
+## Cuando Usar
+
+- Desarrollo paralelo de stories
+- Aislamiento de cambios
+- Trabajo en multiples features
+
+## Agentes Participantes
+
+| Agente | Rol |
+|--------|-----|
+| @devops | Gestion de worktrees |
+| @dev | Uso de worktrees |
+
+## Ver Mas
+
+- **[Documentacion completa (PT)](../../aexos-workflows/auto-worktree-workflow.md)**
+
+---
+
+*Stub v1.0 - Referencia a documentacion principal*

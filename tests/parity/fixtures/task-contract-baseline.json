@@ -1,0 +1,3374 @@
+{
+  "schema_version": "1.0.0",
+  "source": "git HEAD candidate task bodies before task operational-path correction batch",
+  "normalization": [
+    "exclude Tools and Scripts sections from substantive projection",
+    "normalize canonical framework/vendor identity and local dependency paths",
+    "normalize database vocabulary for reviewed PostgreSQL metadata correction"
+  ],
+  "record_count": 218,
+  "records": [
+    {
+      "path": ".aexos-core/development/tasks/add-mcp.md",
+      "baseline_sha256": "f282f70feee7aa8e30f5eeaf95fde07296df928d6853943ff736c02c4729c431",
+      "substantive_projection_sha256": "55659bf133f9d73e1ffeb7fdc9b5df0656080bcd4030d1ceb432d2f55d5bfd56",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/advanced-elicitation.md",
+      "baseline_sha256": "7bd450ffb18f5e9b735da539fee1f28b21d0aa1a9270c0b0d9825e2ed68e751f",
+      "substantive_projection_sha256": "592e864f08d9f60108895a535e41d69ff57dfe146ffe2c904a33cef0836ffaff",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/analyst-facilitate-brainstorming.md",
+      "baseline_sha256": "d952273987b261ea5cecb95d6f7638b62225965401d94197f9195f5a9c5c6c2e",
+      "substantive_projection_sha256": "7f750c2ca15d259416d9d6dba36a5b62fb95a6eee7cf7e6310f75a42d612acf4",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/analyze-brownfield.md",
+      "baseline_sha256": "422ccab61090061e5996c230ea93169f6b4763c22dc87920d6969ab2d299a758",
+      "substantive_projection_sha256": "55348fbdda8babd9364a923efda1fa679b56b774c8d2c7210e1917c4ef5b16c1",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output Options"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/analyze-cross-artifact.md",
+      "baseline_sha256": "f726c298166b25943203b091922b075b36ebcfe899cb8fe62353963571edbcaf",
+      "substantive_projection_sha256": "00dd50f049d79d88a272f8cb6c286cabb1c70106a72869a300867e6223c5461f",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/analyze-framework.md",
+      "baseline_sha256": "af0adb5f10f3f4a31c77cfed944dcd769d5b61cec11926d16d06ffbb6e920826",
+      "substantive_projection_sha256": "0fb20c8271e17ae11f33cbcd188ba838c2d45fc4e9c8cb7d0b7c9f80f6a2e1bb",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/analyze-performance.md",
+      "baseline_sha256": "4cb272b3f1cc76727b0cbc6b12410ba5280dcf69679114facd247022f7fc3cd9",
+      "substantive_projection_sha256": "01612ef9309fefe721e1e866f42207cc218292cf19f565e533aaded02f644901",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output Examples"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/analyze-project-structure.md",
+      "baseline_sha256": "ec840409fde1ae76587befe2d5756b755885f610203b238e1bda5bce06083409",
+      "substantive_projection_sha256": "6d3d590d0fae0a945e25189f49c8680c64c557d3abd5b1a3a7f9e50218d80461",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (3-5 prompts) **[DEFAULT]**",
+        "### 3. Comprehensive Mode - Full Analysis"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/apply-qa-fixes.md",
+      "baseline_sha256": "15d24709b8e4d6299e928dbab215dc2101a25a39fd841169ef6a259e054f1ee8",
+      "substantive_projection_sha256": "1fc63069fca52b98cb38eb426fbba9845b60150bda82c9cf2f00511d289a558c",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/architect-analyze-impact.md",
+      "baseline_sha256": "2b6aa2d52d6cd29ac4631b9ebb57cf1a125b639e370807be554b411b4f42d01f",
+      "substantive_projection_sha256": "ac8110145f8d3b9f13c4f6ab6ca0d69883bf194ebdbb6ad86c7277ea5b1d1d10",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "### Input Validation",
+        "## Output Structure"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/audit-codebase.md",
+      "baseline_sha256": "7c62792bffe5ef8ae06a47f1991102e2d974222aee613af223bd13845eda6d2c",
+      "substantive_projection_sha256": "df154aea5c89976bd4d15b070b35b19a81054c45bc995a36e284605a4bbf8621",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output",
+        "### Output Format",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/audit-tailwind-config.md",
+      "baseline_sha256": "51b16d79430347379c095098e3fbe9d69c2a211df58c56a5a1bc83824bb404fc",
+      "substantive_projection_sha256": "a18297a1d0b68d7030d8baf236adc5128fe4c110ea18eadbc2126f10f6b41373",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/audit-utilities.md",
+      "baseline_sha256": "079b75bba7fe12817bcb5f54c47ac9bc313de3071969433868509ab9d197be85",
+      "substantive_projection_sha256": "ffc48dd1c852c82e37ee22cfdf54484c609e4dcde9bccae322d0fca9311c1c62",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Execution Steps",
+        "## Output"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/blocks/README.md",
+      "baseline_sha256": "77f7ba817d0e102e3798644b60bba2cd711ac3a4b953fb1eba518aac4d9d24d6",
+      "substantive_projection_sha256": "efef7ad44415e01c11eae5781061fdf537579824b639636d3b883cdfe2193f7b",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Input",
+        "## Output",
+        "## Execution Steps",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": "host adapter replaces nonexistent block-loader example"
+    },
+    {
+      "path": ".aexos-core/development/tasks/blocks/agent-prompt-template.md",
+      "baseline_sha256": "142158bb472b333382261e91b91bf42cc51c3945ee65cb63b318b7fb487c644c",
+      "substantive_projection_sha256": "37e39eb933c2fdff4f89da0a7e08d33077dee3ad458b3f64284a02b4c4ea8a4f",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Input",
+        "## Output",
+        "## Output",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": "host adapter replaces nonexistent block-loader example"
+    },
+    {
+      "path": ".aexos-core/development/tasks/blocks/context-loading.md",
+      "baseline_sha256": "6200fb0d43ff7006c0271c2de486d06c26997b903fe8149bc0dba83d8cf0c672",
+      "substantive_projection_sha256": "c0db615ee93ac5da78c1583014805ac95c6b20b5adc1083de93cb095bd038268",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Input",
+        "## Output",
+        "## Execution Steps",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": "host adapter replaces incompatible context-loader example while retaining optional-source behavior"
+    },
+    {
+      "path": ".aexos-core/development/tasks/blocks/execution-pattern.md",
+      "baseline_sha256": "d458dedea339b3a0d02e4b297632efeec4c23079de68a61ceffd322bcbb746fd",
+      "substantive_projection_sha256": "d3cd55baf415ab4bd09f1a99bba3f2d2a98cc47693e878145852182a88dc12bc",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Input",
+        "## Output",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/blocks/finalization.md",
+      "baseline_sha256": "8414839ac579a6e25c8ad8cc3218bb5f216288ef30a0a995dde59d3d7dc9130e",
+      "substantive_projection_sha256": "0f43334972929164e48c7f878d4ca6409c8dba3c42e46e7a97f1083d5fe6e044",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Input",
+        "## Output",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/bootstrap-shadcn-library.md",
+      "baseline_sha256": "b459b78bea83b3bbadc0299d8de501829e3fbe77ce0d3a41481a4bc05ba190c0",
+      "substantive_projection_sha256": "344eca3204b20f05a569e3b66faec48861064c189c228fbfd18da141dfe7fab7",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/brownfield-create-epic.md",
+      "baseline_sha256": "8c4dda24f13a53ecbe9229ec661d0113f3c87a8a4a9f5ff3107820e12f5cb25c",
+      "substantive_projection_sha256": "685030ecc93794ebb03f6e1ef4398609f96d8cb1e2adb3fae84b673647b6eea6",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/brownfield-create-story.md",
+      "baseline_sha256": "e106071b115c7dcc27613319a65a7148544ca60954f4f9b0e537835a1b288f58",
+      "substantive_projection_sha256": "31d6b71f3a3314ee62c00beac2ce36f7739b0391b828b7ba4a827d86a11ddac1",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "#### Acceptance Criteria"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/build-autonomous.md",
+      "baseline_sha256": "0d8fa4c56dbcfd27265c385981e183e3134c0589b5a5849d614c03a83f6e877d",
+      "substantive_projection_sha256": "2e6bc25a3227ee243511fcb8a6239fd91c6529c7ff268827406e64f22d24ec88",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Output Example",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/build-component.md",
+      "baseline_sha256": "7aaf9cb06a8b99a00011d2fc5edc028e82f23b701e43f5817130f65565754be8",
+      "substantive_projection_sha256": "8ada4e9ebc4aaddfd36f87fc8bcfdd8903830a7ec564732e885f4c8a47721f3f",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output",
+        "### Output Format",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/build-resume.md",
+      "baseline_sha256": "920b1faa39d021fd7c0013b5d2ac4f66ac6de844723821b65dfaceba41d37885",
+      "substantive_projection_sha256": "3190e54ebb3af67f8a82b9131e2d8c902844d224f54368382c3b47ceeb298268",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Output Example",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/build-status.md",
+      "baseline_sha256": "47a5f95ab59ff99532adf442700f4b949e32bd5bd2131998d8f271327108e4e1",
+      "substantive_projection_sha256": "5fdd9d0f32dbbbd3ff153aff69aacca02326cbc4f2ca144bf8c6dfb44129f631",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Output Example"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/build.md",
+      "baseline_sha256": "8c72d8e3b2aa96126beb83ce78f17ff3e0059e946e89a4e0d7d733877275b0a1",
+      "substantive_projection_sha256": "3ee3f5efc71d7659282c2b4a635d6bf302225f0d2dd538167dad51149c5e14a5",
+      "mode_headings": [
+        "# Debug mode with verbose output"
+      ],
+      "contract_headings": [
+        "## Output (AC6)"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/calculate-roi.md",
+      "baseline_sha256": "73770399fc5798cdf4757bc4fcc9b54cc41e95579529b23bfc1f5b9e4a0f1497",
+      "substantive_projection_sha256": "99f06cdab71f141cf3c65f670696b4b17147c30c783a6bf174072cc968f57e0c",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output",
+        "### Output Format",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/check-docs-links.md",
+      "baseline_sha256": "9a7e1400d894777caa607486ff78b77ea454e4ace1c16d54308533ecc7f2c015",
+      "substantive_projection_sha256": "6bc9e660b66c95f4ba3f6b940af029afd0997a18cce52571dc9dd010d8d957f6",
+      "mode_headings": [],
+      "contract_headings": [
+        "# Output JSON (para integração)",
+        "## Output Example"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/ci-cd-configuration.md",
+      "baseline_sha256": "14e6e3b8b59640755ecce3d805d292e6fe9a35d245ce968265deaeed77e6935d",
+      "substantive_projection_sha256": "c65db9a7db562d74efc571861a4aaa505301923a77dc5fed636ede9928fd0ad5",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Input",
+        "## Output",
+        "### Pre-conditions",
+        "### Post-conditions",
+        "### Acceptance Criteria",
+        "## Error Handling",
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/cleanup-utilities.md",
+      "baseline_sha256": "bd110ad763fa64de1f1edb88fbc99ff10e9806924f9d0e654194208a19edab38",
+      "substantive_projection_sha256": "861b5eac325e0e4568f01571418e2f5285d5be46016ba7143b60f17ef3dbf047",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Execution Steps",
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output"
+      ],
+      "reviewed_body_correction": "canonical scripts root and manifest-guided archive/restore correction"
+    },
+    {
+      "path": ".aexos-core/development/tasks/cleanup-worktrees.md",
+      "baseline_sha256": "10d9fab42ba133a03f76094829ab467d2ef53b80bcc3de39245805679cedfbbd",
+      "substantive_projection_sha256": "3dd87384f78ef4b40f98b502c72cf3403671932adc228ca97a7fb0940f03c135",
+      "mode_headings": [],
+      "contract_headings": [],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/collaborative-edit.md",
+      "baseline_sha256": "9037d2a2bb273ecaf0aa7aaba819a687b270e2ccf2f7fa453ce78f288a3f9e12",
+      "substantive_projection_sha256": "5d80952d219cdd95f0e4639a2a71c462eb9948592d75c6dd92595e114be512db",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**",
+        "### Editing Modes"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/compose-molecule.md",
+      "baseline_sha256": "a26f0ca45e2e9955fde9bd6e0bb7181d981bd1c33330432dd15912ed3f3fc31f",
+      "substantive_projection_sha256": "4590f577105949ec2ba47a45d05ec307619650dd9549aa5565df23bbd954417f",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/consolidate-patterns.md",
+      "baseline_sha256": "370c566eb04f15253dcf97eee68ca8d9ca4e63ff210fd1da81fe66bfe4a2f042",
+      "substantive_projection_sha256": "eee9b3f3a4081a95c5bb201e8159dcdcff58c4d8aeed69ba3e23290ac9f02599",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output",
+        "### Output Format",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/correct-course.md",
+      "baseline_sha256": "5ce0aa597152a6613dc2b81796169016d8b7baea355de7b269a2affecf1cd4dc",
+      "substantive_projection_sha256": "70dde4207bf7c02d5e752f48592a0938831187ae0f7efeaa5b468bc0a626bb5d",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**",
+        "### 1. Initial Setup & Mode Selection",
+        "### 2. Execute Checklist Analysis (Iteratively or Batched, per Interaction Mode)"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output Deliverables"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/create-agent.md",
+      "baseline_sha256": "8b0f33f91cac29aee1924981c2694dbf9b43839bfe8519f99addeb32ba2cdc95",
+      "substantive_projection_sha256": "2945acf61b13db6c5dc876e13bc8fe05e3ad700ed858931a8cbc7fd48541a29e",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/create-brownfield-story.md",
+      "baseline_sha256": "b585ef433a84ccd8ee4bc05af9bdc91349ea892b2d9f5dc42426446f7d36c7d4",
+      "substantive_projection_sha256": "fa7790cf3b478256ac920dc391e23a3b216cc0388f01d865c22a551b27d7595a",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/create-deep-research-prompt.md",
+      "baseline_sha256": "8d897c611099b9dec09f78bd49c3aa4ac5ab6f37a30b0d2cd72f52f4a9612804",
+      "substantive_projection_sha256": "9748c1564c99568a3d2091ba9bda549b7357b33c1704c83b009dfd973401fe0c",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/create-doc.md",
+      "baseline_sha256": "9891999f42e5f5d27beac938a7bfe4fd3f9496207b21fa25ad1805247bf29049",
+      "substantive_projection_sha256": "bf5850f7fc3cc94a53247a0e2821007837b2fcce438cda31481bca2bbeebfd97",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**",
+        "## YOLO Mode"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/create-next-story.md",
+      "baseline_sha256": "47499d5a8cd4653977efebba303c0f935a0a84da9a61099d3e6ca48f7323dc61",
+      "substantive_projection_sha256": "13315a53adc838ee5db06c9ce5d54a1faeb9ec1962ac61cbb4e0dff2b8bb3375",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/create-service.md",
+      "baseline_sha256": "e587fc516856c4b74db88523a79f1806acb1c4863fe02e2a8cd0dc25ed9b7104",
+      "substantive_projection_sha256": "dec2debbc802c16da916162ee5b006bcac25b1aa5875180b0861b8bb8e2c263e",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/create-suite.md",
+      "baseline_sha256": "78d50f641f38bb9d771abf62f84b2a4eebfa52c976b62d644719283819415508",
+      "substantive_projection_sha256": "79ca13b4666fb1713c58973540c45b5208ea9e0ab6b39a0c87ae819e63c0ea82",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Error Handling",
+        "## Output"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/create-task.md",
+      "baseline_sha256": "5d7e9105a06a977a3193430a3a33814052dbf5b2cc3e956145ab51a7dcacf0ab",
+      "substantive_projection_sha256": "5ad96047a1a8de68995f59e45dcf4e81c63de95e249c04f2ff1d4867a0f261c6",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/create-workflow.md",
+      "baseline_sha256": "df24e6225a6bd8a2b0cb3243669690ec2e3dce2daabfcedf8d4eda48722ea387",
+      "substantive_projection_sha256": "917e6785a531466189c906bd595ef940d30b712ee76df712d8840835cfb3d990",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/create-worktree.md",
+      "baseline_sha256": "f0c8d4cf87f4a625522474e1936ca8e7d8a03b7e52d4e667a45ab37889131111",
+      "substantive_projection_sha256": "45a5c7c65e62d87566ce79a0de7dd831c786cf09c9b2476e66436de90f331521",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts) **[DEFAULT]**",
+        "### 2. Interactive Mode - Balanced, Educational (2-3 prompts)"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/db-analyze-hotpaths.md",
+      "baseline_sha256": "74a5f5522938fb5f5b2070de9013384980909d0cfc9488780b0876d5fadc730b",
+      "substantive_projection_sha256": "e64fdb79236e451a8710db6cfaf201f5e28b2a54bc6ef032fe26ce64b8aa1450",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output"
+      ],
+      "reviewed_body_correction": "PostgreSQL/Supabase metadata correction replacing inherited Neo4j/Cypher claims"
+    },
+    {
+      "path": ".aexos-core/development/tasks/db-apply-migration.md",
+      "baseline_sha256": "54a5e918018e43273b670120372a1a250a2470a2318ab32ee0c1796455ff76b1",
+      "substantive_projection_sha256": "14a771eec5ba60657a3af8d35f1f53dfc259cf8d7a78956da43502c7ed3e54e8",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": "PostgreSQL/Supabase metadata correction replacing inherited Neo4j/Cypher claims"
+    },
+    {
+      "path": ".aexos-core/development/tasks/db-bootstrap.md",
+      "baseline_sha256": "200d26f7ab594aae59bbccba98c0a27cb951e89c7ee9b02c3c0c3f2f663e8f5a",
+      "substantive_projection_sha256": "02774df8c3cd5a692c131bcb2ac65e076636ab2b76f888eba96ec593b78c77ab",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**",
+        "# SUPABASE_DB_URL=\"postgresql://postgres.[PASSWORD]@[PROJECT-REF].supabase.co:5432/postgres?sslmode=require\""
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": "PostgreSQL/Supabase metadata correction replacing inherited Neo4j/Cypher claims"
+    },
+    {
+      "path": ".aexos-core/development/tasks/db-domain-modeling.md",
+      "baseline_sha256": "41a831f5876a0050ae6f5734734941b3b5691493b1ba1577d0ec589b384c3468",
+      "substantive_projection_sha256": "95c2ad4eb5fa7d722d18c9c471ecb60fe0d8afe3bb41a4af2d94020c66bff5bf",
+      "mode_headings": [
+        "# Task: Domain Modeling Session",
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output"
+      ],
+      "reviewed_body_correction": "PostgreSQL/Supabase metadata correction replacing inherited Neo4j/Cypher claims"
+    },
+    {
+      "path": ".aexos-core/development/tasks/db-dry-run.md",
+      "baseline_sha256": "c1c0148e820c04f43a51d60c32a07e0923d21b3d80b0024b87f4e74ec486d547",
+      "substantive_projection_sha256": "c15dff32d4a53f4a40ff99fce89a2fc00005f5f70f5faf4753a9be8d7cf7c57a",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": "PostgreSQL/Supabase metadata correction replacing inherited Neo4j/Cypher claims"
+    },
+    {
+      "path": ".aexos-core/development/tasks/db-env-check.md",
+      "baseline_sha256": "1d90810abc11c21c9157cde5b17fbd1dfb14f763c1f255e405321f218c78f2ff",
+      "substantive_projection_sha256": "2d920e765d3168add6dd526dafec741cc9b8b2b454a09a9e8170108f8c6dac3b",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**",
+        "### 2. Check SSL Mode and Pooler"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": "PostgreSQL/Supabase metadata correction replacing inherited Neo4j/Cypher claims"
+    },
+    {
+      "path": ".aexos-core/development/tasks/db-explain.md",
+      "baseline_sha256": "fe47bd4e4b2b15e5840c4c8a0f88c72125e5627741a14cb9d3165ed585e9b7e6",
+      "substantive_projection_sha256": "b5aaf56c134833949e35818e310da32ded6e74a12f0c68c6874847f29fc92402",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": "PostgreSQL/Supabase metadata correction replacing inherited Neo4j/Cypher claims"
+    },
+    {
+      "path": ".aexos-core/development/tasks/db-impersonate.md",
+      "baseline_sha256": "467304e0a6c68d9996d85f17f8d498228dc58d7051e011c4395ba13dd4743047",
+      "substantive_projection_sha256": "280825b306d2dd995ecb9c3bd7b4558a92a15c41f8d1e5c590885392fd973529",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": "PostgreSQL/Supabase metadata correction replacing inherited Neo4j/Cypher claims"
+    },
+    {
+      "path": ".aexos-core/development/tasks/db-load-csv.md",
+      "baseline_sha256": "8fc3519fe321eb43cee0f438bc237a1fbfa727e84b25026eabbe85ab868d0a8c",
+      "substantive_projection_sha256": "6b893e85f1d396b9fe7ea340f53c1f50627a0d1b14e8450615ac3bd7b3e03964",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output"
+      ],
+      "reviewed_body_correction": "PostgreSQL/Supabase metadata correction replacing inherited Neo4j/Cypher claims"
+    },
+    {
+      "path": ".aexos-core/development/tasks/db-policy-apply.md",
+      "baseline_sha256": "801cd756c739434b57a67875d1098ed1932a1f9c521135beb68c41f6d2bc885f",
+      "substantive_projection_sha256": "ee38110b3f34763effbf222241dea2d028e55af6c2be5f288fc402d4ed936f10",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**",
+        "# Available modes: kiss, read-only, private, team, custom",
+        "# Check mode"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": "PostgreSQL/Supabase metadata correction replacing inherited Neo4j/Cypher claims"
+    },
+    {
+      "path": ".aexos-core/development/tasks/db-rls-audit.md",
+      "baseline_sha256": "f7a1f18ac482ceaaf431045da5989f315344d606c9ac20c953008a62a3715459",
+      "substantive_projection_sha256": "08d34d555355f845b99b147d980441fb99a1a683d4f08f63f3c30855df54d1d5",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output Interpretation"
+      ],
+      "reviewed_body_correction": "PostgreSQL/Supabase metadata correction replacing inherited Neo4j/Cypher claims"
+    },
+    {
+      "path": ".aexos-core/development/tasks/db-rollback.md",
+      "baseline_sha256": "13d41f0f4862965c047fd7071ad9884871de1afc01ea4dc0da216f7bff8ab3c6",
+      "substantive_projection_sha256": "7227fe30279ba2eafec4993fe63c56e9d8c156d7fbd2aeec85df82dee868f40f",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**",
+        "# 2. Enable maintenance mode",
+        "# 7. Disable maintenance mode"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": "PostgreSQL/Supabase metadata correction replacing inherited Neo4j/Cypher claims"
+    },
+    {
+      "path": ".aexos-core/development/tasks/db-run-sql.md",
+      "baseline_sha256": "09775d255336c6aea86c918f6f87047de4d625fb10d209c0e17f9ea98d0ee156",
+      "substantive_projection_sha256": "7f23a90916e2e7b6485ff50cbd587816432d49005cfe2b28b99cfe790c14977b",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**",
+        "### 4. Transaction Mode Selection",
+        "### 2. Transaction Modes",
+        "### Interactive Mode"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": "PostgreSQL/Supabase metadata correction replacing inherited Neo4j/Cypher claims"
+    },
+    {
+      "path": ".aexos-core/development/tasks/db-schema-audit.md",
+      "baseline_sha256": "56d7f0d0d00512e7ade94ae795790a8eb9046d2c23211f56315955d3ded6afbc",
+      "substantive_projection_sha256": "27b5e30007d10cf3846dc43c33e388a2bd39054b93aa86dc8d73046218ba7d38",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output"
+      ],
+      "reviewed_body_correction": "PostgreSQL/Supabase metadata correction replacing inherited Neo4j/Cypher claims"
+    },
+    {
+      "path": ".aexos-core/development/tasks/db-seed.md",
+      "baseline_sha256": "15941c686af12ed2909e6add5f16cda15493df7f6d0a585d30b9c8a53a4c198e",
+      "substantive_projection_sha256": "6b7a0c4b9fe44955c79666068862c9996e47cc81ed6c22163b04ca2d6c15a944",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": "PostgreSQL/Supabase metadata correction replacing inherited Neo4j/Cypher claims"
+    },
+    {
+      "path": ".aexos-core/development/tasks/db-smoke-test.md",
+      "baseline_sha256": "a89211b0ca77b08e6b9f25a197dabb4a7d4258c4c1cf450c4433c3b12fd7b6d8",
+      "substantive_projection_sha256": "39ad00802f0652339fe5a0c8eb01821c69be1d902f1ed38f5ddd768f986871d6",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": "PostgreSQL/Supabase metadata correction replacing inherited Neo4j/Cypher claims"
+    },
+    {
+      "path": ".aexos-core/development/tasks/db-snapshot.md",
+      "baseline_sha256": "3be4b719ad85d987839ca6399c386f5491c52ef6d789fd4daad0d77d307f6c0f",
+      "substantive_projection_sha256": "d2675cc8855c13a32bcd278d50df840e7e8539396d882b6bcf857dd4aa0e6540",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output"
+      ],
+      "reviewed_body_correction": "PostgreSQL/Supabase metadata correction replacing inherited Neo4j/Cypher claims"
+    },
+    {
+      "path": ".aexos-core/development/tasks/db-squad-integration.md",
+      "baseline_sha256": "09a2b008b48d136356f9818f9e66d9dfdf82e5525a702399e1564284ff86c629",
+      "substantive_projection_sha256": "64959e131fb74fdf2c5b04c9a12459f4473cebe047ad4269c50f8b72f42d4f80",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output Files"
+      ],
+      "reviewed_body_correction": "PostgreSQL/Supabase metadata correction replacing inherited Neo4j/Cypher claims"
+    },
+    {
+      "path": ".aexos-core/development/tasks/db-supabase-setup.md",
+      "baseline_sha256": "aca0f5bb93deb32fc81dbf3e1765842dd6e9a37f09f3d0c4b2401b40d998ada1",
+      "substantive_projection_sha256": "db5559d703560e4584c0d4c965ce46bcc52f7434e4f2281b5b76cfebe4a48f1c",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**",
+        "# Option A: Interactive modeling"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output"
+      ],
+      "reviewed_body_correction": "PostgreSQL/Supabase metadata correction replacing inherited Neo4j/Cypher claims"
+    },
+    {
+      "path": ".aexos-core/development/tasks/db-verify-order.md",
+      "baseline_sha256": "5a823a0636c31fa987dbd5f5d431dc4ccc0a19b51c182007f0ca4ee0e09d103a",
+      "substantive_projection_sha256": "7e5073ea38e156dda83571e5b19cbb6828cfd68e43be77dc5a3f0b58f25bf310",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": "PostgreSQL/Supabase metadata correction replacing inherited Neo4j/Cypher claims"
+    },
+    {
+      "path": ".aexos-core/development/tasks/delegate-to-external-executor.md",
+      "baseline_sha256": "cca1b2f36444baf6d43a470e066537103d071a6950dc7623e27dddf472824e83",
+      "substantive_projection_sha256": "7e7c8553e35231eac176ff57b6385ab7dcf25ba37713db621fd19d720718a82c",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Pre-Conditions"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/deprecate-component.md",
+      "baseline_sha256": "d7367592264fc02def85d5abf5078ad68195bcd2b39802d5559d5bfc886102ab",
+      "substantive_projection_sha256": "b58137544f9bbd0a90b0db9fe0690b27d53714e83fa6acfab37819d784001ce2",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "### Input Validation",
+        "## Output Structure"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/dev-apply-qa-fixes.md",
+      "baseline_sha256": "4289f4c6e499232e982aef9c238138337b431d62eef4a9124797771f37dc4b15",
+      "substantive_projection_sha256": "de8166d26a2df073731df219fae338dcfafe15eb8635e235a644f186a60dd9b9",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/dev-backlog-debt.md",
+      "baseline_sha256": "53b82704b09a9f11ad6f15d62d62aaca95c13fdc8ca0193b66ecd225d3cbbfb3",
+      "substantive_projection_sha256": "6c460d085868698448a0ee7feaf2f0812eb89003b7057c473e7f17f743aae3ff",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/dev-develop-story.md",
+      "baseline_sha256": "214bb9dd9be97dc5bd38ae0ab1e785190ea2161f898bdd4dd7a941386344a48e",
+      "substantive_projection_sha256": "0f0b297d9fd460a3a301a6121db31dd045e10bf24f83dedad4bba1848ca6d3b5",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**",
+        "## Mode: YOLO (Autonomous)",
+        "## Mode: Interactive (Balanced) **[DEFAULT]**",
+        "## Mode: Pre-Flight Planning (Comprehensive)",
+        "## Common Workflow (All Modes)",
+        "### Story File Updates (All Modes)",
+        "### Blocking Conditions (All Modes)",
+        "### InReview Criteria (All Modes)",
+        "### Completion Checklist (All Modes)",
+        "### Integration with Execution Modes",
+        "## Mode Selection Implementation",
+        "### Example 1: YOLO Mode",
+        "### Example 2: Interactive Mode (Default)",
+        "## Status Transitions (MANDATORY — All Modes)"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "### Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/dev-improve-code-quality.md",
+      "baseline_sha256": "bed3c24b6305524ed55f95b6a0e77ef73f7118597f0b82ff1e54ae2a03a8c122",
+      "substantive_projection_sha256": "9d7e94b1369464733251deb62f3c27d18a00c34c9e0d9ffd7fd62859a2b388df",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/dev-optimize-performance.md",
+      "baseline_sha256": "b703958b121883e3b5d8b7f0367d488349613878d0dee8e1d671ac54b0f2fbc5",
+      "substantive_projection_sha256": "2759822507fbcbdfa496c071925f5f20a814c5b7c332df223c3e31bdb2051f80",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/dev-suggest-refactoring.md",
+      "baseline_sha256": "9cbe1666bb5779f29d646175900e0f01a2ccbb0305a5b5b1eb9f447ce4979136",
+      "substantive_projection_sha256": "207814df16100a1fd1228134058952cb84ceb8c7eb7e1cda0ff5065ad0ffc7d4",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/dev-validate-next-story.md",
+      "baseline_sha256": "2b34e738ff71f61ae0d150004026009a15c4ee82a2c790852fe86b45705f91a0",
+      "substantive_projection_sha256": "5ac12c13b677f89019b0694c3bec4a5b8aad5edb5024e9b56bfca7c33ea63687",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/devops-pro-access-grant.md",
+      "baseline_sha256": "5974d2660fe2a7fce7842b9aeee88fe2d95a70590a5015699f2d433ff6973bf4",
+      "substantive_projection_sha256": "afe5083e19376b7437b0a56da29c61c9aa7d29f53d33276417bfc8ffa2505712",
+      "mode_headings": [],
+      "contract_headings": [],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/devops-pro-activate.md",
+      "baseline_sha256": "e8188076009407a5715b01c267365e07dc029087c1e4e607fabaa4104f9dff8b",
+      "substantive_projection_sha256": "a595b883e4bca639be839c810473247d6291b07f7185f3fff9da2e291981259f",
+      "mode_headings": [],
+      "contract_headings": [],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/devops-pro-check-access.md",
+      "baseline_sha256": "55ae1f84b7d8f86eb074028b8c8b8b44a36e0f9941182a5aad47112c1dc1b5fd",
+      "substantive_projection_sha256": "6d6f2b52dfb3b8925ec1714df6b6426565628d73128b9464fd646036ca64fe1b",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Input"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/devops-pro-request-reset.md",
+      "baseline_sha256": "f45ffd73c4db9fe8321e66d883ab4f3c115717b22391253a162f6593fda30cfa",
+      "substantive_projection_sha256": "2e05c373d8b36f4254dec036aee83272805b52e95becd72c860fcdfc905c873e",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Input"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/devops-pro-resend-verification.md",
+      "baseline_sha256": "fed4a9ee3c71959ac20ba75341eb0eb08ed331965935f9968ff876036c463e5c",
+      "substantive_projection_sha256": "330a21c35117fbaa28921dcd2cea0205d59a9228ffbe0f4000ab74d70d0ca1bf",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Input"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/devops-pro-reset-password.md",
+      "baseline_sha256": "2327f315a2872adec766e1757f4ca6d0f47a4d8cfcfbd400419d7de375466324",
+      "substantive_projection_sha256": "7d553c4057db8d4bd0212fe93785bd52dd3132b54f420e7b53b90fdc2541974f",
+      "mode_headings": [],
+      "contract_headings": [],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/devops-pro-validate-login.md",
+      "baseline_sha256": "49ee2eb921d518b13a693c7da83b86b8d55775d454d99416cdf6ebfb9dd6c54d",
+      "substantive_projection_sha256": "31a93aec366b1376eb012e8b4de982d6b5e56a0a40d361278c44a81732994dc6",
+      "mode_headings": [],
+      "contract_headings": [],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/devops-pro-verify-status.md",
+      "baseline_sha256": "4fdbb1a199e3a192fe0ad55c1495b0eb3cf414968dd3a4e9ee5bbd1165a5be00",
+      "substantive_projection_sha256": "6db88bafec00116336f0b81c6d7d60e1e3e95a8573ab28f3e9804e62e80be74b",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Input"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/document-gotchas.md",
+      "baseline_sha256": "28d03a60f3d79aed116cbfc95472f0edc58c28ff337d69b86d02bc50bebbb39b",
+      "substantive_projection_sha256": "af72099342356db21c4c464bfb465b83d634f74681b279f3b442c127589fe8df",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Execution Steps",
+        "## Output Format",
+        "# Output as JSON",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/document-project.md",
+      "baseline_sha256": "90c0e9de1e16f5cc00772d5f85cb1848f168d89bc90611a5e05b4990df130dd6",
+      "substantive_projection_sha256": "a0b2d098c50fe51943dfed0b79536d9af08c6c63271036a22dcf8e5914b7f9cc",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**",
+        "## Data Models and APIs",
+        "### Data Models"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/environment-bootstrap.md",
+      "baseline_sha256": "313d7f3cfaa4ac2a627fc28cc7fc5b2b76f5808e4ae6d392a76a02940eaafdea",
+      "substantive_projection_sha256": "7b5a1e959e697f04ad922c64feff57915b8e8dd2e2bac8572c6588deedd6adad",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": "project-root anchored config resolver require"
+    },
+    {
+      "path": ".aexos-core/development/tasks/execute-checklist.md",
+      "baseline_sha256": "44215624c74320343f98e8f843d58643c44be9c44430a87eb054686bc3bfb28d",
+      "substantive_projection_sha256": "11f39405fdafa6c68d94ded14725dde227654c9bac7af4dbcb29de9eb63e9376",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts) **[DEFAULT]**",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts)"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": "canonical development and product checklist roots"
+    },
+    {
+      "path": ".aexos-core/development/tasks/execute-epic-plan.md",
+      "baseline_sha256": "13e13eb146de26f37ef88caffcbb698ed79db417c4a1a01d2a117e7be91626ef",
+      "substantive_projection_sha256": "50bc7679b31f80447ff7804b91591978e15b544b8614a4104030e7e5d0341347",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Autonomous (0-2 prompts)",
+        "### 2. Interactive Mode - Balanced (5-10 prompts) **[DEFAULT]**",
+        "# Start in YOLO mode (autonomous)"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output Format"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/export-design-tokens-dtcg.md",
+      "baseline_sha256": "cb9fbf9269d50554e61cd2ac3421a2de8e57a0eb8effab45224d501d871fd1a0",
+      "substantive_projection_sha256": "624689f6021fe459ae018ef5a39a2ed9b297d4e9cf520f073092923462c95344",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/extend-pattern.md",
+      "baseline_sha256": "6d98d7ae6877f6c9bb235b80981d8d60ee6e373219b8adb9e2eea6bc34459745",
+      "substantive_projection_sha256": "ac37b479405edf14e5a6e8f4d4e4d0fbeea6bc468d4d0df5640068ae69eac463",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/extract-patterns.md",
+      "baseline_sha256": "22b6d9bfcc56d84d9a0aab3218d8d17481421a5de4239fc1c09e8813ebf45993",
+      "substantive_projection_sha256": "ea3a213697b282c3b7f5543f59d743e997802c462509ac2871dc00c8520c1fa0",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Output Formats",
+        "## Post-Conditions",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/extract-tokens.md",
+      "baseline_sha256": "4a24fefc94b15b19a0d72b103d2ef42635bcf690846e89c086da5c32c755bef1",
+      "substantive_projection_sha256": "03f0cc83753c20836bf6d6493d8c512dc42c75d99e471e5469d5e18f109b23ef",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output",
+        "### Output Format",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/facilitate-brainstorming-session.md",
+      "baseline_sha256": "b2c43fde4772d2a5406de728a2249c054c30a0ce54494cc33136022ea09627d2",
+      "substantive_projection_sha256": "9c3dc620807d67579e0a7dcad90f100d6b9e123cbf3e4a19443f8539d37a9048",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Input",
+        "## Output",
+        "### Pre-conditions",
+        "### Post-conditions",
+        "### Acceptance Criteria",
+        "## Error Handling",
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/fast-path-gate.md",
+      "baseline_sha256": "62e2a51647b501c5d59adee8f996af06bee75f33e002537dba0a50e04ea2cb5d",
+      "substantive_projection_sha256": "e3e69630190e84c6ae28deaeb280e363743c573b0ea18e4400b4170dcf597362",
+      "mode_headings": [
+        "### Before mode selection"
+      ],
+      "contract_headings": [
+        "## Acceptance Criteria"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/generate-ai-frontend-prompt.md",
+      "baseline_sha256": "331171ebd510dcfb050241331eabe207dc56a9aae820f5adebbdc03dc5cacaf4",
+      "substantive_projection_sha256": "7d27fcc2d06dab1917dda81b6a9a73a6cc5f16bf7211c9487b108d842c3d9089",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/generate-documentation.md",
+      "baseline_sha256": "2f5ca068933c7b618be4b2273285493e582dd65663adffa2d43c2c87af6a4462",
+      "substantive_projection_sha256": "33e63ff421c88aeed3c8a396ed9a86becaf6a9eb59f31c067b3b7c6464284a43",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/generate-migration-strategy.md",
+      "baseline_sha256": "bb29ae7e063d340e199ea9c5dfd536e93c8d9f89593a9ea25c0a25c7ec4317c5",
+      "substantive_projection_sha256": "769d02ae500e86556f33e0ae2f47df7259c8b735ddc6f67d306e704394fa0761",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output",
+        "### Output Format",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/generate-shock-report.md",
+      "baseline_sha256": "daa19f86e027c5bdd7bafafcfa1d4c0a176de7a0dcb93e049c2f980f4c7c1e2e",
+      "substantive_projection_sha256": "4edeb7ad1a4a258bcf1734f40b2205de74bf5375fc6871a9901470802c0d1949",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output",
+        "### Output Format",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/github-devops-github-pr-automation.md",
+      "baseline_sha256": "2a8dcfc7bea079b43cf6bd29e4e632a4042a88ebf4780d3f74ad658239dd6ebf",
+      "substantive_projection_sha256": "6565db5a7ede147853aad9929b043e647fce4c59cc4b655f47a8236752854e36",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/github-devops-pre-push-quality-gate.md",
+      "baseline_sha256": "12c609a935b14349b1b60ce96beddd0bcb874588b9837ca79aa2a4afc82afab3",
+      "substantive_projection_sha256": "95cb8679af60d585d4e744bc7b1da1f12213d34db33b4c358e9f57359ef22746",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/github-devops-repository-cleanup.md",
+      "baseline_sha256": "ed9511c534323d536218088dbf90e467fad2e4b0e5eae4cfca6dcd2fca6fdeca",
+      "substantive_projection_sha256": "705d663792b28b03fa348b856f5baf39d881af841e21fe8e797469499ec4673d",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/github-devops-version-management.md",
+      "baseline_sha256": "8931889044d39bb1cf2e481654500b0d2937ac64ef55b3f5ed4dff0e9c81be59",
+      "substantive_projection_sha256": "0d42d530d2b681b09e83d33d76589e6f4ad3d679c8d432857df57d525c3a0084",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/github-issue-triage.md",
+      "baseline_sha256": "6fa9ddd199cc71d1064ff9050d69b277ce69f92f8a55e65bd9e42360de3e0b12",
+      "substantive_projection_sha256": "f235c8d47f685b0a0b8254985fe2d4421b27cf251d580c5e3eff20f953f1681e",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Output"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/gotcha.md",
+      "baseline_sha256": "bc9cef87891425a4cb53242201a37b496b4dc0fe82724dfe550b715818862e58",
+      "substantive_projection_sha256": "5c60fee71a5239f00c8a9066d1c9ff9297913244fa69f344f7075c74c923096a",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Output Example"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/gotchas.md",
+      "baseline_sha256": "a4fb5548ad423dac9fe5ae1a518f15b3fa23197a538b9bfafe5a7bf8c30834f4",
+      "substantive_projection_sha256": "72f021314ba3a0d709f88d975d2b78086f1f2c65bdf7fb44b0d688136e83b8e7",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Output Example"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/ids-governor.md",
+      "baseline_sha256": "cef8e05328072502e5ebe87c0f3e171746d278643ec96a962b8dc81dd5f6e361",
+      "substantive_projection_sha256": "0390383cdf5b378e708187aac9737bb7a017d19af11a559c2abdc9083c87c8eb",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Execution Steps",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/ids-health.md",
+      "baseline_sha256": "aff0c07794d010411bfe6d45f0bb0c679f88cda44872ee7c60674323241bfcb3",
+      "substantive_projection_sha256": "0f17c2c031a40d0769f3325f683f747bd6e55a8eb1304ebe7f75404f81590c17",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/ids-query.md",
+      "baseline_sha256": "819e64678121cf205924630bb2074312cf7c4bcf16e871850e4295e91bcd57d0",
+      "substantive_projection_sha256": "8066d00856befe7ce74b755568ee4992834e9c47af1a934f1614637025c1ebee",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Output Structure"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/improve-self.md",
+      "baseline_sha256": "ffc50420d99aa139e595d718d0d9bdfbcbac91d6ad1e43bb8594e624c3b78f9c",
+      "substantive_projection_sha256": "11b1053abc962d6a5c62c7f9322bf0237029acd689224b938c4dede25adf7a7d",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**",
+        "### Safe Mode Fallback"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Execution Steps",
+        "## Output Format"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/index-docs.md",
+      "baseline_sha256": "9c3509b1e7d05c94119206b47f3cf59efd1ceb549c15bae6827141e800838c9b",
+      "substantive_projection_sha256": "cd091873690d2c54377b8b06ff97f2cfb9b877bcd886e4901e8938201694d44e",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/init-project-status.md",
+      "baseline_sha256": "750d9c70b314d31d683e050bf5dd9e765c083ed265173e60267e94edd0d716cb",
+      "substantive_projection_sha256": "6988bae9e1b962cc41e94cd00427ca0910cec17d073492be50191f8e4d91679d",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/integrate-squad.md",
+      "baseline_sha256": "073bdaf11c5532d437394f77663a023cc01b0939ff3e61bf2419093f2df18bcc",
+      "substantive_projection_sha256": "70d67981f343ba65a47dfde0fbabf29eeefdde7b5fcf33ac628383cce3038c41",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/kb-mode-interaction.md",
+      "baseline_sha256": "ec7dde2b048d543d45810d3fbf9f8ced3be3bbf0dbfaa4a437d45772d3e894aa",
+      "substantive_projection_sha256": "f6a39083e6c32c68c296f7c12086738b04f86370f556536a9e36bc61ff715023",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**",
+        "# No checklists needed - interactive KB mode facilitation task, no validation workflow required",
+        "# KB Mode Interaction Task"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/learn-patterns.md",
+      "baseline_sha256": "04a2567d6a1631ed48ad59d2d36e153cd07260936892b25e892bdf968de2a68d",
+      "substantive_projection_sha256": "c6548fa8a57d64a6c96b5669d8503a09df697109f2d68a27fca55dc1309a3d0c",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/list-mcps.md",
+      "baseline_sha256": "c2eca1a9c8d0be7c83a3e2eea59b33155bf7955f534eb0b36b27ed3852ea7dd1",
+      "substantive_projection_sha256": "c548865ace296f8d8c05101be84e734a1d46cc5458a6bd32b0e3a01dc53f9e08",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Output"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/list-worktrees.md",
+      "baseline_sha256": "bc9833c415899b94f6d30f9ce6bdbedba18b14c4a284cef448990e78ddef9dc5",
+      "substantive_projection_sha256": "0cc33d6b8379ae7bac35891f86036b2647cc71b8e37ec0c167ca67d3fa71cb6c",
+      "mode_headings": [
+        "## Execution Modes"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/mcp-workflow.md",
+      "baseline_sha256": "3ed1eb96aef67c065ed4c3ccd53c16b6e554f180d33f937722f45d856f6004ae",
+      "substantive_projection_sha256": "412a7d56eb3b39f9a4d01d11dfa3d41e08b03c3e567fc6ffca5a99a95ed92d05",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/merge-worktree.md",
+      "baseline_sha256": "e33a96e1961bbaba60f2258f4a98b8c9d384754a07eba705732f41d61ed2d4f4",
+      "substantive_projection_sha256": "0b769bb02b158fdc2783889fda700b988262ef1a27b061e10a74b1022a773e5c",
+      "mode_headings": [],
+      "contract_headings": [],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/modify-agent.md",
+      "baseline_sha256": "947ceec6b26fa1c71df7f5873df36e0af4d260fecfc97ece77d09118a9b60430",
+      "substantive_projection_sha256": "56a99fb68e84dba8bb9508e9feb8264ff2a6f20f9b9f0aabccee334f9bdc6375",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output Format",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/modify-task.md",
+      "baseline_sha256": "61433cec194365059f6d4217dff5d81621e22b96782043b334fec203f2c22b90",
+      "substantive_projection_sha256": "35677d5ce519246b5a961007962dee9b7720dd9cdd7fac75dea6ae660eeb7087",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output Format",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/modify-workflow.md",
+      "baseline_sha256": "a016800850ee286a967529bd8e578f7f566688bb39fdea6765dd79e5a55a0e89",
+      "substantive_projection_sha256": "2fa560966227faab06941300cbc231eb219d0b2ef301e88af13765cb2b32eace",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output Format",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/next.md",
+      "baseline_sha256": "e653c0c54e4dc46f5ab7c9ce5cb7ed4d55a7a546ebf74523601dc942de63acd1",
+      "substantive_projection_sha256": "bb0ad4fba7a37fa35e4248c9f7a4cfb6fc8a436b4d009740de70bcd084723884",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Output Format",
+        "## Post-Conditions",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": "project-root anchored requires and named SuggestionEngine export"
+    },
+    {
+      "path": ".aexos-core/development/tasks/orchestrate-resume.md",
+      "baseline_sha256": "cfcd973e87e13870c68ec6cbd497b3d3dcabff63b77a5566dd0da4ceebcc84bb",
+      "substantive_projection_sha256": "8430893200fe52f93afc8402562095e5f33d589353a569154cf29fe8f6495cb5",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Output"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/orchestrate-status.md",
+      "baseline_sha256": "bbc6a7b07c8d37da28a73aeaa0332d884f19d74a50abee286c503c4b4301f4f9",
+      "substantive_projection_sha256": "a9f97c2885d3fc250701b38c72e3081d1ea49f870ba95cd53450f29078fb805f",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Output"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/orchestrate-stop.md",
+      "baseline_sha256": "50d9289ff65485f40660ca0114112bb612f47bb7e039aecc8e9a4b9f4ac0fc40",
+      "substantive_projection_sha256": "f9882b2c43d3e3319e1c01ae6ce207cf9cde0be42315b70cea72cc0f567fbb2c",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Output"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/orchestrate.md",
+      "baseline_sha256": "21035cdfb427b089f5fc2af404153c0d81b6e8d155d847c48678d0bf2d264f29",
+      "substantive_projection_sha256": "a066d927738ffd3ad9581b48227f87fd816c2a87f88988a6c6c190e0723d283f",
+      "mode_headings": [
+        "# Strict mode"
+      ],
+      "contract_headings": [
+        "## Output"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/patterns.md",
+      "baseline_sha256": "d9e2e57af2e526d97199ff4df3b777bb233cbb323881acc1dc685170f5263e88",
+      "substantive_projection_sha256": "46d61dc8e447302158a048df36eb613aa0183b4918a6232f83982be910ea2084",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Output Formats",
+        "## Post-Conditions",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/plan-create-context.md",
+      "baseline_sha256": "dd1825682bfd41f6cda8ba0bf2b4cbc478e9707441c7c9b72b541cf11c7f7eca",
+      "substantive_projection_sha256": "5e95394c138c08ff0d14a8d085d15e7b0e8ef7b73dba76d18282ceefecbca081",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Output Templates",
+        "## Output Schemas",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/plan-create-implementation.md",
+      "baseline_sha256": "685697ed3920f758050917bbef59c585aad956ed8d0024a0146167360d0f5abb",
+      "substantive_projection_sha256": "d460eecf37fa7b23fcebfddf18f2a3f7f2501317c26f2a9d75d91e1101eca9ce",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Output Schema",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": "project-root anchored code-intelligence requires"
+    },
+    {
+      "path": ".aexos-core/development/tasks/plan-execute-subtask.md",
+      "baseline_sha256": "965f41f7f1b0ba07b3627c77e8e4850c306f7169842d10ad268998fb79e707f8",
+      "substantive_projection_sha256": "d20d3860a74cfc2af41ce227006cad96402ba8f2c0f4eb2b289d7d9b60bf715f",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/po-backlog-add.md",
+      "baseline_sha256": "d26a0765c384eec16f2285ffcbae63b235ea050d32a0b19bbed95b5014d305a3",
+      "substantive_projection_sha256": "370c9f17393fdfef16906fc91bbf6d5a7c24ea626b7a7f4a2f56dcf48439df86",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**",
+        "# Interactive mode (recommended)"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/po-close-story.md",
+      "baseline_sha256": "418fbd93861be71900d51e2e2ecba8959b2ca6f4ac2a67abf7d363e7c31763f9",
+      "substantive_projection_sha256": "c9fc95f90658264d857775e2ae0d784bdc96dfbd376709358ae8fb6dc473c4b9",
+      "mode_headings": [],
+      "contract_headings": [],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/po-manage-story-backlog.md",
+      "baseline_sha256": "a8dc59a4aefaf7a6f67a4fc9a8c3e3d1dda9d6cc7ed155a48024b1b0d26bbcfe",
+      "substantive_projection_sha256": "11582aae7966234bc4cf4c9aa2b5299b488df4b2e232447dfc4b53be5ad8bd0e",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/po-pull-story-from-clickup.md",
+      "baseline_sha256": "1b5acdbda4ae97e48c290c1819526f24eb3bd1e1ce75df4846dd910ad797e6c7",
+      "substantive_projection_sha256": "be4b208957f108979c496e0bc3fdcb3cc976bce3c4f16c3d0360958969355ea3",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/po-pull-story.md",
+      "baseline_sha256": "9abb01da2ae24021c787f3ce926515e694be3a3fc4c3f169150121dfa8af266a",
+      "substantive_projection_sha256": "55aa40dbed85170a237ea21c568f16cacc57b1cccf1d63b3911fc4932f42e482",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/po-stories-index.md",
+      "baseline_sha256": "d686b7fd2803653f8d78e203541f9a1d142174fd3318f8daa4a54393bd3201f9",
+      "substantive_projection_sha256": "0fb16c5d53e87a14d028982fba21be6465cb8aa49b778271f4ee0d3c7f99018e",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**",
+        "### 4. Preview Mode (if selected)",
+        "# Interactive mode"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/po-sync-story-to-clickup.md",
+      "baseline_sha256": "6d2c203a2cf2b3c94811579ff36aa2108cf14a6a1aaa7f85db94c7a9e664247b",
+      "substantive_projection_sha256": "75ed1ec2c9a4cec35f69f7a6b7029ce42e4318aa2021119b8824130bd1752e09",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/po-sync-story.md",
+      "baseline_sha256": "be89cd8b0a345b9d1f67d7c618df5da9380810a5531348f8024398e9497bafb1",
+      "substantive_projection_sha256": "90817c01a0a34b705e81fd7c50dd995ba4281dc2b95193883f259070023d4eaf",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/pr-automation.md",
+      "baseline_sha256": "63a3e7eb251c685fd8fb59c12013c1bd70767e9daeb0bedae741ea696dc37084",
+      "substantive_projection_sha256": "ef5361baf62cbeaa374d5b34e229e91edac5bcf12fc3ba733608f4123f1e4fc9",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Input",
+        "## Output",
+        "### Pre-conditions",
+        "### Post-conditions",
+        "### Acceptance Criteria",
+        "## Error Handling",
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/project-status.md",
+      "baseline_sha256": "f0c9780a58136abe40fabf279bf66f9e15b1886e17391951a44782dd6fe38bda",
+      "substantive_projection_sha256": "2811702bc89cb12a4bbe637484a50dac868d8f2a8176b5ac8762b7581c81213f",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Output Format",
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/propose-modification.md",
+      "baseline_sha256": "73b644953385b565f665e91445a34d782d985debec2363ff71d1d1a9ebe78a84",
+      "substantive_projection_sha256": "ac10b0673455dcb3691a378ba756416c2f85be1048f3f17e133a3830521b4118",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "### Input Validation"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/publish-npm.md",
+      "baseline_sha256": "c974a274c85922fd296aa87226ced4c40007b1dfc8c66bfe2a84e45e45384a00",
+      "substantive_projection_sha256": "9174a10a1a8e331b8184356296ed303c7d5d7e11396b85108e4c0301b1dcb3f3",
+      "mode_headings": [],
+      "contract_headings": [],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/qa-after-creation.md",
+      "baseline_sha256": "e9f6ceff7a0bc00d4fc035e890b7f1178c6ea43f447d135774b46a00713450e6",
+      "substantive_projection_sha256": "61f857228c544aa0b509cd864c5bede28439ae9518c4aa8682413a1f51c8e94d",
+      "mode_headings": [],
+      "contract_headings": [],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/qa-backlog-add-followup.md",
+      "baseline_sha256": "7f3bc01920f117bd9052f5605ced124ea5810ba6b2a8f0dd6e36aec33867632c",
+      "substantive_projection_sha256": "1ba4f8faf71cdf89e88198985a341b31ba61d582692709874902b56ce447c558",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/qa-browser-console-check.md",
+      "baseline_sha256": "27568a65a679289631e1bb6f1f2b5d13272295c37bcd526879d0862095616a89",
+      "substantive_projection_sha256": "52d3fda1725f0bcf3a1a2306092d8c8547355541efbeda2996d63e070e5571a3",
+      "mode_headings": [],
+      "contract_headings": [],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/qa-create-fix-request.md",
+      "baseline_sha256": "9401883cee5e24dfd7c911b2e0e35925693fcf8abbb9ce554c6e5a52e693af3b",
+      "substantive_projection_sha256": "78b8d1952011495f6f0ee2b62635f7e36a7ff5b24ba3cf0d315abcd2c3d3b97a",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/qa-evidence-requirements.md",
+      "baseline_sha256": "957836bb3b92144928b6532c03642ed64ac9897b921627e4df4eede498ae40fb",
+      "substantive_projection_sha256": "3610ac08c4f9cc734045f1ebd660317a87b7337538914e4fadd262b7bfdf45be",
+      "mode_headings": [],
+      "contract_headings": [],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/qa-false-positive-detection.md",
+      "baseline_sha256": "e151d2ed2a4f2d9cc5d8a36dc818c989495effd3b75b49732d6d909806fe91c3",
+      "substantive_projection_sha256": "44427b018885523ad95b5226867c8856c9c5cdc3c186b60e4add41e48c8fb4d5",
+      "mode_headings": [],
+      "contract_headings": [],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/qa-fix-issues.md",
+      "baseline_sha256": "16989542d74dc194ca6605dc80860e107ca347cdcd8d5f44633363ea350ade2e",
+      "substantive_projection_sha256": "74a9927d983557e2d2c156c77526b3e38947aef094bc1c55260ef8ef5603bb08",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/qa-gate.md",
+      "baseline_sha256": "85d6e38ee0afa8e21339544b4a4b92afc2fc38f5a9e335b3c281ab7711e17c45",
+      "substantive_projection_sha256": "e959ef3ec41a5cecef8e932aa8a0543913f314e918f7f3ba5ee720e07e959480",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output Requirements"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/qa-generate-tests.md",
+      "baseline_sha256": "1741b7ab98694143b4b96ab60b72f7da1ea7defc984666fd0abd80cbbb865242",
+      "substantive_projection_sha256": "dc9e05ad56ebd3629d35f192d8d6c4fb4426dec34a3003edcaf18c56e45c8fc8",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "### Input Validation",
+        "## Output Structure"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/qa-library-validation.md",
+      "baseline_sha256": "33211c6fcd0aa5bcdade853e6526cf3dfee57fe6be7fc6fc373b5472e8d46835",
+      "substantive_projection_sha256": "dd33bccc73279ae72cc4993c5c2791fc27243c1ed558e039845e9c0e7943cf08",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/qa-migration-validation.md",
+      "baseline_sha256": "612b80f30acd044843dcf49ef839567bf10665e6476a994805da69fc3ae7649e",
+      "substantive_projection_sha256": "3c6837fa8271001da1743f114dc05907c37134e20c6413c50e54a98a3821b556",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/qa-nfr-assess.md",
+      "baseline_sha256": "b327f2ec9589d912aeb6247afdfe075b2d6eed7102b6dcc62317b6f6534c37c3",
+      "substantive_projection_sha256": "fe145c3d087a1e78159b71710131c89deaed4100f0e4d7d3618e74c4cdf6549f",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Output 1: Gate YAML Block",
+        "## Output 2: Brief Assessment Report",
+        "## Output 3: Story Update Line",
+        "## Output 4: Gate Integration Line",
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/qa-review-build.md",
+      "baseline_sha256": "d8fb509bb88454706b143954bb314a8d316d7eb904ae9d53b09fe8ccbda4fc84",
+      "substantive_projection_sha256": "caceb4df12b177fe4b5e48a6290bf59b5cae2e1459f1a5ce3e9731df4b4fdb30",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Output Files",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/qa-review-proposal.md",
+      "baseline_sha256": "514c26077f13c47aef9c2876ea37675f2c908b51048d97efbedd63c1d5bde0f5",
+      "substantive_projection_sha256": "2ae8d3217057f4392c55f70a13fcc6617b59d1d22d7847d0af22df0f6ee72968",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/qa-review-story.md",
+      "baseline_sha256": "0e39090603ab0881f726ceab90b73813ea2327b174df1510a5938514973e7e87",
+      "substantive_projection_sha256": "6844540c89977327d02c92670dd810fec34386e2df113e8a90c62cf24cc61bbe",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output 1: Update QA Results and Apply the QA-Owned Lifecycle Transition",
+        "## Output 2: Create Quality Gate File"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/qa-risk-profile.md",
+      "baseline_sha256": "b45f7fafb4b7cee6f6aa5f8a4f710c537b5661ed7ae34d2a8c3129ae7d634909",
+      "substantive_projection_sha256": "87b8ae34fc814ad779096eac1447fc74ecab73f523f93a103fe26223deffc3d5",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "### Output 1: Gate YAML Block",
+        "### Output 2: Markdown Report",
+        "### Output 3: Story Hook Line"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/qa-run-tests.md",
+      "baseline_sha256": "639165f9fad7d535973402ee60dbecbc664e78aa11c2a120e8a2987cc684d063",
+      "substantive_projection_sha256": "9033b5ca0406979a34fb3c9cb9aef2fa25493293119300fe85132828402d08d3",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/qa-security-checklist.md",
+      "baseline_sha256": "7b988c3006e8634e612499b2886a0c0709b691091b3b712411303b1fa090613f",
+      "substantive_projection_sha256": "296095681067efe355830680fa77c5739052365560d4a3b8fca473b71fcda3de",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/qa-test-design.md",
+      "baseline_sha256": "278da5e1edb09143ba74ab869e7e5be1ecc65aeac3b36c88304cec4706a083b0",
+      "substantive_projection_sha256": "610c707ed421592d1c680e75206e0a09c4f4ad21eafb71d8df64e1f66f618bc3",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "### Output 1: Test Design Document",
+        "### Output 2: Gate YAML Block",
+        "### Output 3: Trace References"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/qa-trace-requirements.md",
+      "baseline_sha256": "3549428fa3ea2a8f8fdb199fa44f825a40b3cef566495c4f6ef0ab453c0ebbe3",
+      "substantive_projection_sha256": "af2e65edaef96d8761a8edf65ba51daa30dc690fc7ebacdfffc33965f085c384",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "### Output 1: Gate YAML Block",
+        "### Output 2: Traceability Report",
+        "### Output 3: Story Hook Line"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/release-management.md",
+      "baseline_sha256": "d2bfcb45ead563b4371281fcb869d8d21f62e1714deedd9dbb3b7f5e419c58e1",
+      "substantive_projection_sha256": "5590e5807d6622a55dcb58c41ccc1333f2184119690962abfafcd225c0066946",
+      "mode_headings": [],
+      "contract_headings": [],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/remove-mcp.md",
+      "baseline_sha256": "3f4bf3f8d4d651109dc783e95598ab21569447295f22a7b868d3973f0848aa4c",
+      "substantive_projection_sha256": "5c7bb772ecb08a52442f4306caca6c7158641816ab35d674e7ee7625fba44e9e",
+      "mode_headings": [],
+      "contract_headings": [],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/remove-worktree.md",
+      "baseline_sha256": "4de8b5a5bc7763175117d7a57929bf3e89d1913665455b1f0ab1681610813de2",
+      "substantive_projection_sha256": "caf307c22297931909d1376c4c0860026f34a54760f0ce6295c07d7dbe4665b9",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Safe, Confirming (2-3 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/resolve-github-issue.md",
+      "baseline_sha256": "96dd70c0a7503322ad67d6a32757753fd3b6fcf3d1c2448f778ba8546565f371",
+      "substantive_projection_sha256": "1e0347680bac076f89141addc5480382de33060626dc986cc9655065121b34ab",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/review-contributor-pr.md",
+      "baseline_sha256": "1061a4df821514440c6ccbfd3600d3f0fe9e518bfd37fb7c838fd9cdcbc5eb92",
+      "substantive_projection_sha256": "8792acef3991f7c8330ce086e51d93d5df083d614b72ceb87db50d7cc05b966c",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/run-design-system-pipeline.md",
+      "baseline_sha256": "74aec5f5c5c93fda0924a0604476d1434784eef80fc695dec9fcedb40d9a83a5",
+      "substantive_projection_sha256": "76926abc9c5a119907ee39e5eed6fe1ebb86058dd15ee057f7a07417c20ea29c",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**",
+        "### Example 1: Execução Completa (YOLO Mode)"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/run-workflow-engine.md",
+      "baseline_sha256": "67f54fc4336f7cc68de28e4526964ca8446cf360aaa68b4224f73bae0f812557",
+      "substantive_projection_sha256": "9bf6afa58534f30ff6d9b75a4bb4989ecbca2ec03ae93fca99288e5209a0985f",
+      "mode_headings": [
+        "## Execution Modes"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output Parser",
+        "## Output Format"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/run-workflow.md",
+      "baseline_sha256": "4616a63d7e49dbe20604172999c312a418c61bf1c2e6990c24ce41fbd4b5f4ed",
+      "substantive_projection_sha256": "be34f4db76d6a040dbecf7e6ecbd13a238ff348d718387162a07c93d510029cf",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**",
+        "### Mode Dispatch"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output Format"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/search-mcp.md",
+      "baseline_sha256": "d8a9ad8c456312c5bff07527ebf209437798a88282056eadc8f47c805d7f89a5",
+      "substantive_projection_sha256": "138ae4250d06a4b3c32f97755a1f736b82775e8ca0fc9b5ec1a86c00412f5b5e",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/security-audit.md",
+      "baseline_sha256": "0870ab4aefa5cd6147b1208e899019b2dc2b4b7ae9fa4ee5909de857c1ccd5ca",
+      "substantive_projection_sha256": "d0c11729f307c5b53230257a6616b06bfc1994a7b1a8bf17a09fcc7cbb897bfe",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/security-scan.md",
+      "baseline_sha256": "41357696738d9bd1cb0493142bdbc970746dfbcf059751731a67eca1d2e6ff2a",
+      "substantive_projection_sha256": "cb39750bc8a1bdc42b347bc8ac5b6197019eb01afdc6a68e592db2d81d8f3c17",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/session-resume.md",
+      "baseline_sha256": "19e946cd5c668b9ba60feb80ebbad308188ae1344b77166bebd5fa7ac1228e90",
+      "substantive_projection_sha256": "4ef5375d531c419be30e18ebe27d40464a62dfdb1dc750947f88a3a2c510bd6c",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Execution Steps",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/setup-database.md",
+      "baseline_sha256": "949c66219164bf67a7d18edd62b35d283223384cf401e32e30a871bc828abe7b",
+      "substantive_projection_sha256": "4f07403233207924d2ca44c439be7fb24fc632bbdf3dcf58d9b959b746d0a8c0",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output Examples"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/setup-design-system.md",
+      "baseline_sha256": "609afa9fbceffec90cbc4124e8cb502597212053b3024aaa4bd3252d4cc294b7",
+      "substantive_projection_sha256": "a3308054dab2de338f4113bd9919e485b09af14249ddc32e4a508261861dde0d",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output",
+        "### Output Format",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/setup-github.md",
+      "baseline_sha256": "05381a52d38faa9bcef052d46ff5c7ac1efc0f0f727f18e9cefaecfe79fdc3f5",
+      "substantive_projection_sha256": "074220f89f192abdc32d361c8876ec2891b66be3be262d4261145fcf7a02f8af",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/setup-llm-routing.md",
+      "baseline_sha256": "5e0edbab357c3f9dbbe25a03df812b717f78c7257346ad2bcf54ef07a64b642c",
+      "substantive_projection_sha256": "4433077541f9924ba35069fc9b5ff3766d8e393d09a550baac16b89e48979e72",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous",
+        "### 2. Interactive Mode **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/setup-mcp-docker.md",
+      "baseline_sha256": "48eb44bc66dc30cbb4709b4f0686591db966fd4d8d983d2aecb564c74b0e8fb8",
+      "substantive_projection_sha256": "efc061051f7707355d2192d3032934e86a4eedb980e8e3fe1e1fd7b2e7d241e0",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/setup-project-docs.md",
+      "baseline_sha256": "5dc0b10e686e00ba98dad51877bd89b8c7072b333ddc39115616cf9ff0361460",
+      "substantive_projection_sha256": "2a7da42e97ed18b48824fce8561784153268dfb16aea566dc497d4c6a014c15a",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**",
+        "### 1. Detect Installation Mode"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/shard-doc.md",
+      "baseline_sha256": "49458917d79a53b18edd90021d44aca376fe3759f889dc8fbcdf799fabb5a9d9",
+      "substantive_projection_sha256": "ab83a1f6901906cbfc5f9254d670eed1eb56ddda38b666413717514b7162a8d6",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/sm-create-next-story.md",
+      "baseline_sha256": "180a3c5dd80b0ef14ef896b556ac7b251a55990d4edb771f6e31d2cbc28070e1",
+      "substantive_projection_sha256": "203af4c3f429abbb0103ee502406c5158b01fdab8484ca722f1d4e2da98a0136",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/spec-assess-complexity.md",
+      "baseline_sha256": "63c600a3ed23d1e9b0f8bf1dee15c7cef966635a4b9156f0242d903167e7f70e",
+      "substantive_projection_sha256": "70faa717634bf63ba65fce2966db0468e02674076a53cb015f92f07e9c67d2a3",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Output Schema",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/spec-critique.md",
+      "baseline_sha256": "2ce35a82028097cb8d0e5517de35f5a06438053bf3c3476bc23e928d2b284464",
+      "substantive_projection_sha256": "7cf3ccb5e9de82ce9cd33777381b82572a4516eaeaa6667f7ba8c3883083a450",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Output Schema",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/spec-gather-requirements.md",
+      "baseline_sha256": "4f0dc252072a4e78f1720c4440e70fa5591a8e1255dccde17589e1f9d52e01f6",
+      "substantive_projection_sha256": "5cdf20cbabbf9c8d5d7e942bde6ca16f47d35359cdde595882750a48cf450096",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Output Schema",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/spec-research-dependencies.md",
+      "baseline_sha256": "033f38eacfdad9bc40f7ebee81ba8b03ffa70e02129a31814122b621b5245392",
+      "substantive_projection_sha256": "7e1bf08a695d0ec17e694c1d6ac70b59672afc9ce012b6d7761870a8ef7cbe9c",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Output Schema",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/spec-write-spec.md",
+      "baseline_sha256": "e57d9ea30dcc0049f75857ff4767d7be00669681d06b813c1b1575e23b4d5ddf",
+      "substantive_projection_sha256": "0211d6fb58c4b069fd6f8ed8cb111685b75f466dbd723ea3074ca79cdafa94f0",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/squad-creator-analyze.md",
+      "baseline_sha256": "140d522deaa6aee5f4d11ba4327cc792a5cc87784fcc6dc8831975565e7041c7",
+      "substantive_projection_sha256": "b4670e9b7ea953a67c4a42b8df22469d7be8780f24cd9dd8d3c54527db466c55",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Execution Steps",
+        "## Output Format (Console)",
+        "## Error Handling",
+        "## Post-Conditions"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/squad-creator-create.md",
+      "baseline_sha256": "f815357f474ad37f8cdcf4d86c4666e7fb6827de0b3495bbb851632214c5a02b",
+      "substantive_projection_sha256": "a887ea3f39d5287e30fd84d7fc71cc1d1b674b63ecdda3eac758a8b4dba1bf18",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Output de Sucesso",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/squad-creator-design.md",
+      "baseline_sha256": "f5de6103e6075f488f311e626b33c4a710029fcf6dccedd553a3055f99eefe60",
+      "substantive_projection_sha256": "ab679017a1335d4a6bc1e9ee1c505ef28355cd05fc2080fb555d5e81a8cc1a2c",
+      "mode_headings": [
+        "# → Interactive mode, prompts for documentation"
+      ],
+      "contract_headings": [
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/squad-creator-download.md",
+      "baseline_sha256": "b3cfa7a8b8a705a9e4d8a07ca35589ededbd800f5d4097bf16f126e607dfe1f2",
+      "substantive_projection_sha256": "d3e0880f32fac9bebe23de451c1686f3da5b5d1a665fb9efb5461335472fb022",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": "previously reviewed external catalog prerequisite correction"
+    },
+    {
+      "path": ".aexos-core/development/tasks/squad-creator-extend.md",
+      "baseline_sha256": "b7eaf8a304627b2a8ff6aa6bb1957336f3f5bdea49023fb3705a90fbc54bd626",
+      "substantive_projection_sha256": "10ac903de2194c3da1ad30aee62a6190c6a18a058b03a99ed11f383c9489ce9e",
+      "mode_headings": [
+        "## Elicitation Flow (Interactive Mode)",
+        "## Direct Mode (Flags)"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Execution Steps",
+        "## Error Handling",
+        "## Post-Conditions"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/squad-creator-list.md",
+      "baseline_sha256": "086b5baab8a68c3a0e378990df764bff5e2f30e8b354bd2c5d9a08a7420c3573",
+      "substantive_projection_sha256": "561379f4f92667fdcb37a5a053a21ccad64e98844ef94dfdb7e2f71ea17f8610",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Output Exemplo (Table)",
+        "## Output Exemplo (JSON)",
+        "## Output Exemplo (YAML)",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/squad-creator-migrate.md",
+      "baseline_sha256": "f19bc8f45975cacc5b3e80b93a9f552f00da9e0e5e9934e88ee7bc72aa6dc649",
+      "substantive_projection_sha256": "b2c55051f1aec39027901b2f8498f26bc423a83bb6e29f6c8b973fabe8ac1196",
+      "mode_headings": [
+        "### Dry-Run Mode"
+      ],
+      "contract_headings": [
+        "## Output Example"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/squad-creator-publish.md",
+      "baseline_sha256": "c63b29fc98fb85b146c1e1eee55bdd128aca901a7379aa3af7613e7ef31bdd8b",
+      "substantive_projection_sha256": "d4ba00e964cf7d8fd3418a5a6ca3bf62fdefeea89fed86aa5d7183a890e1a861",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/squad-creator-sync-ide-command.md",
+      "baseline_sha256": "79a86cce0b31262e5f8fe64e86e9d7a61f37f5950617a602401f8de2f62d8830",
+      "substantive_projection_sha256": "bd146e7f6fcc42267e477351de205b97314917de81be575cbc65d0d5d17d20cb",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Output Exemplo",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/squad-creator-sync-aexos.md",
+      "baseline_sha256": "5b7efc146d4fd8ca731483cbfb90c77a0a5e5b31791042ae8e471f0a029c0c37",
+      "substantive_projection_sha256": "ef15165ba41f112f9e910abff66b3b6b8a73f0be36b06be4be48f6346e84dd25",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Output Exemplo",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": "previously reviewed Cyryx sync wiring and external prerequisite correction"
+    },
+    {
+      "path": ".aexos-core/development/tasks/squad-creator-validate.md",
+      "baseline_sha256": "42f34a86fe4a822e5bcb3af53be69664e6bd03671cc200165bc81d171f561583",
+      "substantive_projection_sha256": "957174b15011b513b9f1daa8bc6247bb94a316159879ffc276b2d9b9fb256936",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Output Example"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/story-checkpoint.md",
+      "baseline_sha256": "f299d40b953ab022b1dcb34ae3d245ad4f48d6757246911359bf68dec07a6944",
+      "substantive_projection_sha256": "cdf6d867fb352c5f4efee15dda67527a01ab87fcef95fa9e907c3840ee2ad7cb",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Output",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/sync-documentation.md",
+      "baseline_sha256": "589cccd167430dc10386b9daddc44044452a354d4eb9a2ae8b42b4bce11d7c2f",
+      "substantive_projection_sha256": "db0032958f157cd9af257e109100bb3690d6174e369700b6045d68d18d1ad64c",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/sync-registry-intel.md",
+      "baseline_sha256": "4fec3e869cd20b1956d22937134d88fe17139fde2232af87224dec5c7207b553",
+      "substantive_projection_sha256": "c36ebed3d22b873973b8bafee0f4f7f72cef6867340a2c579025ed86f93ca527",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Execution Steps",
+        "## Output",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/tailwind-upgrade.md",
+      "baseline_sha256": "6150d79ec65b8d2d26889d44553a97e5cf36a155b151d35562f1d6f7a7e2e99f",
+      "substantive_projection_sha256": "016a207457cf1eef0333032b0e228233f530cc03fccca28ca625e1553f0930fe",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/test-as-user.md",
+      "baseline_sha256": "7b0e8412a203c09bb9f91b184b225d2b0250ad41b497fe676cc0f9be63bf57df",
+      "substantive_projection_sha256": "6fe973b568801acd0f8e627198b9fc497ba1797040e27da842fdf0e54099509f",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Output Example"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/test-validation-task.md",
+      "baseline_sha256": "5af1d4d6caa75fedba1b9f031efbe4442cc03fac4ceb0eb0f8355aa8232357eb",
+      "substantive_projection_sha256": "d20ef978dde8f355f96621820f5272a0643a738c001f262c5831626c1781a1ac",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/triage-github-issues.md",
+      "baseline_sha256": "944aa71c6201eff138b8d40beec8abb7159e39a67f3b2bf06b8e41e858b4f7a7",
+      "substantive_projection_sha256": "08a37b68e2b6f99d99786e40681c4c2d270eb2f6e810080660e7076e72d6816d",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/undo-last.md",
+      "baseline_sha256": "238479c50e4278666048edb92aa1f707712e46c37c7b2844a521e0b7293af337",
+      "substantive_projection_sha256": "385859f5eec082ba46313de5bd8be6b42e95d04aa35c4d3fa97d5005a04f26e4",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Input Requirements",
+        "## Output",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/update-aexos.md",
+      "baseline_sha256": "7129400aafd2f6003d7ca05b994e73683384e181de98cc3264261ab845e81140",
+      "substantive_projection_sha256": "8398ea0f325e7411e878cb43f1d29ea6453b8c177491d7f745a45fc99d134a8b",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/update-manifest.md",
+      "baseline_sha256": "705d41ea6ff17726858928f52e35ca1bdac65af62c3a4493ef140bca5fa9a717",
+      "substantive_projection_sha256": "1e64b855787e7dac89a77d43d3bf1ab74efa1d641810c4b52d4ee269b7d0dc65",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/update-source-tree.md",
+      "baseline_sha256": "2852f2cdeb0602d11c1c376c6b650304a9747d8596c82ee019c870f199e037c8",
+      "substantive_projection_sha256": "34cdcfa6fd5f34c8e0683a2b7f61f14d40f862bd6cfd535fd6a75fa6db69d8eb",
+      "mode_headings": [
+        "### Step 7: Fix (if mode=fix)"
+      ],
+      "contract_headings": [
+        "## Execution Steps",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/ux-create-wireframe.md",
+      "baseline_sha256": "8fa347902c6ec10bfc32b485e889e0577ceb3e8979c5020b54969ed7a594ae3a",
+      "substantive_projection_sha256": "5826b644559b8be6bb6efee8d13cf0ead6940400e3a62b19e0ea0fdb51c97241",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/ux-ds-scan-artifact.md",
+      "baseline_sha256": "f847047d3a9b230db728918104449d8dfd48d7f1fce66f8ca32bc79afd56be70",
+      "substantive_projection_sha256": "a03a8d92b5ad646934cf90fda55cd9f9df122963e4da44437e1b2ce9821240cb",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/ux-user-research.md",
+      "baseline_sha256": "c01c6cc86a8444bccc484e898123e54819c7c1d87f2d7e78f7771700d2d6d5ee",
+      "substantive_projection_sha256": "fff96f53f83d4e8b3557731c1c84a88bcb5c99300a12d757a46691fd6a412f30",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/validate-agents.md",
+      "baseline_sha256": "c61fcb2dbd45e3f97185746c80cf7f53a67da1bb09ed11f1298d4f6c52875840",
+      "substantive_projection_sha256": "f12561922d293ac1f66154f645796bc6ac52d5b8c16b9624e614f542ae1cc66b",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Execution Steps",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/validate-next-story.md",
+      "baseline_sha256": "2df40c4a4b4b1d35fc8b9a5ac7c9d3985d21ee8c27e382e1e872ab9aadc979c2",
+      "substantive_projection_sha256": "c5f1123c979b5e3b33d2f0e58e52a4cc09783246f0d1f69551f418a94044d305",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/validate-tech-preset.md",
+      "baseline_sha256": "5f3657d31ba7bbbc6646ede30346c2bfcd383152f4d095c54c26a92f931f8e54",
+      "substantive_projection_sha256": "0a0e40b40af750c8125b769b7d7e4171ad072226e2925165d94b61d1a6f7a492",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Output Example",
+        "## Acceptance Criteria"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/validate-workflow.md",
+      "baseline_sha256": "377e6018cd8b88fe7d86c828e67f66be40c3e47145676388d6e303fcc04ca4d4",
+      "substantive_projection_sha256": "ab20d9720f60f0532411bade10c4001c7f075f495a0f8c82049eddca5cb92f1d",
+      "mode_headings": [
+        "## Execution Modes",
+        "### 1. YOLO Mode - Fast, Autonomous (0-1 prompts)",
+        "### 2. Interactive Mode - Balanced, Educational (5-10 prompts) **[DEFAULT]**"
+      ],
+      "contract_headings": [
+        "## Pre-Conditions",
+        "## Post-Conditions",
+        "## Acceptance Criteria",
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/verify-subtask.md",
+      "baseline_sha256": "2cdf083788024476a71f297a430df5c7b7182d308bc839bd49b575eec775ce2a",
+      "substantive_projection_sha256": "b7f51a9492ccafbf50612490cc26349923e5590325e66f6fd6cb00fbd918615c",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/waves.md",
+      "baseline_sha256": "8a4a30f790840d1ddff59aa4b172d1d5ab5d948d80f96e20d6e2c7f55d8af80e",
+      "substantive_projection_sha256": "759fbe18946d3ab03fc85487083e4e705551cb7aa704d8938aac28f34d0e9c5e",
+      "mode_headings": [],
+      "contract_headings": [
+        "## Output"
+      ],
+      "reviewed_body_correction": null
+    },
+    {
+      "path": ".aexos-core/development/tasks/yolo-toggle.md",
+      "baseline_sha256": "5887a8c952f0094ead40db7c3cb6873717df3598a2cdda7abb2bcce64984c85b",
+      "substantive_projection_sha256": "b8abbac060c76d5acadf8b33ef1837daf11cd7b1fbf88e51778bb580e7d00362",
+      "mode_headings": [
+        "### Step 1: Load Current Mode",
+        "### Step 2: Cycle to Next Mode",
+        "### Step 3: Save New Mode"
+      ],
+      "contract_headings": [
+        "## Error Handling"
+      ],
+      "reviewed_body_correction": null
+    }
+  ],
+  "expected": {
+    "mapped_task_count": 218,
+    "candidate_task_count": 219,
+    "candidate_extensions": [
+      "add-tech-doc.md"
+    ],
+    "unsupported_occurrences": {
+      ".aexos-core/scripts/execute-task.js": 49,
+      ".aexos-core/core/task-runner.js": 43,
+      ".aexos-core/utils/logger.js": 43,
+      ".aexos-core/scripts/db-query.js": 20,
+      ".aexos-core/utils/db-query-validator.js": 20,
+      ".aexos-core/scripts/create-component.js": 13,
+      ".aexos-core/scripts/run-validation.js": 11,
+      ".aexos-core/utils/validation-engine.js": 11
+    }
+  },
+  "upstream_commit": "4ef6530ff03b83aea953e4a426f95e012b8b70c5"
+}

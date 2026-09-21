@@ -1,0 +1,81 @@
+schema: 1
+story: 'AEX.8'
+story_title: 'AEXOS Expanded Squad Library'
+gate: CONCERNS
+status_reason: >-
+  All story-owned acceptance criteria and focused quality gates pass. The review
+  records two non-blocking environmental concerns: CodeRabbit is unavailable on
+  this host and unrelated inherited repository tests remain red.
+reviewer: 'Argus (Test Architect)'
+reviewed_revision: 'working-tree-sha256:74982a9e8e61e169f275a3eecde9733ac9594f27c23f38a84957cf65532899a6'
+updated: '2026-08-11T19:18:26Z'
+
+top_issues:
+  - id: 'AEX8-001'
+    severity: medium
+    finding: >-
+      CodeRabbit could not be executed because no native CLI is installed and
+      the available WSL environment does not provide bash.
+    suggested_action: 'Run CodeRabbit before any future authorized PR.'
+    suggested_owner: '@devops'
+  - id: 'AEX8-002'
+    severity: medium
+    finding: >-
+      The repository-wide Jest run retains 10 inherited or environmental suites
+      with 50 failures outside the files and behavior introduced by this story.
+    suggested_action: >-
+      Resolve Windows/WSL shell assumptions and the pre-existing Pro and
+      integration test failures in separately scoped stories.
+    suggested_owner: '@qa'
+
+waiver:
+  active: false
+
+quality_score: 80
+expires: '2026-08-25T19:18:26Z'
+
+evidence:
+  tests_reviewed: 10032
+  focused_tests_passed: 338
+  focused_suites_passed: 6
+  squad_validation:
+    squads: 20
+    errors: 0
+    warnings: 0
+  content_inventory:
+    added_squad_files: 1059
+    agents: 104
+    tasks: 270
+    workflows: 43
+  risks_identified: 2
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    ac_gaps: []
+
+nfr_validation:
+  security:
+    status: PASS
+    notes: >-
+      No source-machine paths, imported ownership records, embedded credentials
+      or personal infrastructure identifiers remain in the added squads.
+  performance:
+    status: PASS
+    notes: 'Content normalization, validation, lint, typecheck and package build complete successfully.'
+  reliability:
+    status: CONCERNS
+    notes: >-
+      Story-owned focused coverage passes, but the repository-wide test baseline
+      remains red in 10 inherited or environment-dependent suites.
+  maintainability:
+    status: PASS
+    notes: >-
+      Squads use canonical manifests, deterministic normalizers, generated
+      registry/projections and regression coverage for structural invariants.
+
+recommendations:
+  immediate: []
+  future:
+    - action: 'Run CodeRabbit when a PR is authorized and a supported runtime is available.'
+      refs: ['docs/framework/epics/aexos-evolution/STORY-AEX.8-AEXOS-SQUAD-LIBRARY.md']
+    - action: 'Track inherited repository-wide test failures outside this story.'
+      refs: ['tests/', 'pro/']

@@ -1,0 +1,523 @@
+# Dependencies
+node_modules/
+pnpm-lock.yaml
+bun.lock
+deno.lock
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+*.tmp
+*.bak
+.cache/
+*.tgz
+
+# Local parity run output is distributed as release evidence, not source.
+/docs/parity/evidence/
+/docs/parity/acceptance-evidence.json
+/docs/parity/capabilities.json
+/docs/parity/component-and-edge-map.json
+/docs/parity/diff.json
+/docs/parity/source-tree.json
+/docs/parity/PARITY-REPORT.md
+/docs/parity/CONTINUATION.md
+
+# Fresh distributions retain reusable defaults, not a developer's runtime state.
+/.aexos/*
+!/.aexos/merge-rules.yaml
+!/.aexos/session-digests/
+/.aexos/session-digests/*
+!/.aexos/session-digests/README.md
+!/.aexos/session-digests/.gitkeep
+
+# Installation logs and backups (Story 1.9 - Error Handling & Rollback)
+.aexos-install.log
+.aexos-install.log.*
+.aexos-backup/
+.aexos-core.backup*/                # Backup directories (any timestamp)
+
+# Build output
+build/*.txt
+web-bundles/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+.env.test
+
+# Ephemeral test dirs created at repo root by Jest suites
+# Nested framework installs created by installer/e2e tests.
+# These are full framework copies; without this they pollute ESLint and Jest
+# (roots: [<rootDir>]) with phantom files, and a single `git add .` would commit them.
+#
+# Every project name our own documentation suggests to `init` is listed here.
+# The list only had /my-project/, so any reader who followed a different page
+# ended up with an untracked ~8,600-file framework copy that ESLint and Jest
+# (roots: [<rootDir>]) swept — the gates then reported hundreds of errors and
+# phantom suites against a tree whose own code has none.
+#
+# Sourced from: git grep -oE "init [a-z][a-z0-9-]{2,30}" -- docs/ README*.md
+# Re-run that after adding an install page, or this hole reopens.
+/AEXOS/
+/my-project/          # README.md, docs/installation/*, 12 occurrences
+/my-first-project/    # docs/getting-started.md
+/myapp/               # docs/troubleshooting.md
+/test/                # docs/troubleshooting.md — no root test/ exists (tests/ does)
+/.aexos-test/
+.test-temp*/
+#
+# Deliberately NOT listed: /pro/. The grep also matches "init pro", but those
+# are `git submodule update --init pro` in docs/guides/workflows/ — not a
+# project name — and pro/ is a real submodule directory. Ignoring it would hide
+# the Pro edition from git.
+
+# Python bytecode from the .claude/hooks/*.py governance hooks.
+# Six .pyc files were committed during the rebrand; untracked and ignored here.
+__pycache__/
+*.py[cod]
+
+# System files
+.DS_Store
+Thumbs.db
+nul                           # Windows temporary file
+
+# Private keys and certificates
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+*.cer
+*.p7b
+*.p7c
+
+# Secrets and credentials directories
+secrets/
+credentials/
+
+# Private local commands (not for repository)
+.claude/commands/mmosMapper/
+.claude/commands/hybridOps/
+
+# Private local squads (not for repository)
+squads/*
+!squads/.gitkeep
+!squads/_example/
+# Published squads (whitelisted for repository)
+# squads/* is ignored by default so a developer's private squads stay local.
+# Every squad that ships with AEXOS has to be listed here or it silently never
+# gets committed.
+!squads/claude-code-mastery/
+!squads/products/
+!squads/ceo/
+!squads/board/
+!squads/marketing/
+!squads/sales/
+!squads/ops/
+!squads/customer-success/
+!squads/business-admin/
+!squads/apex/
+!squads/brand/
+!squads/curator/
+!squads/deep-research/
+!squads/dispatch/
+!squads/education/
+!squads/kaizen/
+!squads/kaizen-v2/
+!squads/legal-analyst/
+!squads/seo/
+!squads/squad-creator/
+keys/
+*.secret
+*.credentials
+
+# Binary installers and development artifacts
+*.msi                         # Windows installer packages
+*.exe                         # Executable binaries
+*.bat                         # Development batch scripts (sync-agents.bat, etc.)
+*.sh                          # Development shell scripts
+sync-*.bat                    # Agent sync scripts
+sync-*.sh                     # Agent sync scripts
+
+# Development tools and configs
+# Note: .husky/, .prettierrc, .prettierignore are TRACKED for pre-commit hooks (Story 3.1)
+
+# IDE and editor configs
+.windsurf/
+!.windsurf/rules/
+!.windsurf/rules/agents/
+.cursor/rules/                # Cursor IDE personal rules and configurations
+!.cursor/rules/agents/
+
+# AI assistant files
+CLAUDE.md
+.claude/*
+!.claude/commands/
+!.claude/commands/AEXOS/
+!.claude/commands/AEXOS/agents/
+!.claude/CLAUDE.md
+!.claude/rules/
+!.claude/settings.json
+.gemini
+!.gemini/
+!.gemini/rules/
+!.gemini/rules/AEXOS/
+!.gemini/rules/AEXOS/agents/
+!.gemini/rules/AEXOS/agents/*.md
+
+# AI Session Artifacts (Story 6.1.2.6 - Decision Logging)
+# Auto-generated decision logs from yolo mode executions
+.ai/
+*.decision-log.md
+
+# Project-specific
+# Note: .aexos-core is SOURCE CODE for framework-development mode
+# It should NOT be ignored in the main repository
+.aexos-core.backup*/                # Only ignore backup directories
+test-project-install/*
+sample-project/*
+
+# Expansion Projects (separate from core AEXOS)
+# These folders are from other projects and should NOT be in this repository.
+#
+# Every pattern here is ROOT-ANCHORED with a leading slash. Without the anchor a
+# pattern like `memory/` matches at any depth and silently swallows framework
+# directories that genuinely belong to this repo — `.aexos-core/core/memory/`,
+# `.aexos-core/core/security/`, `.aexos-core/scripts/`, `packages/installer/tests/`
+# and `docs/security/` among them. Files already tracked keep working, so the
+# breakage only shows up later, when a NEW file in one of those directories is
+# never picked up by `git add`.
+.aexos/                        # AEXOS runtime artifacts (any depth, intentional)
+.cursor/                       # Cursor IDE project files (any depth, intentional)
+/aexos-memory-layer-mvp/       # Separate memory layer project
+/memory/                       # Memory squad
+/performance/                  # Performance squad
+/security/                     # Security squad
+/telemetry/                    # Telemetry squad
+# NOTE: `scripts/` and `tests/` are NOT ignored. Both are first-class content of
+# this repository — `scripts/` ships inside the npm tarball via package.json
+# `files[]`, and `tests/` is the Jest suite.
+
+# Cyryx Labs Development Artifacts (generated during workflow execution)
+# These files are created by agents during development and should NOT be in version control
+# NOTE: docs/prd/ is TRACKED - it contains important product documentation
+qa/                           # Test artifacts and quality assurance files
+epic-retrospective.md         # Epic retrospective documents
+*.stats.md                    # Statistics and analysis files
+flattened-codebase.xml        # Flattened codebase exports
+test-results.txt              # Test result outputs
+**/test-results.txt           # Test results in any subdirectory
+
+# Test coverage reports (generated by test runs)
+coverage/
+*.lcov
+lcov-report/
+
+# Cyryx Labs temporary build/analysis files
+.aexos/reports/
+.aexos/temp-*.js
+
+# Build outputs (generated from source)
+aexos-core/index.d.ts
+aexos-core/index.esm.js
+aexos-core/*.map
+
+# Applications (separate deployments, NOT part of npm package)
+apps/
+
+# External projects (separate repositories)
+aexos-guide-app/
+examples/
+!docs/examples/
+supabase/
+
+# Output directories (generated artifacts)
+outputs/
+
+# Test fixtures (generated during tests)
+tests/*/__fixtures__/
+
+# UI/UX design artifacts
+docs/ui-prompts.pdf
+
+# NOTE: docs/ internal directories are gitignored in the
+# "INTERNAL DOCS" section below. Only public docs ship.
+
+# Windows reserved device names
+NUL
+CON
+AUX
+PRN
+
+# ============================================
+# GENERATED ARTIFACTS (Story 6.12)
+# ============================================
+
+# Framework runtime artifacts
+.aexos-core/.session/
+.aexos-core/manifests/*.csv
+.aexos-core/core/registry/service-registry.json
+
+# Quality metrics (generated during testing)
+.aexos/data/quality-metrics.json
+.aexos-core/quality/metrics-*.json
+.aexos-core/data/quality-metrics.json
+
+# Session data
+.aexos-core/.session/current-session.json
+
+# ============================================
+# ARCHIVED DOCUMENTATION (Story 6.12)
+# ============================================
+# Historical documentation moved to .github/deprecated-docs/
+# These are internal development artifacts, not user documentation
+# NOTE: Keep archived in repo for historical reference,
+#       but prevent new files from being added accidentally
+# .github/deprecated-docs/  # TRACKED - contains archived docs
+
+# ============================================
+# DEVELOPMENT ARTIFACTS
+# ============================================
+# Office documents should not be in repo
+*.docx
+*.xlsx
+*.pptx
+
+# Test/sample files (prefixed patterns)
+test-sample-*.md
+*-sample-*.md
+
+# Backup/archive patterns
+*.backup
+*.old
+*~
+
+# TypeScript incremental build cache
+.tsbuildinfo
+*.tsbuildinfo
+
+# Runtime Cyryx Labs artifacts (explicit rules without inline comments)
+.aexos/
+.aexos/project-status.yaml
+.aexos/notifications/
+.aexos/sessions/
+
+# ESLint cache
+.eslintcache
+
+# ============================================
+# INTERNAL DOCS (not for GitHub or npm install)
+# ============================================
+# Development artifacts, internal strategy, and proprietary content.
+# These stay local only — not published to GitHub or npm.
+
+docs/stories/
+docs/research/
+docs/qa/
+docs/epics/
+docs/prd/
+docs/decisions/
+docs/one-pagers/
+docs/strategy/
+docs/handoffs/
+docs/requirements/
+docs/releases/
+docs/standards/
+docs/architecture/*
+!docs/architecture/
+!docs/architecture/orchestration-hierarchy.md
+!docs/architecture/adr/
+docs/architecture/adr/*
+!docs/architecture/adr/ADR-SDC-WAVE-CHECKPOINT-OWNERSHIP.md
+docs/agents/
+docs/private/
+
+# Squad Design Files (test artifacts)
+squads/.designs/
+
+# ============================================
+# MCP Configuration (contains API keys)
+.mcp.json
+
+# Nogic (code intelligence - local config)
+.nogic/
+
+# MCP/PLAYWRIGHT ARTIFACTS
+# ============================================
+# Screenshots and sensitive data from MCP tools
+.playwright-mcp/
+*.recovery-codes.txt
+npm-recovery-codes.txt
+
+# ============================================
+# PRO SUBMODULE (ADR-PRO-001 — git submodule, NOT ignored)
+# ============================================
+# pro/ is a git submodule pointing to CyryxLabs/aexos-pro (private)
+# It is tracked by git via .gitmodules — do NOT add pro/ to gitignore
+# Pro submodule contents excluded from npm publish (not in package.json files array)
+
+# ============================================
+# LOCAL CONFIG (ADR-PRO-002 — machine-specific secrets, never committed)
+# ============================================
+.aexos-core/local-config.yaml
+
+# ============================================
+# IDS REGISTRY (Story IDS-3 — Self-Updating Registry)
+# ============================================
+.aexos-core/data/registry-backups/
+.aexos-core/data/.entity-registry.lock
+.aexos-core/data/registry-update-log.jsonl
+
+# Advisory write lock held by greeting-preference-manager while it rewrites
+# core-config.yaml. proper-lockfile creates it as a directory; it is released
+# in a finally block, but a hard kill can leave it behind (it expires as stale).
+.aexos-core/core-config.yaml.lock/
+
+# ============================================
+# .Cyryx Labs-CORE INTERNAL/GENERATED FILES
+# ============================================
+
+# Deprecated documentation (superseded by V2.1-COMPLETE)
+.aexos-core/docs/standards/Cyryx Labs-LIVRO-DE-OURO.md
+.aexos-core/docs/standards/Cyryx Labs-LIVRO-DE-OURO-V2.1.md
+.aexos-core/docs/standards/Cyryx Labs-LIVRO-DE-OURO-V2.1-SUMMARY.md
+.aexos-core/docs/standards/Cyryx Labs-FRAMEWORK-MASTER.md
+.aexos-core/docs/standards/V3-ARCHITECTURAL-DECISIONS.md
+
+# Duplicate docs (originals in .aexos-core/core/docs/)
+.aexos-core/docs/SHARD-TRANSLATION-GUIDE.md
+.aexos-core/docs/component-creation-guide.md
+.aexos-core/docs/template-syntax.md
+.aexos-core/docs/troubleshooting-guide.md
+.aexos-core/docs/session-update-pattern.md
+
+# Generated runtime files
+.aexos-core/.session/
+.aexos-core/.session/current-session.json
+
+# Generated manifests (created by framework)
+.aexos-core/manifests/*.csv
+
+# Internal audit results
+.aexos-core/infrastructure/tests/utilities-audit-results.json
+
+# ============================================
+# TEMPORARY FILES
+# ============================================
+# Windows path-encoded temporary files (malformed path files)
+C:Users*
+*temp-catalog.txt
+.eslintcache
+
+# ============================================
+# SYNAPSE RUNTIME (auto-managed)
+# ============================================
+.synapse/sessions/
+.synapse/cache/
+.synapse/metrics/
+
+# ============================================
+# SYNAPSE PACKAGE (generated by scripts/package-synapse.js)
+# ============================================
+synapse-package.zip
+.synapse-package/
+
+# ============================================
+# MMOS IMPORT (TEMPORARY - Story MMOS-Sync)
+# Remove entries after validation
+# ============================================
+scripts/glue/
+.claude/skills/
+!.claude/skills/
+!.claude/skills/AEXOS/
+!.claude/skills/AEXOS/agents/
+!.claude/skills/AEXOS/agents/*/
+!.claude/skills/AEXOS/agents/*/SKILL.md
+!.claude/hooks/
+!.claude/templates/
+.claude/templates/*
+!.claude/templates/agent-template.yaml
+!.claude/templates/architecture-tmpl.yaml
+!.claude/templates/brainstorming-output-tmpl.yaml
+!.claude/templates/brownfield-architecture-tmpl.yaml
+!.claude/templates/brownfield-prd-tmpl.yaml
+!.claude/templates/competitor-analysis-tmpl.yaml
+!.claude/templates/database-schema-request-full.md
+!.claude/templates/database-schema-request-lite.md
+!.claude/templates/front-end-architecture-tmpl.yaml
+!.claude/templates/front-end-spec-tmpl.yaml
+!.claude/templates/fullstack-architecture-tmpl.yaml
+!.claude/templates/market-research-tmpl.yaml
+!.claude/templates/prd-tmpl.yaml
+!.claude/templates/project-brief-tmpl.yaml
+!.claude/templates/qa-gate-tmpl.yaml
+!.claude/templates/story-tmpl.yaml
+!.claude/templates/task-template.md
+!.claude/templates/workflow-template.yaml
+.claude/agents/
+!.claude/agents/
+!.claude/agents/aexos-*.md
+.claude/agent-memory/
+.claude/setup/
+!.claude/setup/
+!.claude/setup/install.sh
+!.claude/setup/settings.json
+!.claude/setup/statusline-custom.sh
+.agents/
+docs/guides/aexos-workflows/
+
+# Local Gemini project rules generated/managed per workspace
+.gemini/rules.md
+
+# Dependencies (Cyryx Labs)
+node_modules
+
+# Build & Logs (Cyryx Labs)
+dist/
+build/
+
+# IDE & OS (Cyryx Labs)
+.idea/
+*.swp
+
+# Cyryx Labs Local (Cyryx Labs)
+.aexos-core/local/
+.claude/settings.local.json
+.aexos/install-log.txt
+
+# Codex CLI projection.
+# `.codex/agents/` IS versioned: ide-sync validates it as a target (index.js:69),
+# so ignoring it made the strict gate fail on every runner while passing on any
+# developer machine — a check that could never go green in CI.
+# The original hold-back reason no longer holds: the 12 files contain no absolute
+# paths, and their only force-push mentions are authority policy ("ONLY this
+# agent", "❌ Force pushing to main/master") already versioned verbatim in the
+# sources under .aexos-core/development/agents/.
+#
+# `.codex/skills/` is versioned for the same reason: the compatibility parity
+# gate counts it against the agent sources and reported 0/12 with the directory
+# ignored. Same content check applied — no absolute paths, no credentials, no
+# personal data across the 12 SKILL.md files, and `.codex` is absent from
+# package.json `files[]`, so none of this reaches the npm tarball.
+# Everything else under .codex/ (session state, caches, local config) stays out.
+# Negations are deliberately narrow: un-ignoring a directory alone would also
+# track anything a local Codex run happens to drop inside it, so each level is
+# re-ignored and only the generated projection files are allowed back in.
+.codex/*
+!.codex/agents/
+.codex/agents/*
+!.codex/agents/*.md
+!.codex/skills/
+.codex/skills/*
+!.codex/skills/*/
+.codex/skills/*/*
+!.codex/skills/*/SKILL.md
+
+# Legacy aexos-* Claude skills (superseded by aexos-* agent skills under Cyryx Labs/ or aexos-* SDC); local only
+.claude/skills/aexos-*/
+.vercel
+.env*.local

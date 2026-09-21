@@ -1,0 +1,129 @@
+name: Build GitHub release assets
+
+# Packages an existing, manually created GitHub release. This workflow never
+# creates a release or dispatches npm publication.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing release tag (for example, v1.0.0)'
+        required: true
+        type: string
+
+concurrency:
+  group: release-assets-${{ inputs.tag }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  NODE_VERSION: '24'
+
+jobs:
+  pack-and-upload:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout tagged source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.tag }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+        env:
+          HUSKY: '0'
+
+      - name: Verify tag and package version
+        id: version
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="$RELEASE_TAG"
+          VERSION="${TAG#v}"
+          PACKAGE_VERSION="$(node -p "require('./package.json').version")"
+          if [[ "$TAG" != "v$PACKAGE_VERSION" || "$VERSION" != "$PACKAGE_VERSION" ]]; then
+            echo "::error::Tag $TAG does not match package.json version $PACKAGE_VERSION"
+            exit 1
+          fi
+          git rev-parse --verify "refs/tags/$TAG^{commit}" >/dev/null
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Run focused release gates
+        run: |
+          node scripts/sync-version-lockstep.js '${{ steps.version.outputs.version }}'
+          npx jest tests/version-identity.test.js tests/cli/validate-publish.test.js --runInBand
+
+      - name: Pack public npm distributions
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist/core dist/compat dist/install dist/pro-cli dist/installer
+          npm pack . --pack-destination dist/core
+          npm pack compat/aexos-core --pack-destination dist/compat
+          npm pack packages/aexos-install --pack-destination dist/install
+          npm pack packages/aexos-pro-cli --pack-destination dist/pro-cli
+          npm pack packages/installer --pack-destination dist/installer
+
+          mv "dist/compat/aexos-core-$RELEASE_VERSION.tgz" \
+            "dist/aexos-core-compat-$RELEASE_VERSION.tgz"
+          find dist -mindepth 2 -maxdepth 2 -type f -name '*.tgz' -exec mv -t dist {} +
+          rmdir dist/core dist/compat dist/install dist/pro-cli dist/installer
+
+          mapfile -t archives < <(find dist -maxdepth 1 -type f -name '*.tgz' -print | sort)
+          if [[ "${#archives[@]}" -ne 5 ]]; then
+            echo "::error::Expected 5 npm pack archives, found ${#archives[@]}"
+            exit 1
+          fi
+
+          for archive in "${archives[@]}"; do
+            packed_version="$(tar -xOf "$archive" package/package.json | jq -r '.version')"
+            if [[ "$packed_version" != "$RELEASE_VERSION" ]]; then
+              echo "::error::$archive contains version $packed_version"
+              exit 1
+            fi
+          done
+
+          (cd dist && sha256sum -- *.tgz > SHA256SUMS)
+          (cd dist && sha256sum --check SHA256SUMS)
+
+      - name: Retain verified assets as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: aexos-${{ inputs.tag }}-npm-pack-assets
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload verified assets to existing GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release view "$RELEASE_TAG" >/dev/null
+          gh release upload "$RELEASE_TAG" dist/*.tgz dist/SHA256SUMS
+
+      - name: Report uploaded hashes
+        shell: bash
+        run: |
+          {
+            echo '## Release assets uploaded'
+            echo
+            echo '```text'
+            cat dist/SHA256SUMS
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
