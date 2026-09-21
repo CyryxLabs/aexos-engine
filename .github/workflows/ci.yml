@@ -55,6 +55,7 @@ jobs:
             tests:
               - 'tests/**'
               - 'jest.config.js'
+              - 'jest.coverage.config.js'
             config:
               - '.github/workflows/**'
               - 'package.json'
@@ -317,7 +318,10 @@ jobs:
         run: npm ci
 
       - name: Run tests with coverage
-        run: npm run test:coverage
+        run: npm run test:coverage -- --config=jest.coverage.config.js
+
+      - name: Run timing-sensitive activation tests without coverage
+        run: node node_modules/jest/bin/jest.js tests/integration/agent-activation-performance.test.js --runInBand --coverage=false
 
       - name: Check coverage threshold
         run: |

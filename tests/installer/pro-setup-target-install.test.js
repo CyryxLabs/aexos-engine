@@ -263,8 +263,35 @@ describe('acquireProArtifactSourceDir — graceful fallback when target install 
     proSetup._testing.installProArtifactIntoTarget = originalInstall;
   });
 
-  test('falls back to the verified temp source and surfaces a warning', async () => {
+  test('rejects a substituted newly created temporary directory without touching its target', async () => {
+    const root = makeTempDir('aexos-pro-substitution-');
+    const external = path.join(root, 'external');
+    const substituted = path.join(root, 'substituted');
+    fs.mkdirSync(external);
+    fs.writeFileSync(path.join(external, 'sentinel'), 'owner');
+    fs.symlinkSync(external, substituted, process.platform === 'win32' ? 'junction' : 'dir');
+    const spy = jest.spyOn(require('fs-extra'), 'mkdtemp').mockResolvedValue(substituted);
+    try {
+      await expect(proSetup._testing.acquireProArtifactSourceDir(root,
+        { accessToken: 'fake-access-token' }, {})).rejects.toThrow('Unsafe newly created Pro temporary directory');
+      expect(fs.readFileSync(path.join(external, 'sentinel'), 'utf8')).toBe('owner');
+    } finally {
+      spy.mockRestore();
+      removeDir(root);
+    }
+  });
+
+  test.each([false, true])('falls back to verified temp source (platform temp alias: %s)', async (alias) => {
     const target = makeTempDir('aexos-pro-acq-target-');
+    const aliasRoot = alias ? makeTempDir('aexos-pro-temp-alias-') : null;
+    let tempSpy;
+    if (alias) {
+      const canonical = path.join(aliasRoot, 'real');
+      const aliasPath = path.join(aliasRoot, 'alias');
+      fs.mkdirSync(canonical);
+      fs.symlinkSync(canonical, aliasPath, process.platform === 'win32' ? 'junction' : 'dir');
+      tempSpy = jest.spyOn(os, 'tmpdir').mockReturnValue(aliasPath);
+    }
     const hijackError = new Error(
       'Installed Pro artifact did not create /fake/path. npm appears to have installed it at /elsewhere instead.',
     );
@@ -320,10 +347,15 @@ describe('acquireProArtifactSourceDir — graceful fallback when target install 
       const fs = require('fs');
       const path = require('path');
       expect(fs.existsSync(path.join(result.proSourceDir, 'package.json'))).toBe(true);
+      expect(result.tempRoot).toBe(fs.realpathSync(result.tempRoot));
+      if (alias) expect(path.dirname(result.tempRoot)).toBe(fs.realpathSync(path.join(aliasRoot, 'real')));
+      removeDir(result.tempRoot);
     } finally {
+      if (tempSpy) tempSpy.mockRestore();
       proSetup._testing.InlineLicenseClient.prototype.getProArtifactUrl = originalGetUrl;
       global.fetch = originalFetch;
       removeDir(target);
+      if (aliasRoot) removeDir(aliasRoot);
     }
   }, NPM_INSTALL_TIMEOUT_MS);
 });

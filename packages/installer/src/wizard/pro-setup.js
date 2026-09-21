@@ -1055,7 +1055,24 @@ async function acquireProArtifactSourceDir(targetDir, licenseResult, options = {
     };
   }
 
-  const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'aexos-pro-artifact-'));
+  // Resolve platform aliases (macOS /var -> /private/var) before creating our
+  // owned directory. This does not relax the extractor's no-link policy.
+  const tempBase = await fs.realpath(os.tmpdir());
+  const createdRoot = await fs.mkdtemp(path.join(tempBase, 'aexos-pro-artifact-'));
+  const createdStat = await fs.lstat(createdRoot);
+  if (!createdStat.isDirectory() || createdStat.isSymbolicLink()) {
+    throw new Error('Unsafe newly created Pro temporary directory');
+  }
+  const tempRoot = await fs.realpath(createdRoot);
+  const canonicalStat = await fs.lstat(tempRoot);
+  const currentStat = await fs.lstat(createdRoot);
+  if (path.dirname(tempRoot) !== tempBase ||
+      !canonicalStat.isDirectory() || canonicalStat.isSymbolicLink() ||
+      !currentStat.isDirectory() || currentStat.isSymbolicLink() ||
+      canonicalStat.dev !== createdStat.dev || canonicalStat.ino !== createdStat.ino ||
+      currentStat.dev !== createdStat.dev || currentStat.ino !== createdStat.ino) {
+    throw new Error('Pro temporary directory identity or containment changed');
+  }
 
   try {
     const machineId = licenseResult.machineId || generateMachineId();
