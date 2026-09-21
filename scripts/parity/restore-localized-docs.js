@@ -85,6 +85,7 @@ const PRE_URL_RULES = [
 ];
 
 const TEXT_RULES = [
+  ['canonical-squad-task-case', /integrate-Squad\.md/g, 'integrate-squad.md'],
   ['scoped-package', /@(?:synkra\/aiox-core|aiox\/core)\b/gi, '@aexos/core'],
   ['npx-package', /\bnpx\s+aiox-core\b/gi, 'npx @aexos/core'],
   ['core-directory', /\.aiox-core\b/g, '.aexos-core'],

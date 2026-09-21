@@ -4571,10 +4571,11 @@
       "destination": "docs/zh/aexos-agent-flows/ux-design-expert-system.md",
       "source_sha256": "793b0abdbb2b416efdb2c0993f232a42c44b74a664a528a7093038fcd4d012fd",
       "source_commit": "4ef6530ff03b83aea953e4a426f95e012b8b70c5",
-      "output_sha256": "4b6ebf81d751a072e6af02faf838c78102c4b83d790d62e252ad1781f45a87c4",
+      "output_sha256": "3f00f245c6daebd1a356864fc1bddfe6d2e8c27a31584b414199889ea568f9af",
       "status": "ADAPTED_NOT_BEHAVIORALLY_VERIFIED",
       "behavioral_verification": "NOT_PERFORMED",
       "transformations": {
+        "canonical-squad-task-case": 1,
         "core-directory": 23,
         "claude-command-namespace": 1,
         "product-acronym": 2

@@ -82,7 +82,11 @@ describe('Quality Gate Pipeline Integration', () => {
 
       const result = await manager.orchestrate({ verbose: false });
 
-      expect(spawnSyncSpy).toHaveBeenCalledWith('wsl', ['-l'], { encoding: 'utf8' });
+      if (process.platform === 'win32') {
+        expect(spawnSyncSpy).toHaveBeenCalledWith('wsl', ['-l'], { encoding: 'utf8' });
+      } else {
+        expect(spawnSyncSpy).not.toHaveBeenCalledWith('wsl', ['-l'], { encoding: 'utf8' });
+      }
       expect(result).toHaveProperty('status');
       expect(result).toHaveProperty('duration');
       expect(result).toHaveProperty('layers');

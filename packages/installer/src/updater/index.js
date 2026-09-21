@@ -88,7 +88,48 @@ async function assertNoSymlinkPath(root, candidate) {
   }
 }
 
+// Accept only npm executable links authenticated by the sibling package bin
+// declaration. All ancestors and targets remain regular, contained filesystem entries.
+async function npmBinLink(candidate, root, allowMissingTarget = false) {
+  const stat = await lstatOrNull(candidate);
+  if (!stat?.isSymbolicLink()) return null;
+  const binDir = path.dirname(candidate);
+  const modules = path.dirname(binDir);
+  if (path.basename(binDir) !== '.bin' || path.basename(modules) !== 'node_modules') {
+    throw new Error(`Refusing symbolic link outside npm bin directory: ${candidate}`);
+  }
+  await assertNoSymlinkPath(root, binDir);
+  const link = await fs.readlink(candidate);
+  if (path.isAbsolute(link)) throw new Error(`Refusing absolute npm symbolic link: ${candidate}`);
+  const target = path.resolve(binDir, link);
+  if (!isContainedPath(modules, target)) throw new Error(`Refusing escaping npm symbolic link: ${candidate}`);
+  await assertNoSymlinkPath(root, target);
+  const parts = path.relative(modules, target).split(path.sep);
+  const packageParts = parts[0].startsWith('@') ? 2 : 1;
+  if (parts.length <= packageParts || parts[0] === '.bin') throw new Error('Invalid npm bin target');
+  const packageRoot = path.join(modules, ...parts.slice(0, packageParts));
+  const manifestPath = path.join(packageRoot, 'package.json');
+  await assertNoSymlinkPath(root, manifestPath);
+  const targetStat = await lstatOrNull(target);
+  if ((!targetStat && !allowMissingTarget) || (targetStat && !targetStat.isFile()) || !(await fs.lstat(manifestPath)).isFile()) {
+    throw new Error('Npm bin target and manifest must be regular files');
+  }
+  const realModules = await fs.realpath(modules);
+  if (targetStat && !isContainedPath(realModules, await fs.realpath(target))) throw new Error('Npm bin target escapes real module root');
+  const manifest = await fs.readJson(manifestPath);
+  const command = path.basename(candidate);
+  const declared = typeof manifest.bin === 'string'
+    ? (manifest.name?.split('/').pop() === command ? manifest.bin : null)
+    : manifest.bin && Object.prototype.hasOwnProperty.call(manifest.bin, command) ? manifest.bin[command] : null;
+  if (typeof declared !== 'string' || !declared || path.isAbsolute(declared) ||
+      !isContainedPath(packageRoot, target) || path.resolve(packageRoot, declared) !== target) {
+    throw new Error(`Undeclared npm bin symbolic link: ${candidate}`);
+  }
+  return link;
+}
+
 async function validateDestinationTree(root, candidate) {
+  if (await npmBinLink(candidate, root, true)) return;
   await assertNoSymlinkPath(root, candidate);
   const stat = await lstatOrNull(candidate);
   if (!stat) return;
@@ -138,6 +179,23 @@ async function removeEmptyParents(start, boundary) {
 }
 
 async function copySnapshot(source, destination, projectRoot) {
+  const binLink = await npmBinLink(source, projectRoot);
+  if (binLink) {
+    await assertNoSymlinkPath(projectRoot, path.dirname(destination));
+    const existing = await lstatOrNull(destination);
+    if (existing) {
+      if (!existing.isSymbolicLink()) {
+        throw new Error(`Refusing conflicting npm bin destination: ${destination}`);
+      }
+      await npmBinLink(destination, projectRoot, true);
+      if (await fs.readlink(destination) === binLink) return;
+      // Unlink only this authenticated directory entry, never its target.
+      await fs.unlink(destination);
+    }
+    await fs.ensureDir(path.dirname(destination));
+    await fs.symlink(binLink, destination, 'file');
+    return;
+  }
   await assertNoSymlinkPath(projectRoot, source);
   await assertNoSymlinkPath(projectRoot, destination);
   const stat = await fs.lstat(source);
@@ -160,6 +218,7 @@ async function copySnapshot(source, destination, projectRoot) {
 }
 
 async function validateSnapshot(source, projectRoot) {
+  if (await npmBinLink(source, projectRoot)) return;
   await assertNoSymlinkPath(projectRoot, source);
   const stat = await fs.lstat(source);
   if (stat.isSymbolicLink()) {
@@ -175,6 +234,13 @@ async function validateSnapshot(source, projectRoot) {
 }
 
 async function verifySnapshotCopy(source, destination, projectRoot) {
+  const binLink = await npmBinLink(source, projectRoot);
+  if (binLink) {
+    if (await npmBinLink(destination, projectRoot) !== binLink) {
+      throw new Error(`Restored npm bin differs from backup: ${destination}`);
+    }
+    return;
+  }
   await assertNoSymlinkPath(projectRoot, destination);
   const original = await fs.lstat(source);
   const restored = await lstatOrNull(destination);

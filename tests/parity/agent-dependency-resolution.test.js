@@ -76,7 +76,14 @@ function resolveDependency(type, name) {
   if (!roots) return null;
   return roots
     .map((root) => path.join(coreRoot, root, name))
-    .find((candidate) => fs.existsSync(candidate)) || null;
+    .find((candidate) => {
+      let directory = coreRoot;
+      for (const part of path.relative(coreRoot, candidate).split(path.sep)) {
+        if (!fs.existsSync(directory) || !fs.readdirSync(directory).includes(part)) return false;
+        directory = path.join(directory, part);
+      }
+      return fs.existsSync(candidate);
+    }) || null;
 }
 
 describe('canonical agent dependency resolution', () => {

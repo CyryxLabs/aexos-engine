@@ -8,7 +8,7 @@
 # - File types for categorization
 #
 version: 1.0.0
-generated_at: "2026-09-21T21:58:51.917Z"
+generated_at: "2026-09-21T22:49:08.535Z"
 generator: scripts/generate-install-manifest.js
 file_count: 1186
 files:
@@ -1413,9 +1413,9 @@ files:
     type: data
     size: 9595
   - path: data/entity-registry.yaml
-    hash: sha256:4543512f7d2ece8734505b802d957b0287ff69519c23db08883ff34448f73642
+    hash: sha256:acf248125f46d5a12889606cfa46b3f174881b55c67a52f96484e566e812c03c
     type: data
-    size: 603550
+    size: 603572
   - path: data/learned-patterns.yaml
     hash: sha256:24ac0b160615583a0ff783d3da8af80b7f94191575d6db2054ec8e10a3f945dc
     type: data
@@ -1597,7 +1597,7 @@ files:
     type: agent
     size: 15460
   - path: development/agents/ux-design-expert.md
-    hash: sha256:c2d1ff30dada286e73aaa66dc02b280c8ab75792ea93ea8400930ca8c3d5a2e1
+    hash: sha256:c69fe6960746e26d140f2b154585852e86082f62b1ef2c118a8e00d6c70c3ded
     type: agent
     size: 20893
   - path: development/agents/ux/MEMORY.md
