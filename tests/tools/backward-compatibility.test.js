@@ -4,6 +4,7 @@
 // Canonical local APIs; upstream fixture corrections are tracked in missing-source-dispositions.json.
 // Integration/Performance test - uses describeIntegration
 const path = require('path');
+const { performance } = require('node:perf_hooks');
 const toolResolver = require('../../.aexos-core/infrastructure/scripts/tool-resolver');
 const ToolValidationHelper = require('../../.aexos-core/infrastructure/scripts/tool-validation-helper');
 
@@ -336,9 +337,9 @@ describe('Backward Compatibility - No-Validator Pass-Through', () => {
     test('validation without validators is instant (<1ms)', async () => {
       const validator = new ToolValidationHelper(undefined);
 
-      const start = Date.now();
+      const start = performance.now();
       await validator.validate('command', { args: 'data' });
-      const duration = Date.now() - start;
+      const duration = performance.now() - start;
 
       // Should be instant (much faster than 50ms target)
       expect(duration).toBeLessThan(1);
@@ -352,9 +353,9 @@ describe('Backward Compatibility - No-Validator Pass-Through', () => {
         args: { index: i },
       }));
 
-      const start = Date.now();
+      const start = performance.now();
       await validator.validateBatch(operations);
-      const duration = Date.now() - start;
+      const duration = performance.now() - start;
 
       // Even 100 operations should be instant
       expect(duration).toBeLessThan(5);
@@ -367,9 +368,9 @@ describe('Backward Compatibility - No-Validator Pass-Through', () => {
         validator.validate(`command${i}`, { data: i }),
       );
 
-      const start = Date.now();
+      const start = performance.now();
       await Promise.all(promises);
-      const duration = Date.now() - start;
+      const duration = performance.now() - start;
 
       // Even 50 concurrent validations should be instant
       expect(duration).toBeLessThan(5);
@@ -389,9 +390,9 @@ describe('Backward Compatibility - No-Validator Pass-Through', () => {
         const tool = await toolResolver.resolveTool(toolName);
         const validator = new ToolValidationHelper(tool.executable_knowledge);
 
-        const start = Date.now();
+        const start = performance.now();
         const result = await validator.validate('test', {});
-        const duration = Date.now() - start;
+        const duration = performance.now() - start;
 
         report.v1_tools.push({
           name: toolName,
@@ -407,7 +408,7 @@ describe('Backward Compatibility - No-Validator Pass-Through', () => {
           });
         }
 
-        if (duration > 1) {
+        if (duration >= 1) {
           report.performance_issues.push({
             tool: toolName,
             duration_ms: duration,
