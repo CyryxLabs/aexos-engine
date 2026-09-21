@@ -12,8 +12,8 @@ const { ROOT, OUTPUT, sha256, readJson, writeJson, candidateIdentity } = require
 function main() {
   const npmCli = process.env.AEXOS_PARITY_NPM_CLI || process.env.npm_execpath;
   if (!npmCli || !fs.existsSync(npmCli)) throw new Error('Set AEXOS_PARITY_NPM_CLI to the installed npm/bin/npm-cli.js (no downloads or guessed CLI)');
-  const workRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'aexos-parity-installed-'));
-  assert(!workRoot.startsWith(ROOT + path.sep));
+  const workRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'aexos-parity-installed-')));
+  assert(!workRoot.startsWith(fs.realpathSync(ROOT) + path.sep));
   const profile = path.join(workRoot, 'profile');
   const cache = process.env.AEXOS_PARITY_NPM_CACHE || path.join(workRoot, 'npm-cache');
   const toolBin = path.join(workRoot, 'tools');
