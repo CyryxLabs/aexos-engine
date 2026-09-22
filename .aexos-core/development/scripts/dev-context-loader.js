@@ -12,6 +12,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const yaml = require('js-yaml');
 const { createHash } = require('crypto');
+const { performance } = require('perf_hooks');
 
 const CACHE_TTL = 3600 * 1000; // 1 hour
 
@@ -19,6 +20,7 @@ class DevContextLoader {
   constructor() {
     this.coreConfigPath = path.join(process.cwd(), '.aexos-core', 'core-config.yaml');
     this.summaryCache = new Map();
+    this.coreConfigCache = null;
     this.cacheDir = path.join(process.cwd(), '.aexos', 'cache');
   }
 
@@ -34,7 +36,7 @@ class DevContextLoader {
     const fullLoad = options.fullLoad || false;
     const skipCache = options.skipCache || false;
 
-    const startTime = Date.now();
+    const startTime = performance.now();
 
     // Load core config to get devLoadAlwaysFiles list
     // TD-6: Handle null/undefined coreConfig gracefully
@@ -44,7 +46,7 @@ class DevContextLoader {
     if (fileList.length === 0) {
       return {
         status: 'no_files',
-        loadTime: Date.now() - startTime,
+        loadTime: performance.now() - startTime,
         files: [],
       };
     }
@@ -52,7 +54,7 @@ class DevContextLoader {
     // Load files (with cache)
     const files = await this.loadFiles(fileList, { fullLoad, skipCache });
 
-    const loadTime = Date.now() - startTime;
+    const loadTime = performance.now() - startTime;
 
     return {
       status: 'loaded',
@@ -73,8 +75,14 @@ class DevContextLoader {
   async loadCoreConfig() {
     try {
       const content = await fs.readFile(this.coreConfigPath, 'utf8');
-      return yaml.load(content);
+      // Read every time so config changes and read failures remain observable.
+      // Reuse only parsing of identical bytes, and never expose mutable cache data.
+      if (!this.coreConfigCache || this.coreConfigCache.content !== content) {
+        this.coreConfigCache = { content, value: yaml.load(content) };
+      }
+      return structuredClone(this.coreConfigCache.value);
     } catch (error) {
+      this.coreConfigCache = null;
       console.warn('⚠️ Could not load core-config.yaml:', error.message);
       return {};
     }
@@ -95,9 +103,6 @@ class DevContextLoader {
       const absolutePath = path.join(process.cwd(), filePath);
 
       try {
-        // Check if file exists
-        await fs.access(absolutePath);
-
         // Try to load from cache
         if (!skipCache) {
           const cached = await this.loadFromCache(filePath, fullLoad);
