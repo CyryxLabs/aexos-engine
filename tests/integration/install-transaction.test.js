@@ -243,6 +243,30 @@ describe('InstallTransaction', () => {
 
   // Test 8: Log File Overflow Handling
   describe('Logging System', () => {
+    test('missing log is quiet and its first entry is synchronously persisted', () => {
+      const error = jest.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        transaction._rotateLogIfNeeded();
+        expect(error).not.toHaveBeenCalled();
+        transaction.log('INFO', 'First entry');
+        expect(fs.readFileSync(transaction.logFile, 'utf8')).toMatch(/\[INFO\] First entry\n$/);
+      } finally {
+        error.mockRestore();
+      }
+    });
+
+    test('non-ENOENT metadata errors remain reported as non-critical rotation failures', () => {
+      const failure = Object.assign(new Error('permission denied'), { code: 'EACCES' });
+      const stat = jest.spyOn(fs, 'statSync').mockImplementation(() => { throw failure; });
+      const error = jest.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        expect(() => transaction._rotateLogIfNeeded()).not.toThrow();
+        expect(error).toHaveBeenCalledWith('Log rotation failed: permission denied');
+      } finally {
+        stat.mockRestore();
+        error.mockRestore();
+      }
+    });
     test('should log operations with timestamps', async () => {
       transaction.log('INFO', 'Test message');
 
@@ -268,6 +292,8 @@ describe('InstallTransaction', () => {
       transaction.log('INFO', 'After rotation');
 
       expect(await fs.pathExists(`${transaction.logFile}.1`)).toBe(true);
+      expect(await fs.readFile(`${transaction.logFile}.1`, 'utf8')).toContain('After rotation');
+      expect(await fs.readFile(transaction.logFile, 'utf8')).toContain('Log file rotated');
     });
   });
 
@@ -403,6 +429,12 @@ describe('InstallTransaction', () => {
       const duration = Date.now() - start;
 
       expect(duration).toBeLessThan(500);
+      const lines = fs.readFileSync(transaction.logFile, 'utf8').trim().split('\n');
+      expect(lines).toHaveLength(1000);
+      expect(transaction.operations).toHaveLength(1000);
+      for (let i = 0; i < 1000; i++) {
+        expect(lines[i]).toMatch(new RegExp(`\\[INFO\\] Log entry ${i}$`));
+      }
     }, 5000);
   });
 });
