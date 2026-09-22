@@ -36,7 +36,7 @@ describe('canonical Grok hook wrappers', () => {
   let originalGrokRoot;
 
   beforeEach(() => {
-    temp = fs.mkdtempSync(path.join(os.tmpdir(), 'aexos-grok-wrapper-'));
+    temp = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'aexos-grok-wrapper-')));
     originalCwd = process.cwd();
     originalGrokRoot = process.env.GROK_WORKSPACE_ROOT;
     delete process.env.GROK_WORKSPACE_ROOT;

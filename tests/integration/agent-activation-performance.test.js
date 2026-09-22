@@ -11,6 +11,7 @@ const SessionContextLoader = require('../../.aexos-core/core/session/context-loa
 const { createGreetingProject } = require('../helpers/isolated-greeting-project');
 const fs = require('fs');
 const path = require('path');
+const { execFileSync } = require('child_process');
 
 describe('Agent Activation Performance (Integration)', () => {
   let devLoader;
@@ -55,17 +56,22 @@ describe('Agent Activation Performance (Integration)', () => {
     });
 
     test('shows correct load time and cache status', async () => {
-      // First load (cache miss)
-      const result1 = await devLoader.load({ fullLoad: false });
+      // Keep the 50 ms / 5 ms budgets on real I/O without Jest's coverage and
+      // module instrumentation inside the measured product execution.
+      const output = execFileSync(process.execPath, [
+        path.resolve(__dirname, '../helpers/dev-context-performance-scenario.js'),
+      ], { cwd: project.root, encoding: 'utf8', timeout: 30000, windowsHide: true });
+      const { cold: result1, warm: result2 } = JSON.parse(output);
 
+      expect(result1.status).toBe('loaded');
+      expect(result1.filesCount).toBeGreaterThan(0);
       expect(result1.loadTime).toBeLessThan(50);
       expect(result1.cacheHits).toBe(0);
 
-      // Second load (cache hit)
-      const result2 = await devLoader.load({ fullLoad: false });
-
+      expect(result2.status).toBe('loaded');
+      expect(result2.filesCount).toBe(result1.filesCount);
       expect(result2.loadTime).toBeLessThan(5);
-      expect(result2.cacheHits).toBeGreaterThan(0);
+      expect(result2.cacheHits).toBe(result2.filesCount);
     });
   });
 

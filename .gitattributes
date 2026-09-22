@@ -15,6 +15,7 @@
 *.md text eol=lf
 *.yml text eol=lf
 *.yaml text eol=lf
+*.toml text eol=lf
 *.css text eol=lf
 *.scss text eol=lf
 *.html text eol=lf

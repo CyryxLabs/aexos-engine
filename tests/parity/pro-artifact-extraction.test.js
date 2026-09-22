@@ -9,7 +9,7 @@ const { extractProArtifactToTemp, resolveNpmInvocation } = require('../../packag
 describe('Public Pro artifact staging without private Pro content', () => {
   let root;
   beforeEach(async () => {
-    root = await fs.mkdtemp(path.join(os.tmpdir(), 'aexos-artifact-'));
+    root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'aexos-artifact-')));
     await fs.outputJson(path.join(root, 'package/package.json'), { name: '@aexos/pro', version: '0.0.0-fixture',
       scripts: { install: 'node -e "throw new Error(\'must not execute\')"' },
       dependencies: { 'intentionally-unavailable-parity-fixture': '0.0.0' } });
