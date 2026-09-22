@@ -376,12 +376,15 @@ class InstallTransaction {
    */
   _rotateLogIfNeeded() {
     try {
-      // Check if log file exists before trying to get stats
-      if (!fs.existsSync(this.logFile)) {
-        return;
+      // One metadata read is enough; tolerate a missing log without a separate
+      // existence syscall on every synchronous append.
+      let stats;
+      try {
+        stats = fs.statSync(this.logFile);
+      } catch (error) {
+        if (error.code === 'ENOENT') return;
+        throw error;
       }
-
-      const stats = fs.statSync(this.logFile);
       const MAX_LOG_SIZE = 10 * 1024 * 1024; // 10MB
       const MAX_LOG_FILES = 5;
 
