@@ -4,9 +4,27 @@
 // Canonical local APIs; upstream fixture corrections are tracked in missing-source-dispositions.json.
 // Integration/Performance test - uses describeIntegration
 const path = require('path');
-const { performance } = require('node:perf_hooks');
+const { execFileSync } = require('child_process');
 const toolResolver = require('../../.aexos-core/infrastructure/scripts/tool-resolver');
 const ToolValidationHelper = require('../../.aexos-core/infrastructure/scripts/tool-validation-helper');
+
+function runtimeBenchmark(mode, tools = []) {
+  const scenario = path.resolve(__dirname, '../helpers/tool-validation-performance-scenario.js');
+  const output = execFileSync(process.execPath, [scenario, mode, JSON.stringify(tools)],
+    { encoding: 'utf8', timeout: 10000, windowsHide: true });
+  const marker = 'TOOL_VALIDATION_BENCHMARK ';
+  const line = output.split('\n').find(value => value.startsWith(marker));
+  if (!line) throw new Error('Missing tool validation benchmark result');
+  return JSON.parse(line.slice(marker.length));
+}
+
+function expectValidResults(results, count) {
+  expect(results).toHaveLength(count);
+  results.forEach(result => {
+    expect(result.valid).toBe(true);
+    expect(result.errors).toHaveLength(0);
+  });
+}
 
 /**
  * Backward Compatibility Test Suite
@@ -335,94 +353,51 @@ describe('Backward Compatibility - No-Validator Pass-Through', () => {
 
   describe('Performance with No Validators', () => {
     test('validation without validators is instant (<1ms)', async () => {
-      const validator = new ToolValidationHelper(undefined);
-
-      const start = performance.now();
-      await validator.validate('command', { args: 'data' });
-      const duration = performance.now() - start;
+      const { duration, results } = runtimeBenchmark('single');
 
       // Should be instant (much faster than 50ms target)
       expect(duration).toBeLessThan(1);
+      expect(duration).toBeGreaterThanOrEqual(0);
+      expectValidResults(results, 1);
     });
 
     test('batch validation without validators is instant', async () => {
-      const validator = new ToolValidationHelper({ validators: [] });
-
-      const operations = Array.from({ length: 100 }, (_, i) => ({
-        command: `cmd${i}`,
-        args: { index: i },
-      }));
-
-      const start = performance.now();
-      await validator.validateBatch(operations);
-      const duration = performance.now() - start;
+      const { duration, results } = runtimeBenchmark('batch');
 
       // Even 100 operations should be instant
       expect(duration).toBeLessThan(5);
+      expect(duration).toBeGreaterThanOrEqual(0);
+      expectValidResults(results.map(item => item.result), 100);
+      results.forEach((item, i) => {
+        expect(item.command).toBe(`cmd${i}`);
+        expect(item.args).toEqual({ index: i });
+      });
     });
 
     test('concurrent validations without validators are instant', async () => {
-      const validator = new ToolValidationHelper(null);
-
-      const promises = Array.from({ length: 50 }, (_, i) =>
-        validator.validate(`command${i}`, { data: i }),
-      );
-
-      const start = performance.now();
-      await Promise.all(promises);
-      const duration = performance.now() - start;
+      const { duration, results } = runtimeBenchmark('concurrent');
 
       // Even 50 concurrent validations should be instant
       expect(duration).toBeLessThan(5);
+      expect(duration).toBeGreaterThanOrEqual(0);
+      expectValidResults(results, 50);
     });
   });
 
   describe('Backward Compatibility Summary', () => {
     test('comprehensive backward compatibility check', async () => {
-      const report = {
-        v1_tools: [],
-        validation_errors: [],
-        performance_issues: [],
-      };
-
-      // Test all v1.0 simple tools
-      for (const toolName of v1SimpleTools) {
-        const tool = await toolResolver.resolveTool(toolName);
-        const validator = new ToolValidationHelper(tool.executable_knowledge);
-
-        const start = performance.now();
-        const result = await validator.validate('test', {});
-        const duration = performance.now() - start;
-
-        report.v1_tools.push({
-          name: toolName,
-          has_exec_knowledge: !!tool.executable_knowledge,
-          validation_passed: result.valid,
-          duration_ms: duration,
-        });
-
-        if (!result.valid) {
-          report.validation_errors.push({
-            tool: toolName,
-            errors: result.errors,
-          });
-        }
-
-        if (duration >= 1) {
-          report.performance_issues.push({
-            tool: toolName,
-            duration_ms: duration,
-          });
-        }
-      }
+      const report = runtimeBenchmark('summary', v1SimpleTools);
 
       // Verify all passed
       expect(report.validation_errors).toHaveLength(0);
       expect(report.performance_issues).toHaveLength(0);
+      expect(report.v1_tools.map(tool => tool.name)).toEqual(v1SimpleTools);
 
       report.v1_tools.forEach(tool => {
         expect(tool.has_exec_knowledge).toBe(false);
         expect(tool.validation_passed).toBe(true);
+        expect(tool.errors).toHaveLength(0);
+        expect(tool.duration_ms).toBeGreaterThanOrEqual(0);
         expect(tool.duration_ms).toBeLessThan(1);
       });
 
