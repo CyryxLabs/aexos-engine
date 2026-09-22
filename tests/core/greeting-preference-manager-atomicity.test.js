@@ -40,7 +40,7 @@ const ORIGINAL_CONFIG = [
  * must be re-required after the chdir.
  */
 function setupProject() {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'greeting-pref-'));
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'greeting-pref-')));
   const coreDir = path.join(root, '.aexos-core');
   fs.mkdirSync(coreDir, { recursive: true });
 

@@ -58,6 +58,7 @@ jobs:
               - 'jest.coverage.config.js'
             config:
               - '.github/workflows/**'
+              - '.gitattributes'
               - 'package.json'
               - 'package-lock.json'
               - 'tsconfig.json'
@@ -597,6 +598,7 @@ jobs:
         compatibility-parity-gate,
         dependency-validation,
         brownfield-install-test,
+        cross-platform,
       ]
     if: always()
 
@@ -627,6 +629,7 @@ jobs:
           echo "  Compatibility Parity Gate: ${{ needs.compatibility-parity-gate.result }}"
           echo "  Dependency Validation: ${{ needs.dependency-validation.result }}"
           echo "  Brownfield Install Test: ${{ needs.brownfield-install-test.result }}"
+          echo "  Cross-Platform Tests: ${{ needs.cross-platform.result }}"
           echo ""
 
           # Check for failures (skipped is OK when changes don't affect that area)
@@ -664,6 +667,14 @@ jobs:
           # Tests: fail if ran and didn't succeed
           if [ "${{ needs.test.result }}" == "failure" ]; then
             echo "❌ Jest tests failed"
+            FAILED=true
+          fi
+
+          # The matrix is required for release-relevant PRs, manual runs, and main pushes.
+          # Reject skipped/cancelled as well as failed so the required summary cannot go green
+          # without all 12 OS/Node combinations completing successfully.
+          if [ "${{ ((github.event_name == 'pull_request' && (needs.changes.outputs.code == 'true' || needs.changes.outputs.tests == 'true' || needs.changes.outputs.config == 'true')) || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')) && needs.cross-platform.result != 'success' }}" == "true" ]; then
+            echo "❌ Cross-platform test matrix did not succeed (${{ needs.cross-platform.result }})"
             FAILED=true
           fi
 
@@ -807,11 +818,26 @@ jobs:
         run: node tests/synapse/benchmarks/pipeline-benchmark.js --iterations=50 --json
         continue-on-error: true
 
-  # Cross-platform testing - ONLY on main branch push
+  # Cross-platform testing for release-relevant PR changes, manual validation, and every main branch push
   # Moved from cross-platform-tests.yml (Story 6.1)
   cross-platform:
     name: Cross-Platform Tests
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: >-
+      ${{
+        !cancelled() &&
+        needs.changes.result == 'success' &&
+        needs.test.result != 'failure' &&
+        needs.test.result != 'cancelled' &&
+        needs.lint.result != 'failure' &&
+        needs.lint.result != 'cancelled' &&
+        needs.typecheck.result != 'failure' &&
+        needs.typecheck.result != 'cancelled' &&
+        (
+          (github.event_name == 'pull_request' && (needs.changes.outputs.code == 'true' || needs.changes.outputs.tests == 'true' || needs.changes.outputs.config == 'true')) ||
+          github.event_name == 'workflow_dispatch' ||
+          (github.event_name == 'push' && github.ref == 'refs/heads/main')
+        )
+      }}
     needs: [changes, lint, typecheck, test]
     strategy:
       fail-fast: false

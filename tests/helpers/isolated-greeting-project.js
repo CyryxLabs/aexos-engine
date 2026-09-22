@@ -10,7 +10,7 @@ const yaml = require('js-yaml');
 function createGreetingProject({ contextFixture = false } = {}) {
   const cwd = process.cwd();
   const source = path.resolve(__dirname, '../..');
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'aexos-greeting-project-'));
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'aexos-greeting-project-')));
   const core = path.join(root, '.aexos-core');
   fs.mkdirSync(core);
   const config = yaml.load(fs.readFileSync(path.join(source, '.aexos-core/core-config.yaml'), 'utf8'));
