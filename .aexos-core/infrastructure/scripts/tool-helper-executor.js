@@ -27,7 +27,10 @@ function timeoutError(label, timeoutMs) {
 }
 
 function remainingTimeout(startedAt, timeoutMs) {
-  return Math.max(0, timeoutMs - (Date.now() - startedAt));
+  const remaining = timeoutMs - Number(process.hrtime.bigint() - startedAt) / 1e6;
+  // vm requires an integer >= 1. Round only the remaining fractional
+  // millisecond, never restart the original budget for a later phase.
+  return remaining <= 0 ? 0 : Math.ceil(remaining);
 }
 
 /**
@@ -40,7 +43,7 @@ function remainingTimeout(startedAt, timeoutMs) {
 function executeInContext(source, args, options = {}) {
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const label = options.label || 'Helper';
-  const startedAt = Date.now();
+  const startedAt = process.hrtime.bigint();
 
   if (!Number.isInteger(timeoutMs) || timeoutMs <= 0) {
     throw new Error('timeoutMs must be a positive integer');
@@ -93,8 +96,10 @@ function executeInContext(source, args, options = {}) {
     throw new Error(`${label} execution failed: source could not be compiled`);
   }
 
+  const executionBudget = remainingTimeout(startedAt, timeoutMs);
+  if (executionBudget <= 0) throw timeoutError(label, timeoutMs);
   try {
-    result = script.runInContext(context, { timeout: timeoutMs });
+    result = script.runInContext(context, { timeout: executionBudget });
   } catch (_error) {
     const remaining = remainingTimeout(startedAt, timeoutMs);
     if (remaining <= 0) throw timeoutError(label, timeoutMs);
@@ -134,6 +139,7 @@ function executeInContext(source, args, options = {}) {
   try {
     serializedResult = new vm.Script(`
       (function() {
+        try {
         const value = globalThis.__aexosResult;
         if (value !== null && (typeof value === 'object' || typeof value === 'function')) {
           if (typeof value.then === 'function') {
@@ -145,11 +151,16 @@ function executeInContext(source, args, options = {}) {
           hasValue: value !== undefined,
           value
         });
+        } catch (_serializationError) {
+          // Never export or inspect a VM-owned thrown value in the host.
+          return '{"kind":"serialization-error"}';
+        }
       })();
     `).runInContext(context, { timeout: remaining });
   } catch (_error) {
-    if (remainingTimeout(startedAt, timeoutMs) <= 0) throw timeoutError(label, timeoutMs);
-    throw new Error(`${label} execution failed: result could not be serialized`);
+    // Ordinary serialization exceptions are captured inside the VM. Its
+    // uncatchable deadline interruption must not depend on wall-clock ticks.
+    throw timeoutError(label, timeoutMs);
   }
 
   if (typeof serializedResult !== 'string') {
@@ -164,6 +175,9 @@ function executeInContext(source, args, options = {}) {
   }
   if (envelope.kind === 'async') {
     throw new Error(`${label} execution failed: asynchronous results are not supported`);
+  }
+  if (envelope.kind === 'serialization-error') {
+    throw new Error(`${label} execution failed: result could not be serialized`);
   }
   return envelope.hasValue ? envelope.value : undefined;
 }

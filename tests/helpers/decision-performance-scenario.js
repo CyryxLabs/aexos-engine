@@ -13,6 +13,14 @@ async function main() {
     agentLoadTime: 150,
   });
   const initialized = performance.now();
+  if (process.argv[2] === 'initialization') {
+    process.stdout.write(`DECISION_BENCHMARK ${JSON.stringify({
+      phases: { initialize: initialized - started }, summary: context.getSummary(),
+      agentId: context.agentId, storyPath: context.storyPath,
+      agentLoadTime: context.metrics.agentLoadTime, commitBefore: context.commitBefore,
+    })}\n`);
+    return;
+  }
   for (let i = 0; i < (generationOnly ? 5 : 7); i++) recorder.recordDecision({
     description: `Realistic decision ${i}`, reason: 'Performance validation',
     alternatives: ['Alt 1', 'Alt 2', 'Alt 3'],

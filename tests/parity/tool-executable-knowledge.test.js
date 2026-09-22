@@ -208,13 +208,18 @@ describe('packaged executable knowledge', () => {
     expect(child.stdout).toContain('exceeded 0.02s timeout');
   });
 
-  test('VM-owned getters and thrown values remain inside the deadline', () => {
+  test.each(['real', 'frozen', 'jumping'])('VM-owned getters and thrown values remain inside the deadline (%s wall clock)', (clock) => {
     const executorPath = path.resolve(
       __dirname,
       '../../.aexos-core/infrastructure/scripts/tool-helper-executor.js',
     );
     const childSource = `
       const ToolHelperExecutor = require(${JSON.stringify(executorPath)});
+      const clock = ${JSON.stringify(clock)};
+      const epoch = Date.now();
+      let tick = 0;
+      if (clock === 'frozen') Date.now = () => epoch;
+      if (clock === 'jumping') Date.now = () => epoch + (++tick % 2 ? 86400000 : -86400000);
       const cases = [
         ['then-getter', '({ get then() { while (true) {} } })'],
         ['value-getter', '({ get value() { while (true) {} } })'],
@@ -245,6 +250,17 @@ describe('packaged executable knowledge', () => {
     expect(messages).not.toContain('unexpected success');
     expect(messages.slice(0, 4).every(message => message.includes('timeout'))).toBe(true);
     expect(messages[4]).toContain('execution failed: safe');
+  });
+
+  test.each([
+    'const value = {}; value.self = value; value;',
+    '1n',
+    '({ get value() { throw { get message() { while (true) {} }, toString() { while (true) {} } }; } })',
+  ])('serialization failures are normalized inside the VM: %s', async (source) => {
+    const executor = new ToolHelperExecutor([{ id: 'serialization', function: source }], { timeoutMs: 20 });
+    await expect(executor.execute('serialization')).rejects.toThrow(
+      'execution failed: result could not be serialized',
+    );
   });
 
   test('malformed definitions and validator result envelopes fail closed', async () => {
