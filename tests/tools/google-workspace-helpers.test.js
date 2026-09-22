@@ -646,12 +646,25 @@ describe('Google Workspace Tool Helpers', () => {
     test('should validate attachment size limits', async () => {
       const largeData = 'x'.repeat(26 * 1024 * 1024); // 26MB
 
-      const result = await executor.execute('format-email-attachment', {
-        filename: 'large.pdf',
-        data: largeData,
+      const vm = require('vm');
+      const OriginalScript = vm.Script;
+      const compiledSources = [];
+      const compile = jest.spyOn(vm, 'Script').mockImplementation(function(source, options) {
+        compiledSources.push(source);
+        return new OriginalScript(source, options);
       });
-
-      expect(result.error).toBe('Attachment exceeds 25MB limit');
+      try {
+        const result = await executor.execute('format-email-attachment', {
+          filename: 'large.pdf',
+          data: largeData,
+        });
+        expect(result.error).toBe('Attachment exceeds 25MB limit');
+        expect(compiledSources.length).toBeGreaterThan(0);
+        expect(compiledSources.every(source => !source.includes(largeData))).toBe(true);
+        expect(compiledSources.every(source => source.length < 64 * 1024)).toBe(true);
+      } finally {
+        compile.mockRestore();
+      }
     });
   });
 

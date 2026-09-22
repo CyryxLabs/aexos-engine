@@ -63,11 +63,16 @@ function executeInContext(source, args, options = {}) {
     });
     if (!defined) throw new Error(`${label} execution failed: reserved state unavailable`);
   }
+  // Pass only a primitive string across the boundary. Compiling a JSON literal
+  // would make source compilation proportional to potentially large inputs.
+  if (!Reflect.defineProperty(context, '__aexosInputJson', {
+    value: serializedArgs, writable: false, enumerable: false, configurable: false,
+  })) throw new Error(`${label} execution failed: reserved state unavailable`);
   const wrappedSource = `
     'use strict';
     const __aexosParse = JSON.parse.bind(JSON);
     const __aexosStringify = JSON.stringify.bind(JSON);
-    const args = __aexosParse(${JSON.stringify(serializedArgs)});
+    const args = __aexosParse(globalThis.__aexosInputJson);
     globalThis.__aexosThrown = undefined;
     try {
       ${source}
