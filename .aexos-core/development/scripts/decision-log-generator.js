@@ -181,11 +181,7 @@ function generateRollbackFilesList(filesModified) {
 async function generateDecisionLog(storyId, context) {
   // Ensure .ai directory exists
   const aiDir = '.ai';
-  try {
-    await fs.access(aiDir);
-  } catch (_error) {
-    await fs.mkdir(aiDir, { recursive: true });
-  }
+  await fs.mkdir(aiDir, { recursive: true });
 
   const logPath = path.join(aiDir, `decision-log-${storyId}.md`);
 

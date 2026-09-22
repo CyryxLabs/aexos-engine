@@ -8,7 +8,7 @@
 # - File types for categorization
 #
 version: 1.0.0
-generated_at: "2026-09-22T02:14:46.365Z"
+generated_at: "2026-09-22T04:19:15.763Z"
 generator: scripts/generate-install-manifest.js
 file_count: 1186
 files:
@@ -1413,7 +1413,7 @@ files:
     type: data
     size: 9595
   - path: data/entity-registry.yaml
-    hash: sha256:941a19ba29a91fadb7b6d69763f40287ae2af6c2397cc39089aa39a1ea33ef02
+    hash: sha256:6703d92b7876dcf1cf77fa67a85701630d110e33c9828d1b98f419937cf76d04
     type: data
     size: 603572
   - path: data/learned-patterns.yaml
@@ -1713,13 +1713,13 @@ files:
     type: script
     size: 6937
   - path: development/scripts/decision-log-generator.js
-    hash: sha256:410f496419ec65b6fe79c08f5c41da44f2ef0753f8da2350b9ee715bab502ce9
+    hash: sha256:0277378299e993364dc4d6ced550721bfb23f692a728338a55315bbc0ef99fd0
     type: script
-    size: 7729
+    size: 7666
   - path: development/scripts/decision-log-indexer.js
-    hash: sha256:0be19c61dd7154dd0124b4b66cea31cdc451779335faa23658f2d82330385898
+    hash: sha256:d60ef55fe500d481c3f1036a1728f9a1d95f41785759dcf93bde674f00c42790
     type: script
-    size: 8590
+    size: 8997
   - path: development/scripts/decision-recorder.js
     hash: sha256:671a6f3c7e926245281fb37fcbd664d8e1432a3aa32cf9f7225c280b2c74b5af
     type: script

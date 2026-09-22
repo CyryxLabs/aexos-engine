@@ -1,6 +1,6 @@
 metadata:
   version: 1.0.0
-  lastUpdated: '2026-09-22T02:14:45.896Z'
+  lastUpdated: '2026-09-22T04:19:13.232Z'
   entityCount: 859
   checksumAlgorithm: sha256
   resolutionRate: 100
@@ -7284,8 +7284,8 @@ entities:
         score: 0.7
         constraints: []
         extensionPoints: []
-      checksum: sha256:410f496419ec65b6fe79c08f5c41da44f2ef0753f8da2350b9ee715bab502ce9
-      lastVerified: '2026-07-30T19:35:41.285Z'
+      checksum: sha256:0277378299e993364dc4d6ced550721bfb23f692a728338a55315bbc0ef99fd0
+      lastVerified: '2026-09-22T04:19:07.292Z'
     decision-log-indexer:
       path: .aexos-core/development/scripts/decision-log-indexer.js
       layer: L2
@@ -7305,8 +7305,8 @@ entities:
         score: 0.7
         constraints: []
         extensionPoints: []
-      checksum: sha256:0be19c61dd7154dd0124b4b66cea31cdc451779335faa23658f2d82330385898
-      lastVerified: '2026-07-30T19:35:41.286Z'
+      checksum: sha256:d60ef55fe500d481c3f1036a1728f9a1d95f41785759dcf93bde674f00c42790
+      lastVerified: '2026-09-22T04:19:07.292Z'
     decision-recorder:
       path: .aexos-core/development/scripts/decision-recorder.js
       layer: L2
@@ -15944,7 +15944,7 @@ entities:
         constraints: []
         extensionPoints: []
       checksum: sha256:<self-reference>
-      lastVerified: '2026-09-22T02:14:45.896Z'
+      lastVerified: '2026-09-22T04:19:13.232Z'
     learned-patterns:
       path: .aexos-core/data/learned-patterns.yaml
       layer: L3

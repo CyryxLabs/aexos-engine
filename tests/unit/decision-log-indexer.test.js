@@ -346,6 +346,34 @@ Total logs: 1
       expect(updatedIndexContent).toContain('3');
     });
 
+    it('does not write an index when the new log cannot be read', async () => {
+      const yaml = require('js-yaml');
+      jest.spyOn(yaml, 'load').mockReturnValue({ decisionLogging: { enabled: true } });
+      fs.mkdir.mockResolvedValue();
+      fs.readFile.mockImplementation((filePath) => {
+        if (filePath.endsWith('core-config.yaml')) return Promise.resolve('decisionLogging:\n  enabled: true');
+        if (filePath.endsWith('decision-logs-index.md')) return Promise.resolve('Existing index remains intact');
+        return Promise.reject(new Error('Unreadable decision log'));
+      });
+      jest.spyOn(console, 'error').mockImplementation();
+      jest.spyOn(console, 'warn').mockImplementation();
+
+      await expect(addToIndex('.ai/decision-log-missing.md')).resolves.toBeNull();
+      expect(fs.writeFile).not.toHaveBeenCalled();
+    });
+
+    it('rejects directory creation errors without writing an index', async () => {
+      const yaml = require('js-yaml');
+      jest.spyOn(yaml, 'load').mockReturnValue({ decisionLogging: { enabled: true } });
+      const error = new Error('Index directory is not writable');
+      fs.mkdir.mockRejectedValue(error);
+      fs.readFile.mockResolvedValue('**Story:** docs/stories/test.md\n**Status:** completed\n');
+      jest.spyOn(console, 'error').mockImplementation();
+
+      await expect(addToIndex('.ai/decision-log-test.md')).rejects.toBe(error);
+      expect(fs.writeFile).not.toHaveBeenCalled();
+    });
+
     it('should return null when decision logging is disabled', async () => {
       const yaml = require('js-yaml');
       jest.spyOn(yaml, 'load').mockReturnValue({
