@@ -70,6 +70,15 @@ const EXCLUDED_PATHS = [
 ];
 
 /**
+ * Generated files that MUST NOT appear anywhere in the public tarball.
+ */
+const EXCLUDED_FILES = ['.aexos-core/data/registry-update-log.jsonl'];
+const EXCLUDED_FILE_PATTERNS = [
+  { description: 'Python cache directories', pattern: /(^|\/)__pycache__(\/|$)/ },
+  { description: 'Python bytecode (*.pyc, *.pyo)', pattern: /\.(?:pyc|pyo)$/i },
+];
+
+/**
  * Entries required in package.json "files" array.
  */
 const REQUIRED_FILES_ENTRIES = [
@@ -223,6 +232,26 @@ function validateTarballContents(tarballFiles) {
 
     check(
       `Excluded: ${excluded} not in tarball`,
+      leaked.length === 0,
+      leaked.length > 0 ? `LEAK DETECTED: ${leaked.slice(0, 3).join(', ')}` : undefined,
+    );
+  }
+
+  const normalizedFiles = tarballFiles.map((file) => file.replace(/^package\//, ''));
+
+  for (const excluded of EXCLUDED_FILES) {
+    const leaked = normalizedFiles.filter((file) => file === excluded);
+    check(
+      `Excluded generated file: ${excluded}`,
+      leaked.length === 0,
+      leaked.length > 0 ? `LEAK DETECTED: ${leaked.join(', ')}` : undefined,
+    );
+  }
+
+  for (const { description, pattern } of EXCLUDED_FILE_PATTERNS) {
+    const leaked = normalizedFiles.filter((file) => pattern.test(file));
+    check(
+      `Excluded generated content: ${description}`,
       leaked.length === 0,
       leaked.length > 0 ? `LEAK DETECTED: ${leaked.slice(0, 3).join(', ')}` : undefined,
     );
