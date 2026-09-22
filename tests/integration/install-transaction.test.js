@@ -9,6 +9,7 @@
 const fs = require('fs-extra');
 const path = require('path');
 const os = require('os');
+const { execFileSync } = require('child_process');
 const { InstallTransaction, ERROR_TYPES } = require('../../bin/utils/install-transaction');
 
 describe('InstallTransaction', () => {
@@ -422,16 +423,16 @@ describe('InstallTransaction', () => {
     }, 15000);
 
     test('should log 1000 entries in under 500ms', async () => {
-      const start = Date.now();
-      for (let i = 0; i < 1000; i++) {
-        transaction.log('INFO', `Log entry ${i}`);
-      }
-      const duration = Date.now() - start;
+      const scenario = path.resolve(__dirname, '../helpers/install-transaction-performance-scenario.js');
+      const { duration, operationsCount } = JSON.parse(execFileSync(process.execPath,
+        [scenario, transaction.logFile], { encoding: 'utf8', timeout: 5000, windowsHide: true }));
 
+      expect(Number.isFinite(duration)).toBe(true);
+      expect(duration).toBeGreaterThanOrEqual(0);
       expect(duration).toBeLessThan(500);
       const lines = fs.readFileSync(transaction.logFile, 'utf8').trim().split('\n');
       expect(lines).toHaveLength(1000);
-      expect(transaction.operations).toHaveLength(1000);
+      expect(operationsCount).toBe(1000);
       for (let i = 0; i < 1000; i++) {
         expect(lines[i]).toMatch(new RegExp(`\\[INFO\\] Log entry ${i}$`));
       }
