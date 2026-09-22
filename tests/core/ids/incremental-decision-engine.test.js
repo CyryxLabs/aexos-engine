@@ -1,6 +1,7 @@
 'use strict';
 
 const path = require('path');
+const { execFileSync } = require('child_process');
 const { RegistryLoader } = require('../../../.aexos-core/core/ids/registry-loader');
 const {
   IncrementalDecisionEngine,
@@ -16,6 +17,16 @@ const {
 const FIXTURES = path.resolve(__dirname, 'fixtures');
 const VALID_REGISTRY = path.join(FIXTURES, 'valid-registry.yaml');
 const EMPTY_REGISTRY = path.join(FIXTURES, 'empty-registry.yaml');
+
+function runtimeBenchmark(mode) {
+  const scenario = path.resolve(__dirname, '../../helpers/ids-performance-scenario.js');
+  const output = execFileSync(process.execPath, [scenario, mode],
+    { encoding: 'utf8', timeout: 10000, windowsHide: true });
+  const marker = 'IDS_BENCHMARK ';
+  const line = output.split('\n').find(value => value.startsWith(marker));
+  if (!line) throw new Error('Missing IDS benchmark result');
+  return JSON.parse(line.slice(marker.length));
+}
 
 describe('IncrementalDecisionEngine', () => {
   let loader;
@@ -545,26 +556,23 @@ describe('IncrementalDecisionEngine', () => {
 
   describe('performance (AC: 9)', () => {
     it('completes analysis in <500ms for typical queries', () => {
-      const start = performance.now();
-      engine.analyze('validate story drafts before implementation');
-      const elapsed = performance.now() - start;
+      const { elapsed, result } = runtimeBenchmark('analysis');
 
       expect(elapsed).toBeLessThan(500);
+      expect(elapsed).toBeGreaterThanOrEqual(0);
+      expect(result).toHaveProperty('summary');
     });
 
     it('benefits from caching on repeated queries', () => {
-      // First call
-      const start1 = performance.now();
-      engine.analyze('template rendering engine');
-      const elapsed1 = performance.now() - start1;
-
-      // Second call (cached)
-      const start2 = performance.now();
-      engine.analyze('template rendering engine');
-      const elapsed2 = performance.now() - start2;
+      const { elapsed1, elapsed2, sameReference, first, second } = runtimeBenchmark('cache');
 
       // Cached should be faster or at least similar
       expect(elapsed2).toBeLessThan(elapsed1 * 2);
+      expect(elapsed1).toBeGreaterThan(0);
+      expect(elapsed2).toBeGreaterThanOrEqual(0);
+      expect(sameReference).toBe(true);
+      expect(first).toHaveProperty('summary');
+      expect(second).toEqual(first);
     });
 
     it('returns same result from cache', () => {
