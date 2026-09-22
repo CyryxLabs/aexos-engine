@@ -14,50 +14,14 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const { execFileSync } = require('child_process');
+const { UnifiedActivationPipeline } = require('../../../.aexos-core/development/scripts/unified-activation-pipeline');
 
 // =============================================================================
-// Extract the private method without loading full pipeline dependencies.
-// The method only uses `path`, `fs` (as fsSync), and `this.projectRoot`,
-// so we can bind it to a minimal context object.
+// Exercise the shipped method, including its atomic writer, on real fixtures.
 // =============================================================================
 
-/**
- * Standalone extraction of _writeSynapseSession from the class prototype.
- * We read the source and eval only the method to avoid loading all pipeline
- * dependencies (GreetingBuilder, AgentConfigLoader, etc.).
- *
- * Instead, we replicate the method body directly — it is self-contained
- * and only depends on `path`, `fs` (sync), and `this.projectRoot`.
- */
-function writeSynapseSession(agentId, quality, metrics) {
-  const fsSync = fs;
-  const start = Date.now();
-  try {
-    const sessionsDir = path.join(this.projectRoot, '.synapse', 'sessions');
-    if (!fsSync.existsSync(path.join(this.projectRoot, '.synapse'))) {
-      const duration = Date.now() - start;
-      metrics.loaders.synapseSession = { duration, status: 'skipped', start, end: start + duration };
-      return;
-    }
-    if (!fsSync.existsSync(sessionsDir)) {
-      fsSync.mkdirSync(sessionsDir, { recursive: true });
-    }
-    const bridgeData = {
-      id: agentId,
-      activated_at: new Date().toISOString(),
-      activation_quality: quality,
-      source: 'uap',
-    };
-    const bridgePath = path.join(sessionsDir, '_active-agent.json');
-    fsSync.writeFileSync(bridgePath, JSON.stringify(bridgeData, null, 2), 'utf8');
-    const duration = Date.now() - start;
-    metrics.loaders.synapseSession = { duration, status: 'ok', start, end: start + duration };
-  } catch (error) {
-    const duration = Date.now() - start;
-    metrics.loaders.synapseSession = { duration, status: 'error', start, end: start + duration, error: error.message };
-    console.warn(`[UnifiedActivationPipeline] SYNAPSE session write failed: ${error.message}`);
-  }
-}
+const writeSynapseSession = UnifiedActivationPipeline.prototype._writeSynapseSession;
 
 // =============================================================================
 // Helpers
@@ -499,17 +463,15 @@ describe('UAP Session Bridge — Timing Budget', () => {
     const sessionsDir = path.join(tmpDir, '.synapse', 'sessions');
     fs.mkdirSync(sessionsDir, { recursive: true });
 
-    const ctx = createContext(tmpDir);
-    const metrics = createMetrics();
+    // Measure the real atomic writer outside Jest instrumentation. Startup is
+    // excluded; the original 20 ms application and metric budgets are retained.
+    const output = execFileSync(process.execPath, [
+      path.resolve(__dirname, '../../helpers/synapse-bridge-performance-scenario.js'),
+    ], { cwd: tmpDir, encoding: 'utf8', timeout: 30000, windowsHide: true });
+    const { elapsed, metrics, written } = JSON.parse(output);
 
-    // Warm up filesystem cache
-    callBridge(ctx, 'dev', 'full', createMetrics());
-
-    // Measured run
-    const start = Date.now();
-    callBridge(ctx, 'dev', 'full', metrics);
-    const elapsed = Date.now() - start;
-
+    expect(metrics.loaders.synapseSession.status).toBe('ok');
+    expect(written).toMatchObject({ id: 'dev', activation_quality: 'full', source: 'uap' });
     expect(elapsed).toBeLessThanOrEqual(20);
     expect(metrics.loaders.synapseSession.duration).toBeLessThanOrEqual(20);
   });
