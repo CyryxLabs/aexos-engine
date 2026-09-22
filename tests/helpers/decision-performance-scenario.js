@@ -13,6 +13,20 @@ async function main() {
     agentLoadTime: 150,
   });
   const initialized = performance.now();
+  if (process.argv[2] === 'repeated-calls') {
+    const times = [];
+    for (let i = 0; i < 50; i++) {
+      const startTime = performance.now();
+      recorder.recordDecision({
+        description: `Regression test ${i}`,
+        reason: 'Checking for performance degradation',
+        alternatives: [],
+      });
+      times.push(performance.now() - startTime);
+    }
+    process.stdout.write(`DECISION_BENCHMARK ${JSON.stringify({ times, summary: context.getSummary() })}\n`);
+    return;
+  }
   if (process.argv[2] === 'initialization') {
     process.stdout.write(`DECISION_BENCHMARK ${JSON.stringify({
       phases: { initialize: initialized - started }, summary: context.getSummary(),
