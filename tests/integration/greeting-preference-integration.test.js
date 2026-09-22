@@ -37,6 +37,9 @@ describe('Greeting Preference Integration', () => {
 
   beforeEach(() => {
     project = createGreetingProject();
+    // Keep preference behavior independent of host scheduling. Real config and
+    // permission reads still run; deadline behavior is checked explicitly below.
+    jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate'] });
     jest.resetModules();
     GreetingPreferenceManager = require('../../.aexos-core/development/scripts/greeting-preference-manager');
     GreetingBuilder = require('../../.aexos-core/development/scripts/greeting-builder');
@@ -49,7 +52,10 @@ describe('Greeting Preference Integration', () => {
     manager = new GreetingPreferenceManager();
     builder = new GreetingBuilder();
   });
-  afterEach(() => { project.cleanup(); });
+  afterEach(() => {
+    jest.useRealTimers();
+    project.cleanup();
+  });
 
   describe('End-to-End: Set Preference → Activate Agent', () => {
     test('minimal preference shows minimal greeting', async () => {
@@ -117,6 +123,24 @@ describe('Greeting Preference Integration', () => {
   });
 
   describe('Backward Compatibility', () => {
+    test('auto preference retains the 150 ms fallback deadline', async () => {
+      manager.setPreference('auto');
+      const { loadProjectStatus } = require('../../.aexos-core/infrastructure/scripts/project-status-loader');
+      loadProjectStatus.mockImplementation(() => new Promise(() => {}));
+      let settled = false;
+      const pending = builder.buildGreeting(mockAgent, { conversationHistory: [] });
+      pending.then(() => { settled = true; });
+
+      await jest.advanceTimersByTimeAsync(149);
+      expect(settled).toBe(false);
+      await jest.advanceTimersByTimeAsync(1);
+      const greeting = await pending;
+      expect(settled).toBe(true);
+      expect(greeting).toContain('Vulcan (Builder) ready');
+      expect(greeting).toContain('Type `*help`');
+      expect(greeting).not.toContain('main');
+    });
+
     test('default preference preserves Story 6.1.2.5 behavior', async () => {
       // Ensure preference is auto (default)
       manager.setPreference('auto');
