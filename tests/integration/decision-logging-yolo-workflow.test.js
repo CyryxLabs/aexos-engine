@@ -52,6 +52,22 @@ describe('Decision Logging + Yolo Mode Integration', () => {
   });
 
   describe('Full Yolo Mode Workflow', () => {
+    it('uses current index configuration and creates its destination before persisting', async () => {
+      await initializeDecisionLogging('dev', testStoryPath);
+      recordDecision({ description: 'Use the current index location', reason: 'Configuration changed during the session' });
+      await fs.writeFile('.aexos-core/core-config.yaml',
+        'decisionLogging:\n  enabled: true\n  location: reports/decisions/\n  indexFile: current.md\n');
+
+      const logPath = await completeDecisionLogging(testStoryId, 'completed');
+      const log = await fs.readFile(logPath, 'utf8');
+      const index = await fs.readFile('reports/decisions/current.md', 'utf8');
+      expect(log).toContain('Use the current index location');
+      expect(index).toContain(`| ${testStoryId} |`);
+      expect(index).toContain('| completed |');
+      expect(index).toContain('Total logs: 1');
+      await expect(fs.access('.ai/decision-logs-index.md')).rejects.toMatchObject({ code: 'ENOENT' });
+    });
+
     it('should complete full workflow with decision logging', async () => {
       // Simulate yolo mode start
       const context = await initializeDecisionLogging('dev', testStoryPath, {

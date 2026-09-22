@@ -149,11 +149,18 @@ async function addToIndex(logPath) {
   const indexFile = path.join(indexDir, config.decisionLogging.indexFile || 'decision-logs-index.md');
 
   try {
-    // Create .ai directory if it doesn't exist
-    await fs.mkdir(indexDir, { recursive: true });
-
-    // Parse metadata from the new log
-    const newMetadata = await parseLogMetadata(logPath);
+    // These reads do not depend on creating the index directory. Keep all
+    // results local and wait for the directory before writing the index.
+    // Capture read errors now but report them only after metadata is valid,
+    // preserving the existing missing-log and missing-index behavior.
+    const [, newMetadata, existingRead] = await Promise.all([
+      fs.mkdir(indexDir, { recursive: true }),
+      parseLogMetadata(logPath),
+      fs.readFile(indexFile, 'utf8').then(
+        content => ({ content }),
+        error => ({ error }),
+      ),
+    ]);
     if (!newMetadata) {
       console.warn('Could not parse log metadata, index not updated');
       return null;
@@ -162,7 +169,8 @@ async function addToIndex(logPath) {
     // Read existing index (if it exists)
     let existingMetadata = [];
     try {
-      const existingContent = await fs.readFile(indexFile, 'utf8');
+      if (existingRead.error) throw existingRead.error;
+      const existingContent = existingRead.content;
 
       // Parse existing log entries from table
       const tableMatch = existingContent.match(/\| Story ID \|.+\n\|[-\s|]+\n((?:\|.+\n)*)/);
