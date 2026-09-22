@@ -28,7 +28,12 @@ function createGreetingProject({ contextFixture = false } = {}) {
   fs.copyFileSync(path.join(source, '.aexos-core/data/workflow-patterns.yaml'), path.join(core, 'data/workflow-patterns.yaml'));
   fs.copyFileSync(path.join(source, '.aexos-core/data/agent-config-requirements.yaml'), path.join(core, 'data/agent-config-requirements.yaml'));
   process.chdir(root);
-  return { root, config, cleanup() { process.chdir(cwd); fs.rmSync(root, { recursive: true, force: true }); } };
+  return { root, config, cleanup() {
+    process.chdir(cwd);
+    // Windows may briefly retain a child's cwd handle after its exit callback.
+    // Retry only cleanup of this owned fixture; persistent locks still fail.
+    fs.rmSync(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+  } };
 }
 
 module.exports = { createGreetingProject };
