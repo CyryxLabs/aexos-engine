@@ -263,22 +263,12 @@ describe('Decision Logging Performance Benchmarks', () => {
 
   describe('Performance Regression Tests', () => {
     it('should not degrade with repeated calls', async () => {
-      await initializeDecisionLogging('dev', testStoryPath);
-
-      const times = [];
-
-      for (let i = 0; i < 50; i++) {
-        const startTime = performance.now();
-
-        recordDecision({
-          description: `Regression test ${i}`,
-          reason: 'Checking for performance degradation',
-          alternatives: [],
-        });
-
-        const duration = performance.now() - startTime;
-        times.push(duration);
-      }
+      // Preserve the same 50 calls and comparison, measuring shipped code
+      // without Jest's coverage instrumentation inside each measured call.
+      const { times, summary } = runtimeBenchmark('repeated-calls');
+      expect(times).toHaveLength(50);
+      expect(times.every(time => Number.isFinite(time) && time >= 0)).toBe(true);
+      expect(summary.decisionsCount).toBe(50);
 
       const firstHalf = times.slice(0, 25);
       const secondHalf = times.slice(25);
