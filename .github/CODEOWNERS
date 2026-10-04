@@ -1,14 +1,13 @@
 # Cyryx Labs Code Owners
 # Issue: #99 (Governance)
-# Last Updated: 2026-02-21
+# Last Updated: 2026-10-04
 #
 # Format: <pattern> <owners>
 # Later patterns take precedence over earlier ones
 # See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 #
 # Owners:
-#   @Pedrovaleriolopez (lead maintainer)
-#   @oalanicolas (maintainer)
+#   @petruff (maintainer)
 #
 # All PRs require approval from a maintainer before merge.
 # Note: Org handles (e.g. @CyryxLabs) cannot approve PRs — only user accounts can.
@@ -16,93 +15,93 @@
 # ============================================
 # Default Owner (fallback)
 # ============================================
-* @Pedrovaleriolopez @oalanicolas
+* @petruff
 
 # ============================================
 # Critical Paths (requires lead maintainer review)
 # ============================================
 # Orchestration layer (MasterOrchestrator, BobOrchestrator, GateEvaluator)
-.aexos-core/core/orchestration/ @Pedrovaleriolopez @oalanicolas
+.aexos-core/core/orchestration/ @petruff
 
 # Execution engine (WaveExecutor, ParallelExecutor)
-.aexos-core/core/execution/ @Pedrovaleriolopez @oalanicolas
+.aexos-core/core/execution/ @petruff
 
 # Packages (installer, CLI, shared libraries)
-packages/ @Pedrovaleriolopez @oalanicolas
+packages/ @petruff
 
 # CI/CD configurations
-.github/ @Pedrovaleriolopez @oalanicolas
+.github/ @petruff
 
 # ============================================
 # Framework Core (requires senior review)
 # ============================================
 # Agent definitions
-.aexos-core/development/agents/ @Pedrovaleriolopez @oalanicolas
+.aexos-core/development/agents/ @petruff
 
 # Task definitions
-.aexos-core/development/tasks/ @Pedrovaleriolopez @oalanicolas
+.aexos-core/development/tasks/ @petruff
 
 # Workflow definitions
-.aexos-core/development/workflows/ @Pedrovaleriolopez @oalanicolas
+.aexos-core/development/workflows/ @petruff
 
 # Templates
-.aexos-core/product/templates/ @Pedrovaleriolopez @oalanicolas
-templates/ @Pedrovaleriolopez @oalanicolas
+.aexos-core/product/templates/ @petruff
+templates/ @petruff
 
 # CLI utilities
-.aexos-core/cli/ @Pedrovaleriolopez @oalanicolas
+.aexos-core/cli/ @petruff
 
 # ============================================
 # Infrastructure
 # ============================================
 # Docker configurations
-.docker/ @Pedrovaleriolopez @oalanicolas
+.docker/ @petruff
 
 # Framework configuration
-.aexos-core/core-config.yaml @Pedrovaleriolopez @oalanicolas
+.aexos-core/core-config.yaml @petruff
 
 # Package management
-package.json @Pedrovaleriolopez @oalanicolas
-package-lock.json @Pedrovaleriolopez @oalanicolas
+package.json @petruff
+package-lock.json @petruff
 
 # ============================================
 # Documentation (more permissive)
 # ============================================
 # General docs
-docs/ @Pedrovaleriolopez @oalanicolas
+docs/ @petruff
 
 # Architecture decisions
-docs/architecture/ @Pedrovaleriolopez @oalanicolas
+docs/architecture/ @petruff
 
 # Framework standards
-docs/framework/ @Pedrovaleriolopez @oalanicolas
+docs/framework/ @petruff
 
 # User guides
-docs/guides/ @Pedrovaleriolopez @oalanicolas
+docs/guides/ @petruff
 
 # ============================================
 # Security-Sensitive Files
 # ============================================
 # This file
-.github/CODEOWNERS @Pedrovaleriolopez @oalanicolas
+.github/CODEOWNERS @petruff
 
 # Release workflows
-.github/workflows/semantic-release.yml @Pedrovaleriolopez @oalanicolas
-.github/workflows/npm-publish.yml @Pedrovaleriolopez @oalanicolas
-.github/workflows/release.yml @Pedrovaleriolopez @oalanicolas
+.github/workflows/semantic-release.yml @petruff
+.github/workflows/npm-publish.yml @petruff
+.github/workflows/release.yml @petruff
 
 # Pro submodule workflows
-.github/workflows/pro-integration.yml @Pedrovaleriolopez @oalanicolas
-.github/workflows/publish-pro.yml @Pedrovaleriolopez @oalanicolas
+.github/workflows/pro-integration.yml @petruff
+.github/workflows/publish-pro.yml @petruff
 
 # Security configurations
-security/ @Pedrovaleriolopez @oalanicolas
+security/ @petruff
 
 # Environment files (should not be committed, but protect pattern)
-.env* @Pedrovaleriolopez @oalanicolas
+.env* @petruff
 
 # Configuration files
-*.config.js @Pedrovaleriolopez @oalanicolas
-*.config.ts @Pedrovaleriolopez @oalanicolas
-tsconfig.json @Pedrovaleriolopez @oalanicolas
-eslint.config.* @Pedrovaleriolopez @oalanicolas
+*.config.js @petruff
+*.config.ts @petruff
+tsconfig.json @petruff
+eslint.config.* @petruff
