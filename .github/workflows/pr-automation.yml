@@ -76,6 +76,7 @@ jobs:
   post-comments:
     name: Post PR Comments
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: [coverage-report]
     if: always()
     steps:
@@ -156,6 +157,7 @@ jobs:
   record-metrics:
     name: Record Quality Metrics
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: [coverage-report]
     if: always()
     steps:
