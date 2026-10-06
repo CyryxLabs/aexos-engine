@@ -17,8 +17,8 @@ updates:
     labels:
       - "dependencies"
       - "automated"
-    reviewers:
-      - "CyryxLabs/maintainers"
+    assignees:
+      - "petruff"
     groups:
       # Group minor and patch updates together
       minor-and-patch:
@@ -33,7 +33,7 @@ updates:
           - "*"
         update-types:
           - "major"
-    ignore:
+    ignore: []
       # Ignore specific packages if needed
       # - dependency-name: "some-package"
       #   update-types: ["version-update:semver-major"]
@@ -52,5 +52,5 @@ updates:
     labels:
       - "ci/cd"
       - "automated"
-    reviewers:
-      - "CyryxLabs/maintainers"
+    assignees:
+      - "petruff"

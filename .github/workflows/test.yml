@@ -28,6 +28,7 @@ jobs:
 
   security-audit:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -56,6 +57,7 @@ jobs:
 
   build-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -108,6 +110,7 @@ jobs:
 
   integration-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [security-audit, build-test]
     steps:
       - name: Checkout code
@@ -172,6 +175,7 @@ jobs:
 
   performance-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [build-test]
     steps:
       - name: Checkout code
@@ -216,6 +220,7 @@ jobs:
 
   summary:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: [security-audit, build-test, integration-test, performance-test]
     if: always()
     steps:
