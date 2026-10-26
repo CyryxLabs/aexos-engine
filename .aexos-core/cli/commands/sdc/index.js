@@ -14,7 +14,10 @@
 const fs = require('fs');
 const path = require('path');
 const { Command } = require('commander');
-const { assertDispatchGovernance } = require('../../../core/permissions');
+const {
+  getDefaultDispatchGovernance,
+  redactGovernanceDecision,
+} = require('../../../core/permissions');
 const sdc = require('../../../core/sdc');
 
 /**
@@ -41,6 +44,7 @@ function createSdcCommand() {
     .requiredOption('--intent-file <path>', 'File containing the exact child model intent')
     .option('--context-file <path>', 'File containing the exact child context')
     .option('--task <task>', 'Dispatch task name', 'develop')
+    .option('--agent <agent>', 'Acting agent id', 'sdc-preflight')
     .option('--json', 'JSON evidence output', false)
     .action((storyPath, opts) => {
       try {
@@ -49,14 +53,16 @@ function createSdcCommand() {
         const context = opts.contextFile
           ? fs.readFileSync(path.resolve(opts.contextFile), 'utf8')
           : '';
-        const evidence = assertDispatchGovernance({
+        const decision = getDefaultDispatchGovernance().evaluate({
+          agentId: opts.agent,
           budgetCeilingUsd: opts.budgetUsd,
           task: opts.task,
           intent: `${intent}\n${context}`,
           story: absoluteStoryPath,
-          projectRoot: path.dirname(absoluteStoryPath),
+          projectRoot: process.cwd(),
           requiresStory: true,
         });
+        const evidence = redactGovernanceDecision(decision);
         if (opts.json) console.log(JSON.stringify(evidence, null, 2));
         else console.log(`SDC dispatch preflight: PASS (${evidence.story.storyId})`);
       } catch (error) {

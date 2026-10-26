@@ -47,7 +47,13 @@ class CodeIntelClient {
     this._noProviderWarned = false;
 
     // Auto-register default providers
-    this._registerDefaultProviders(options);
+    if (options.providers !== undefined) {
+      if (!Array.isArray(options.providers)
+        || options.providers.some(provider => !provider || typeof provider.isAvailable !== 'function')) {
+        throw new TypeError('Explicit code intelligence providers must implement isAvailable().');
+      }
+      this._providers = [...options.providers];
+    } else this._registerDefaultProviders(options);
   }
 
   /**
@@ -194,6 +200,7 @@ class CodeIntelClient {
   // --- Cache helpers ---
 
   _getFromCache(key) {
+    if (this._options.cacheEnabled === false) return undefined;
     const entry = this._cache.get(key);
     if (!entry) return undefined;
     if (Date.now() - entry.timestamp > CACHE_TTL_MS) {
@@ -204,6 +211,7 @@ class CodeIntelClient {
   }
 
   _putInCache(key, value) {
+    if (this._options.cacheEnabled === false) return;
     // Evict expired entries periodically (every 50 puts)
     if (this._cache.size > 0 && this._cache.size % 50 === 0) {
       this._evictExpired();

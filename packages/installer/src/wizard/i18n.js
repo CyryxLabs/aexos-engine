@@ -59,7 +59,7 @@ const TRANSLATIONS = {
     // Cancellation
     cancelConfirm: 'Cancel installation?',
     cancelled: 'Installation cancelled.',
-    tryAgain: 'Run `npx @aexos/core init` to try again.',
+    tryAgain: 'Run the same command to try again, or use `npx @aexos/core install` in this directory.',
     continuing: 'Continuing installation...',
 
     // Pro Installation Wizard (pro-setup.js)
@@ -69,7 +69,7 @@ const TRANSLATIONS = {
     proContentInstallation: 'Pro Content Installation',
     proVerification: 'Verification',
     proHowActivate: 'How would you like to activate Pro?',
-    proLoginOrCreate: 'Login or create account (Recommended)',
+    proLoginOrCreate: 'Login with purchase account (Recommended)',
     proEnterKey: 'Enter license key (legacy)',
     proEmailLabel: 'Email:',
     proEmailRequired: 'Email is required',
@@ -77,7 +77,7 @@ const TRANSLATIONS = {
     proVerifyingAccess: 'Verifying your access...',
     proNoAccess: 'No AEXOS Pro access found for this email.',
     proContactSupport: 'If you believe this is an error, please contact support:',
-    proPurchase: 'Purchase Pro: https://pro.cyryx.ai',
+    proPurchase: 'Purchase AEXOS: https://aexos.cyryxlabs.com/aexos',
     proEmailNotBuyer: 'Email not found in Pro buyers list.',
     proAccessConfirmedAccount: 'Pro access confirmed! Account found.',
     proAccessConfirmedCreate: "Pro access confirmed! Let's create your account.",
@@ -115,7 +115,7 @@ const TRANSLATIONS = {
     proValidatingSubscription: 'Validating Pro subscription...',
     proSubscriptionConfirmed: 'Pro subscription confirmed! License: {key}',
     proNoSubscription: 'No active Pro subscription found for this email.',
-    proPurchaseAt: 'Purchase Pro at https://pro.cyryx.ai',
+    proPurchaseAt: 'Purchase AEXOS at https://aexos.cyryxlabs.com/aexos',
     proSeatLimit: 'Deactivate another device or upgrade your license.',
     proAlreadyActivated: 'Pro license already activated for this account.',
     proActivationFailed: 'Activation failed: {message}',

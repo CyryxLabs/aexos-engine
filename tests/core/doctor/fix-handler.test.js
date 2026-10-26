@@ -26,6 +26,10 @@ describe('Doctor Fix Handler', () => {
 
   beforeEach(() => {
     tmpDir = makeTempDir();
+    const agentsDir = path.join(tmpDir, '.aexos-core', 'development', 'agents');
+    fs.mkdirSync(agentsDir, { recursive: true });
+    fs.writeFileSync(path.join(agentsDir, 'dev.md'), '# dev');
+    fs.writeFileSync(path.join(agentsDir, 'qa.md'), '# qa');
   });
 
   afterEach(() => {
@@ -154,7 +158,7 @@ describe('Doctor Fix Handler', () => {
 
     const fixResults = await applyFixes(results, context);
     expect(fixResults).toHaveLength(1);
-    expect(fixResults[0].applied).toBe(true);
+    expect(fixResults[0].applied).toBe(false);
     expect(fixResults[0].message).toContain('install --force');
   });
 

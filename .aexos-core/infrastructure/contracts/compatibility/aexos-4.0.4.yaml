@@ -1,5 +1,5 @@
 release: "AEXOS 4.0.4"
-updated_at: "2026-02-16"
+updated_at: "2026-09-08"
 source_of_truth:
   docs_matrix: "docs/ide-integration.md"
   validator: ".aexos-core/infrastructure/scripts/validate-parity.js"
@@ -42,3 +42,8 @@ ide_matrix:
     expected_status: "Limited"
     required_checks:
       - antigravity-sync
+  - ide: "grok"
+    display_name: "Grok Build"
+    expected_status: "Projection only"
+    required_checks:
+      - grok-projection

@@ -33,6 +33,92 @@ describe('hook-runtime', () => {
     }
   });
 
+  it('uses the package runtime with project manifest, config and session state', () => {
+    const cwd = makeTempDir();
+    try {
+      writeFile(path.join(cwd, '.synapse/manifest'), 'AGENT_DEV_STATE=active\nAGENT_DEV_AGENT_TRIGGER=dev\n');
+      writeFile(path.join(cwd, '.aexos-core/core-config.yaml'), 'synapse:\n  pipelineTimeoutMs: 444\n  session:\n    staleTTLHours: 24\n');
+      const { SynapseEngine } = require('../../.aexos-core/core/synapse/engine');
+      const sessionManager = require('../../.aexos-core/core/synapse/session/session-manager');
+      const cleanup = jest.spyOn(sessionManager, 'cleanStaleSessions');
+      try {
+        const result = resolveHookRuntime({ cwd, session_id: 'package-session' });
+        expect(result).not.toBeNull();
+        expect(result.engine).toBeInstanceOf(SynapseEngine);
+        expect(result.engine.config.manifest.domains.AGENT_DEV.agentTrigger).toBe('dev');
+        expect(result.engine.config.synapse.pipelineTimeoutMs).toBe(444);
+        expect(result.session.cwd).toBe(cwd);
+        expect(result.sessionId).toBe('package-session');
+        expect(result.sessionsDir).toBe(path.join(cwd, '.synapse/sessions'));
+        expect(fs.existsSync(path.join(result.sessionsDir, 'package-session.json'))).toBe(true);
+        expect(cleanup).toHaveBeenCalledWith(result.sessionsDir, 24);
+        expect(fs.existsSync(path.join(cwd, '.aexos-core/core/synapse'))).toBe(false);
+      } finally {
+        cleanup.mockRestore();
+      }
+    } finally {
+      fs.rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  it.each(['empty', 'missing-engine', 'missing-session', 'throwing-engine', 'throwing-session', 'file'])(
+    'does not fall back or mutate sessions for a present %s project runtime', (kind) => {
+      const cwd = makeTempDir();
+      try {
+        fs.mkdirSync(path.join(cwd, '.synapse'));
+        const runtime = path.join(cwd, '.aexos-core/core/synapse');
+        if (kind === 'file') {
+          writeFile(runtime, 'not a runtime directory');
+        } else {
+          fs.mkdirSync(runtime, { recursive: true });
+          if (kind === 'missing-engine' || kind === 'throwing-engine') {
+            writeFile(path.join(runtime, 'session/session-manager.js'), [
+              "const fs = require('fs'); const path = require('path');",
+              'module.exports = {',
+              "  loadSession: (_id, dir) => { fs.mkdirSync(dir, { recursive: true }); fs.writeFileSync(path.join(dir, 'unexpected'), 'called'); },",
+              '  createSession: () => ({}), cleanStaleSessions: () => 0,',
+              '};',
+            ].join('\n'));
+          }
+          if (kind === 'missing-session') {
+            writeFile(path.join(runtime, 'engine.js'), 'module.exports = { SynapseEngine: class {} };');
+          }
+          if (kind === 'throwing-engine') {
+            writeFile(path.join(runtime, 'engine.js'), "throw new Error('Broken project runtime');");
+          }
+          if (kind === 'throwing-session') {
+            writeFile(path.join(runtime, 'session/session-manager.js'), "throw new Error('Broken project session manager');");
+            writeFile(path.join(runtime, 'engine.js'), 'module.exports = { SynapseEngine: class {} };');
+          }
+        }
+        expect(resolveHookRuntime({ cwd, sessionId: 'must-not-create' })).toBeNull();
+        expect(fs.existsSync(path.join(cwd, '.synapse/sessions'))).toBe(false);
+      } finally {
+        fs.rmSync(cwd, { recursive: true, force: true });
+      }
+    },
+  );
+
+  it('does not treat runtime access errors as absence', () => {
+    const cwd = makeTempDir();
+    const original = fs.lstatSync;
+    let inspect;
+    try {
+      fs.mkdirSync(path.join(cwd, '.synapse'));
+      const runtime = path.join(cwd, '.aexos-core/core/synapse');
+      inspect = jest.spyOn(fs, 'lstatSync').mockImplementation((file, ...args) => {
+        if (file === runtime) throw Object.assign(new Error('Access denied'), { code: 'EACCES' });
+        return original(file, ...args);
+      });
+      expect(resolveHookRuntime({ cwd, sessionId: 'denied' })).toBeNull();
+      expect(inspect).toHaveBeenCalledWith(runtime);
+      expect(fs.existsSync(path.join(cwd, '.synapse/sessions'))).toBe(false);
+    } finally {
+      inspect?.mockRestore();
+      fs.rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
   it('resolves runtime when required modules and .synapse exist', () => {
     const cwd = makeTempDir();
     try {

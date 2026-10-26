@@ -6,6 +6,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { spawnSync } = require('child_process');
+const { readManifest, managedContent, hash, safePath } = require('./managed-projection');
 const {
   syncGrok,
   AGENT_PROFILES,
@@ -120,6 +121,47 @@ function runtimeDiagnostics(projectRoot, grokRoot) {
     );
   }
   return diagnostics;
+}
+
+function validateGrokProjection(options = {}) {
+  const projectRoot = path.resolve(options.projectRoot || process.cwd());
+  const target = path.resolve(options.grokRoot || path.join(projectRoot, '.grok'));
+  const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'aexos-grok-inspect-'));
+  if (path.dirname(temporary) !== path.resolve(os.tmpdir()) || !path.basename(temporary).startsWith('aexos-grok-inspect-')) {
+    throw new Error('Unsafe temporary cleanup path.');
+  }
+  try {
+    const generated = (options.generate || syncGrok)({ projectRoot, grokRoot: temporary, quiet: true });
+    const findings = [];
+    const expectedManifest = options.generate ? null : readManifest(temporary);
+    const actualManifest = options.generate ? null : readManifest(target);
+    if (expectedManifest && !actualManifest) findings.push({ path: '.aexos-managed.json', status: 'missing' });
+    for (const file of generated.written) {
+      const relative = path.relative(temporary, file);
+      if (relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
+        throw new Error('Grok generator returned a path outside its temporary root.');
+      }
+      const current = safePath(target, relative.split(path.sep).join('/'));
+      if (!fs.existsSync(current)) findings.push({ path: relative, status: 'missing' });
+      else if (!fs.lstatSync(current).isFile()) {
+        findings.push({ path: relative, status: 'different' });
+      } else {
+        const name = relative.split(path.sep).join('/');
+        const expected = expectedManifest?.files.find((entry) => entry.path === name);
+        const currentText = fs.readFileSync(current, 'utf8');
+        if (expected ? hash(managedContent(currentText, expected)) !== expected.sha256 : currentText !== fs.readFileSync(file, 'utf8')) findings.push({ path: relative, status: 'different' });
+        const actual = actualManifest?.files.find((entry) => entry.path === name);
+        if (expected && actualManifest && (!actual || actual.sha256 !== expected.sha256 || actual.mode !== expected.mode)) findings.push({ path: relative, status: 'ownership-drift' });
+      }
+    }
+    for (const entry of actualManifest?.files || []) {
+      if (!expectedManifest.files.some((expected) => expected.path === entry.path)) findings.push({ path: entry.path, status: 'stale-managed' });
+    }
+    return { schemaVersion: 1, valid: findings.length === 0, checked: generated.written.length, findings,
+      evidenceLevel: 'generated-projection-comparison', hostRuntime: 'NOT_ASSESSED' };
+  } finally {
+    fs.rmSync(temporary, { recursive: true, force: true });
+  }
 }
 
 function getDefaultOptions() {
@@ -309,4 +351,4 @@ if (require.main === module) {
   process.exitCode = result.ok ? 0 : 1;
 }
 
-module.exports = { validateGrok, validateDeterministicProjection, parseArgs, getDefaultOptions };
+module.exports = { validateGrok, validateGrokProjection, validateDeterministicProjection, parseArgs, getDefaultOptions };

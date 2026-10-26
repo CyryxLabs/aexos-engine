@@ -1,0 +1,3 @@
+private/
+*.generated.js
+!packages/shared/src/kept.generated.js

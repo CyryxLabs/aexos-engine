@@ -22,12 +22,21 @@ class RegistryProvider extends CodeIntelProvider {
     this._registryPath = options.registryPath || null;
     this._registry = null;
     this._registryMtime = null;
+    this._snapshotMode = Object.prototype.hasOwnProperty.call(options, 'registryData');
 
     // In-memory indexes (built on first load)
     this._byName = null;   // Map<string, Array<Entity>>
     this._byPath = null;   // Map<string, Entity>
     this._byCategory = null; // Map<string, Array<Entity>>
     this._byKeyword = null;  // Map<string, Array<Entity>> (inverted index)
+    if (this._snapshotMode) {
+      if (!options.registryData || typeof options.registryData !== 'object' || Array.isArray(options.registryData)
+        || !options.registryData.entities || typeof options.registryData.entities !== 'object'
+        || Array.isArray(options.registryData.entities)) {
+        throw new TypeError('Snapshot registry requires a validated entities object.');
+      }
+      this._buildIndexes(JSON.parse(JSON.stringify(options.registryData)));
+    }
   }
 
   /**
@@ -47,6 +56,7 @@ class RegistryProvider extends CodeIntelProvider {
    * @private
    */
   _resolveRegistryPath() {
+    if (this._snapshotMode) return null;
     if (this._registryPath) return this._registryPath;
 
     // Default: resolve from project root
@@ -67,6 +77,7 @@ class RegistryProvider extends CodeIntelProvider {
    * @private
    */
   _ensureLoaded() {
+    if (this._snapshotMode) return;
     const filePath = this._resolveRegistryPath();
     if (!filePath) return;
 

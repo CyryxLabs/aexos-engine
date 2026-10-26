@@ -14,6 +14,12 @@ Checklist:
 
 ```yaml
 task:
+  policy: config/brand-runtime.yaml
+  policy_instructions: >-
+    Before this task, load squads/brand/config/brand-runtime.yaml. Apply its task anatomy,
+    executor and tier guidance under user/host instructions and core authority. Preserve
+    this task's checkpoints, vetoes and success criteria; human approvals remain human.
+    This guidance does not grant dispatch, messaging or provider execution authority.
   task_name: "Create Visual Identity Brief"
   status: pending
   responsible_executor: michael-johnson

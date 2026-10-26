@@ -13,7 +13,9 @@
 const fs = require('fs-extra');
 const path = require('path');
 const yaml = require('js-yaml');
-const { password, select } = require('@clack/prompts');
+const { isDeepStrictEqual } = require('node:util');
+const { password, select, isCancel } = require('@clack/prompts');
+const { getTerminalCapabilities, promptPlainQuestions, createCancellationError } = require('../wizard/install-experience');
 const { generateEnvContent, generateEnvExample } = require('./templates/env-template');
 const { generateCoreConfig } = require('./templates/core-config-template');
 const {
@@ -28,6 +30,18 @@ const { getMergeStrategy, hasMergeStrategy } = require('../merger/index.js');
 function isBrownfieldProjectType(projectType) {
   const normalized = String(projectType || '').toLowerCase();
   return normalized === 'brownfield' || normalized === 'existing_cyryx' || normalized === 'existing-cyryx';
+}
+
+const PACKAGE_OPERATIONAL_DEFAULT_BLOCKS = ['synapse', 'models', 'lazyLoading'];
+
+function applyPackageOperationalDefaults(generatedConfig, packageConfig) {
+  const configured = { ...generatedConfig };
+  for (const block of PACKAGE_OPERATIONAL_DEFAULT_BLOCKS) {
+    if (Object.prototype.hasOwnProperty.call(packageConfig, block)) {
+      configured[block] = packageConfig[block];
+    }
+  }
+  return configured;
 }
 
 async function resolveFileAction(filePath, options = {}) {
@@ -77,11 +91,18 @@ async function resolveFileAction(filePath, options = {}) {
     { value: 'skip', label: 'Skip (keep existing)' },
   );
 
-  let action = await select({
-    message,
-    options: choices,
-    initialValue: isBrownfield && canMerge ? 'merge' : 'backup',
-  });
+  const defaultAction = isBrownfield && canMerge ? 'merge' : 'backup';
+  let action;
+  if (getTerminalCapabilities().plain) {
+    ({ action } = await promptPlainQuestions([{
+      type: 'list', name: 'action', message,
+      choices: choices.map((choice) => ({ name: choice.label, value: choice.value })),
+      default: defaultAction,
+    }]));
+  } else {
+    action = await select({ message, options: choices, initialValue: defaultAction });
+    if (typeof action === 'symbol' || isCancel?.(action)) throw createCancellationError();
+  }
 
   if (action === 'backup') {
     const backupPath = `${filePath}.backup.${Date.now()}`;
@@ -256,7 +277,7 @@ async function configureEnvironment(options = {}) {
     // config because framework files are copied before environment setup. It
     // is installation input, not an existing user preference, so replace it
     // with the secure generated default. Undefined preserves standalone use.
-    const packageSeededConfig = coreConfigExistedBeforeInstall === false &&
+    const packageSeededConfig = (options.coreConfigCreatedByInstaller === true || coreConfigExistedBeforeInstall === false) &&
       await fs.pathExists(coreConfigPath);
     const coreConfigAction = packageSeededConfig
       ? 'secure-seed'
@@ -271,29 +292,25 @@ async function configureEnvironment(options = {}) {
     if (coreConfigAction === 'skip') {
       console.log('⏭️  Skipped .aexos-core/core-config.yaml (keeping existing)');
     } else if (coreConfigAction === 'secure-seed') {
-      const seededContent = await fs.readFile(coreConfigPath, 'utf8');
-      const seededConfig = yaml.load(seededContent) || {};
-      seededConfig.boundary = seededConfig.boundary || {};
-      seededConfig.boundary.frameworkProtection = true;
-
-      const securedSeed = yaml.dump(seededConfig, {
-        indent: 2,
-        lineWidth: 120,
-        noRefs: true,
-        sortKeys: false,
-      });
-      const merger = getMergeStrategy(coreConfigPath);
-      const mergeResult = await merger.merge(securedSeed, coreConfigContent);
-
-      await fs.writeFile(coreConfigPath, mergeResult.content, { encoding: 'utf8' });
+      const packageConfig = yaml.load(await fs.readFile(coreConfigPath, 'utf8')) || {};
+      const securedConfig = applyPackageOperationalDefaults(yamlValidation.parsed, packageConfig);
+      await fs.writeFile(coreConfigPath, yaml.dump(securedConfig, { lineWidth: 120, noRefs: true }), { encoding: 'utf8' });
       results.coreConfigCreated = true;
-      console.log('✅ Secured package defaults and merged .aexos-core/core-config.yaml');
+      console.log('✅ Created secure .aexos-core/core-config.yaml with package operational defaults');
     } else if (coreConfigAction === 'merge' && await fs.pathExists(coreConfigPath)) {
       const existingContent = await fs.readFile(coreConfigPath, 'utf8');
       const merger = getMergeStrategy(coreConfigPath);
       const mergeResult = await merger.merge(coreConfigContent, existingContent);
-
-      await fs.writeFile(coreConfigPath, mergeResult.content, { encoding: 'utf8' });
+      // Preserve project settings, but the selected hosts belong to this install,
+      // not to the framework author's copied configuration.
+      const mergedConfig = yaml.load(mergeResult.content);
+      mergedConfig.ide = { ...mergedConfig.ide, ...yamlValidation.parsed.ide };
+      if (options.userProfileChangedByReview) mergedConfig.user_profile = userProfile;
+      // Avoid rewriting a semantically unchanged user document: comments and
+      // formatting are user-owned too.
+      if (!isDeepStrictEqual(yaml.load(existingContent), mergedConfig)) {
+        await fs.writeFile(coreConfigPath, yaml.dump(mergedConfig, { lineWidth: 120, noRefs: true }), { encoding: 'utf8' });
+      }
       results.coreConfigCreated = true;
       console.log('✅ Merged .aexos-core/core-config.yaml');
     } else {

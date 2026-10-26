@@ -11,6 +11,16 @@ CRITICAL: Read the full YAML BLOCK that FOLLOWS IN THIS FILE to understand your 
 ## COMPLETE AGENT DEFINITION FOLLOWS - NO EXTERNAL FILES NEEDED
 
 ```yaml
+command-instructions:
+  - A dependency fragment selects a bounded procedure. Read the base file and common policy, then execute only the named section; never pass a fragment to filesystem Read or mark the entire multi-phase task complete.
+  - Before any Brand work command or routed task, load squads/brand/config/brand-runtime.yaml as required guidance; if unavailable or malformed, stop that work and report the file.
+  - Do not load the policy during activation, help, exit or idle chat. Load it when substantive Brand work starts, including direct specialist requests.
+  - Apply task anatomy, executor selection and tier responsibilities alongside the task or workflow checkpoints, vetoes and success criteria. Honor settings.max_context_files by loading context on demand.
+  - User and host instructions and AEXOS core agent authority take precedence. Executor categories are planning guidance, not permission to dispatch agents, contact people or execute providers. Humans own human approvals.
+  - Checkpoint policy guides this command; YAML does not install a machine-enforced blocker. BR-TP and BR-EP identifiers are specifications, not executable validators or adapters.
+dependencies:
+  config:
+    - brand-runtime.yaml
 metadata:
   version: '1.0'
   tier: 1
@@ -24,7 +34,7 @@ IDE-FILE-RESOLUTION:
   - FOR LATER USE ONLY - NOT FOR ACTIVATION, when executing commands that reference dependencies
   - Dependencies map to squads/brand/{type}/{name}
   - type=folder (tasks|templates|checklists|data|workflows|etc...), name=file-name
-  - Example: name-storm.md → squads/brand/tasks/name-storm.md
+  - Example: name-storm.md → squads/brand/tasks/naming-exercise.md#name-storm
   - 'IMPORTANT: Only load these files when user requests specific command execution'
 REQUEST-RESOLUTION:
   - Match user requests to commands flexibly
@@ -145,17 +155,17 @@ agent:
 
     *name            → Full naming process (brief → storm → evaluate → select)
 
-    *creative-brief  → Read("squads/brand/tasks/naming-creative-brief.md")
+    *creative-brief  → Read("squads/brand/tasks/naming-exercise.md"); execute only section "creative-brief"
 
-    *name-storm      → Read("squads/brand/tasks/name-storm.md")
+    *name-storm      → Read("squads/brand/tasks/naming-exercise.md"); execute only section "name-storm"
 
-    *smile-test      → Read("squads/brand/tasks/smile-test.md")
+    *smile-test      → Read("squads/brand/tasks/naming-exercise.md"); execute only section "smile-test"
 
-    *scratch-test    → Read("squads/brand/tasks/scratch-test.md")
+    *scratch-test    → Read("squads/brand/tasks/naming-exercise.md"); execute only section "scratch-test"
 
-    *tagline         → Read("squads/brand/tasks/tagline-create.md")
+    *tagline         → Read("squads/brand/tasks/naming-exercise.md"); execute only section "tagline"
 
-    *name-audit      → Read("squads/brand/tasks/name-audit.md")
+    *name-audit      → Read("squads/brand/tasks/naming-exercise.md"); execute only section "name-audit"
 
 
     NO Search, NO Grep, NO discovery. DIRECT Read ONLY.
@@ -1182,6 +1192,7 @@ level-6-operations:
       output: Complete naming deliverable with rationale
     creative_brief:
       syntax: '*creative-brief'
+      dependency: squads/brand/tasks/naming-exercise.md#creative-brief
       description: Generate a naming creative brief through guided elicitation
       workflow: |
         1. Ask the 10 brief questions sequentially
@@ -1191,6 +1202,7 @@ level-6-operations:
       output: Completed creative brief document
     name_storm:
       syntax: '*name-storm'
+      dependency: squads/brand/tasks/naming-exercise.md#name-storm
       description: Generate 50+ name candidates using all techniques
       requires: Creative brief must be completed first
       workflow: |
@@ -1202,6 +1214,7 @@ level-6-operations:
       output: 50+ candidates organized by technique
     smile_test:
       syntax: '*smile-test'
+      dependency: squads/brand/tasks/naming-exercise.md#smile-test
       description: Score name candidates on the SMILE framework
       requires: Name candidates from *name-storm
       workflow: |
@@ -1212,6 +1225,7 @@ level-6-operations:
       output: Ranked candidates with SMILE scores and rationale
     scratch_test:
       syntax: '*scratch-test'
+      dependency: squads/brand/tasks/naming-exercise.md#scratch-test
       description: Filter names through the SCRATCH elimination criteria
       requires: Candidates that passed SMILE test
       workflow: |
@@ -1223,6 +1237,7 @@ level-6-operations:
       output: Filtered shortlist with SCRATCH results
     tagline:
       syntax: '*tagline'
+      dependency: squads/brand/tasks/naming-exercise.md#tagline
       description: Create tagline options for a brand
       requires: Brand name and positioning defined
       workflow: |
@@ -1233,6 +1248,7 @@ level-6-operations:
       output: Tagline shortlist with evaluation
     name_audit:
       syntax: '*name-audit'
+      dependency: squads/brand/tasks/naming-exercise.md#name-audit
       description: Evaluate an existing brand name against SMILE & SCRATCH
       requires: Existing brand name
       workflow: |

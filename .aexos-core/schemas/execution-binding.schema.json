@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aexos.cyryxlabs.com/schemas/execution-binding-v1.json",
+  "title": "AEXOS selected SDLC execution binding",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["bindingVersion", "phaseId", "task", "agentId", "projectRoot", "story", "taskContractHash", "inputs", "requiredCapabilities", "budgetScope", "budgetCeilingUsd", "estimatedCostUsd", "requireAcceptance"],
+  "properties": {
+    "bindingVersion": { "const": 1 },
+    "phaseId": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,79}$" },
+    "task": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,79}$" },
+    "agentId": { "enum": ["sm", "po", "architect", "dev", "qa"] },
+    "projectRoot": { "type": "string", "minLength": 1 },
+    "story": { "type": "string", "minLength": 1 },
+    "taskContractHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "inputs": { "type": "object", "additionalProperties": { "type": ["string", "number", "boolean", "object", "array"] } },
+    "requiredCapabilities": {
+      "type": "array", "minItems": 1, "maxItems": 128,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["capability", "action", "resource", "scope"],
+        "properties": {
+          "capability": { "enum": ["filesystem", "process"] },
+          "action": { "enum": ["read", "guarded-create", "guarded-recoverable-replace", "guarded-recover", "node-test"] },
+          "resource": { "type": "string", "minLength": 1 },
+          "scope": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "budgetScope": { "type": "string", "minLength": 1, "maxLength": 160 },
+    "budgetCeilingUsd": { "type": "number", "exclusiveMinimum": 0 },
+    "estimatedCostUsd": { "type": "number", "minimum": 0 },
+    "requireAcceptance": { "const": true }
+  }
+}

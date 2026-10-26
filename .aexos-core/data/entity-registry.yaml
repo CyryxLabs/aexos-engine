@@ -1,7 +1,7 @@
 metadata:
   version: 1.0.0
-  lastUpdated: '2026-09-22T04:19:13.232Z'
-  entityCount: 859
+  lastUpdated: '2026-10-26T18:13:17.822Z'
+  entityCount: 944
   checksumAlgorithm: sha256
   resolutionRate: 100
 entities:
@@ -155,8 +155,8 @@ entities:
         score: 0.8
         constraints: []
         extensionPoints: []
-      checksum: sha256:f726c298166b25943203b091922b075b36ebcfe899cb8fe62353963571edbcaf
-      lastVerified: '2026-07-30T19:35:40.991Z'
+      checksum: sha256:905a15e8894a0f1233d304a2b79f43e33816f43f1564d245548c8c7c745e5587
+      lastVerified: '2026-10-26T16:20:31.004Z'
     analyze-framework:
       path: .aexos-core/development/tasks/analyze-framework.md
       layer: L2
@@ -971,8 +971,8 @@ entities:
         score: 0.8
         constraints: []
         extensionPoints: []
-      checksum: sha256:b6ffc1f70797a80ac5997d63dd69c0bd749b5622dc4bb342db4834d3fec0eab3
-      lastVerified: '2026-09-21T21:48:28.840Z'
+      checksum: sha256:cd0aae70fc71d994ee9eec05d10942ae858a09357c33a079874aa101056f7913
+      lastVerified: '2026-10-26T16:20:31.272Z'
     create-service:
       path: .aexos-core/development/tasks/create-service.md
       layer: L2
@@ -1747,8 +1747,8 @@ entities:
         score: 0.8
         constraints: []
         extensionPoints: []
-      checksum: sha256:471c2f0205521835f560edbfe5c00772cd4fb11f4083db5b14d9e98dd20c47d2
-      lastVerified: '2026-09-21T21:48:28.850Z'
+      checksum: sha256:d53ac18d0050d93f0bcd6a3c676234b04fb8e3f64a33628375f0a962d16bc006
+      lastVerified: '2026-10-26T16:20:31.628Z'
     dev-improve-code-quality:
       path: .aexos-core/development/tasks/dev-improve-code-quality.md
       layer: L2
@@ -3253,8 +3253,8 @@ entities:
         score: 0.8
         constraints: []
         extensionPoints: []
-      checksum: sha256:0aab3755380c6922e0ded94761d8631098d4de535cbcfc1d594e8dcaaf97ff7f
-      lastVerified: '2026-09-21T21:48:28.871Z'
+      checksum: sha256:dfaf6441911490fbf797b31f242aea5e340b95d5f1adfa8c118732bfb9eafb5e
+      lastVerified: '2026-10-26T16:20:32.338Z'
     plan-execute-subtask:
       path: .aexos-core/development/tasks/plan-execute-subtask.md
       layer: L2
@@ -4013,8 +4013,8 @@ entities:
         score: 0.8
         constraints: []
         extensionPoints: []
-      checksum: sha256:a4c26aa7f3c8f916d2ea10a0f83aea8d8096da980d31e8514ed206c53f0936c6
-      lastVerified: '2026-09-21T21:48:28.883Z'
+      checksum: sha256:3a064a101fee2709495f15f14fd77cd10d5ce020bef143d5834b9d0a175d9057
+      lastVerified: '2026-10-26T16:20:32.740Z'
     qa-risk-profile:
       path: .aexos-core/development/tasks/qa-risk-profile.md
       layer: L2
@@ -4068,8 +4068,8 @@ entities:
         score: 0.8
         constraints: []
         extensionPoints: []
-      checksum: sha256:e1da640f1622caa3ec849f622e7b735aa99e02c476d3290420fd1a726f5a7168
-      lastVerified: '2026-09-21T21:48:28.883Z'
+      checksum: sha256:45f8ef864830a0dbe7b5365eadf9fc7ad4e8e50de8cb2271b320d611c9ee147b
+      lastVerified: '2026-10-26T16:20:32.760Z'
     qa-security-checklist:
       path: .aexos-core/development/tasks/qa-security-checklist.md
       layer: L2
@@ -4159,8 +4159,7 @@ entities:
         - releases
       usedBy:
         - devops
-      dependencies:
-        - devops
+      dependencies: []
       externalDeps: []
       plannedDeps:
         - github-devops-checklist
@@ -4170,8 +4169,8 @@ entities:
         score: 0.8
         constraints: []
         extensionPoints: []
-      checksum: sha256:d2bfcb45ead563b4371281fcb869d8d21f62e1714deedd9dbb3b7f5e419c58e1
-      lastVerified: '2026-08-03T01:05:43.712Z'
+      checksum: sha256:952c9f9a3114677bb1b2cbb3f6ebab01bf56e2bfcbf581c9249063fb7df622f8
+      lastVerified: '2026-10-26T16:20:32.808Z'
     remove-mcp:
       path: .aexos-core/development/tasks/remove-mcp.md
       layer: L2
@@ -4391,13 +4390,14 @@ entities:
       externalDeps: []
       plannedDeps:
         - security-scan.js
+        - database-reliability
       lifecycle: production
       adaptability:
         score: 0.8
         constraints: []
         extensionPoints: []
-      checksum: sha256:cef65cedeb2399b9a19789167d51e9c755b34d925515b29d4f7647b918dfbad0
-      lastVerified: '2026-09-21T21:48:28.887Z'
+      checksum: sha256:97660927453656c588b87355f7944969eac1064d3e0bc99ef94d222e8b7b8a03
+      lastVerified: '2026-10-26T16:20:32.920Z'
     security-scan:
       path: .aexos-core/development/tasks/security-scan.md
       layer: L2
@@ -5493,8 +5493,8 @@ entities:
         score: 0.8
         constraints: []
         extensionPoints: []
-      checksum: sha256:4ae5d5a79038925a7a89f6e4da78ea5f6a61c939320158569d5b3564fde4949a
-      lastVerified: '2026-09-21T21:48:28.907Z'
+      checksum: sha256:c09b47433f99f5dba7c28d761c5cba5ffa0b57bed27b34cb7eafa2661217c2d9
+      lastVerified: '2026-10-26T16:20:33.531Z'
     validate-tech-preset:
       path: .aexos-core/development/tasks/validate-tech-preset.md
       layer: L2
@@ -8497,6 +8497,92 @@ entities:
         extensionPoints: []
       checksum: sha256:26426516691db47a3863e644f7f23cbd41f3bbd025c57191751652146e36a82d
       lastVerified: '2026-08-03T01:32:56.296Z'
+    cerberus-contract:
+      path: .aexos-core/core/cerberus/cerberus-contract.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/cerberus/cerberus-contract.js
+      keywords:
+        - cerberus
+        - contract
+      usedBy:
+        - cerberus-gateway
+        - cerberus-index
+        - durable-mission
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:22bf14be658da25e1fa741718ffd97b6ee66b771fe52d7ff247b6c4f53e5ae8e
+      lastVerified: '2026-10-26T16:20:35.719Z'
+    cerberus-gateway:
+      path: .aexos-core/core/cerberus/cerberus-gateway.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/cerberus/cerberus-gateway.js
+      keywords:
+        - cerberus
+        - gateway
+      usedBy:
+        - cerberus-index
+        - subprocess-transport
+      dependencies:
+        - cerberus-contract
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:12c7237f9f896cd843871747e696bfd985d2e822046290433bdb45a1b22a3479
+      lastVerified: '2026-10-26T16:20:35.742Z'
+    cerberus-index:
+      path: .aexos-core/core/cerberus/index.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/cerberus/index.js
+      keywords:
+        - index
+      usedBy: []
+      dependencies:
+        - cerberus-contract
+        - cerberus-gateway
+        - subprocess-transport
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: experimental
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:dc8a255cf4e4f2fcf0f538b378ab39a0ccdac3aa6d353623fac619643c0b4f1d
+      lastVerified: '2026-10-26T16:20:35.745Z'
+    subprocess-transport:
+      path: .aexos-core/core/cerberus/subprocess-transport.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/cerberus/subprocess-transport.js
+      keywords:
+        - subprocess
+        - transport
+      usedBy:
+        - cerberus-index
+      dependencies:
+        - cerberus-gateway
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:1248c7e8bbe779f92a880c0168357938a1d5601e96fec109f959cdd362b991e6
+      lastVerified: '2026-10-26T16:20:35.767Z'
     code-intel-client:
       path: .aexos-core/core/code-intel/code-intel-client.js
       layer: L1
@@ -8508,6 +8594,7 @@ entities:
         - client
       usedBy:
         - code-intel-index
+        - analyze
       dependencies:
         - code-graph-provider
         - registry-provider
@@ -8518,8 +8605,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:6c9a08a37775acf90397aa079a4ad2c5edcc47f2cfd592b26ae9f3d154d1deb8
-      lastVerified: '2026-07-30T19:35:41.369Z'
+      checksum: sha256:8b0e3e81aff793872841b670894a5718cdb6dd7a28cbdc1f5b11bb8ee582e100
+      lastVerified: '2026-10-26T16:20:35.788Z'
     code-intel-enricher:
       path: .aexos-core/core/code-intel/code-intel-enricher.js
       layer: L1
@@ -8779,6 +8866,164 @@ entities:
         extensionPoints: []
       checksum: sha256:202d141a292bc5a8dd0697e044d7627b260839ae8b7119fd40ae486b3a1b0825
       lastVerified: '2026-07-30T19:35:41.379Z'
+    audit:
+      path: .aexos-core/core/database-reliability/audit.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/database-reliability/audit.js
+      keywords:
+        - audit
+      usedBy:
+        - database-reliability-index
+        - postgres-adapter
+      dependencies:
+        - durable-evidence
+        - contract
+        - catalog
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:d9b64b0b32a98e1a619d70ea30692d03a977c083c5c968ed8b51470a6f2e7878
+      lastVerified: '2026-10-26T16:20:36.044Z'
+    baseline-policy:
+      path: .aexos-core/core/database-reliability/baseline-policy.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/database-reliability/baseline-policy.js
+      keywords:
+        - baseline
+        - policy
+      usedBy:
+        - postgres-adapter
+      dependencies:
+        - durable-evidence
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:95d55bcd8878af1e5120925db95366f7eaf346e30302713beefec7b7e45e71e9
+      lastVerified: '2026-10-26T16:20:36.064Z'
+    catalog:
+      path: .aexos-core/core/database-reliability/catalog.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/database-reliability/catalog.js
+      keywords:
+        - catalog
+      usedBy:
+        - audit
+        - database-reliability-index
+        - postgres-adapter
+      dependencies:
+        - durable-evidence
+        - contract
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:ad3f048386ec695fdee82f43396e89bfe9082e362883857778650bcb4948025f
+      lastVerified: '2026-10-26T16:20:36.086Z'
+    contract:
+      path: .aexos-core/core/database-reliability/contract.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/database-reliability/contract.js
+      keywords:
+        - contract
+      usedBy:
+        - audit
+        - catalog
+        - database-reliability-index
+        - postgres-adapter
+        - collector
+        - export
+        - research-index
+        - service
+        - store
+        - analyze
+        - evidence
+        - code-intel-brownfield-export
+        - code-intel-brownfield-index
+        - snapshot
+        - typescript-snapshot-provider
+        - authority
+        - compile
+        - conformance
+        - workflow-engineering-sop-index
+        - lifecycle
+        - native-review
+        - render
+        - runtime-association
+        - workflow-engineering-sop-store
+      dependencies:
+        - durable-evidence
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:45ee00c9806738088c70403f261eff5f8d8e47b63c6e18eab3cc010254d788d6
+      lastVerified: '2026-10-26T16:20:36.110Z'
+    database-reliability-index:
+      path: .aexos-core/core/database-reliability/index.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/database-reliability/index.js
+      keywords:
+        - index
+      usedBy: []
+      dependencies:
+        - contract
+        - catalog
+        - durable-evidence
+        - audit
+        - postgres-adapter
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: experimental
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:ae03366d171c633c43dcde0e58ef605695a0bd51aff8de089987b00063ecb64e
+      lastVerified: '2026-10-26T16:20:36.131Z'
+    postgres-adapter:
+      path: .aexos-core/core/database-reliability/postgres-adapter.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/database-reliability/postgres-adapter.js
+      keywords:
+        - postgres
+        - adapter
+      usedBy:
+        - database-reliability-index
+      dependencies:
+        - durable-evidence
+        - audit
+        - baseline-policy
+        - contract
+        - catalog
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:37652246677550b134598ec70054556aad5cb1b2401c996fe0798a82e8149184
+      lastVerified: '2026-10-26T16:20:36.156Z'
     fix-handler:
       path: .aexos-core/core/doctor/fix-handler.js
       layer: L1
@@ -8799,8 +9044,32 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:20499ca638461d313c6d70a43ec041cff6618deeac930c44bd9bca8b9f4fa9e1
-      lastVerified: '2026-09-21T13:58:45.756Z'
+      checksum: sha256:67dd691755d03eff219012d8d2238c8407839bf8d2277b0a4a36e3fd05ab9e9f
+      lastVerified: '2026-10-26T16:20:36.177Z'
+    host-selection:
+      path: .aexos-core/core/doctor/host-selection.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/doctor/host-selection.js
+      keywords:
+        - host
+        - selection
+      usedBy:
+        - commands-count
+        - core-config
+        - ide-sync
+        - selected-hosts
+        - skills-count
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:bc583fb1d39dc251b5e1c7edc0b1e4ac6866e55ac9c5c2c1144686380c96ffff
+      lastVerified: '2026-10-26T16:20:36.195Z'
     ide-applicability:
       path: .aexos-core/core/doctor/ide-applicability.js
       layer: L1
@@ -8813,6 +9082,7 @@ entities:
         - claude-md
         - hooks-claude-count
         - rules-files
+        - settings-json
       dependencies: []
       externalDeps: []
       plannedDeps: []
@@ -8821,8 +9091,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:b1889453685a9888c129a76dc402914a740ed6f55863e16cbbcd8fcaf6ebfe75
-      lastVerified: '2026-09-21T19:49:34.308Z'
+      checksum: sha256:8e49697a4d63af8ff59b64a5ba5afb5ccffbfbf5a1239c58ad0a927c0bc4f7b0
+      lastVerified: '2026-10-26T18:13:17.448Z'
     doctor-index:
       path: .aexos-core/core/doctor/index.js
       layer: L1
@@ -8843,8 +9113,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:70558a4d9b4a48cfb897ce6e083d53a2ecac0049d85b6235778410c46699f3dc
-      lastVerified: '2026-07-30T19:35:41.381Z'
+      checksum: sha256:7bc92d579d788d3e1ad2fed0d23169af4b41b234d1bb1b507aaadec955e52168
+      lastVerified: '2026-10-26T16:20:36.232Z'
     agent-elicitation:
       path: .aexos-core/core/elicitation/agent-elicitation.js
       layer: L1
@@ -9130,6 +9400,8 @@ entities:
         - events-index
         - bob-orchestrator
       dependencies:
+        - event-normalizer
+        - host-bridge
         - types
       externalDeps: []
       plannedDeps: []
@@ -9138,8 +9410,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:4621da56e9efb85c82a8d956a5bb0ea18c50b3802a6e930b839f636d78479499
-      lastVerified: '2026-07-30T19:35:41.421Z'
+      checksum: sha256:cec30f0aa416afe3c0040403187941f8c7d4eb904e100f1d8c2944ad9bebe6ad
+      lastVerified: '2026-10-26T16:20:36.376Z'
     events-index:
       path: .aexos-core/core/events/index.js
       layer: L1
@@ -9179,8 +9451,34 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:eebe4bf26617bb097df3ff19f4fa07347797848249e331ebc03501278a2a1478
-      lastVerified: '2026-07-30T19:35:41.422Z'
+      checksum: sha256:73d189d99229c6075067fbb4abadefe66f09052158fb1d8119f7dcdd9ee94432
+      lastVerified: '2026-10-26T16:20:36.378Z'
+    agent-runtime:
+      path: .aexos-core/core/execution/agent-runtime.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/execution/agent-runtime.js
+      keywords:
+        - agent
+        - runtime
+      usedBy:
+        - wave-executor
+      dependencies:
+        - dispatch-governance
+        - task-contract
+        - outcome-verifier
+        - operation-guard
+        - permission-mode
+        - runtime-association
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:a082e857af529e21c757eb5a10b6c5c4d8ed16216bebe7d5e99f7cd1458b88cb
+      lastVerified: '2026-10-26T16:20:36.409Z'
     autonomous-build-loop:
       path: .aexos-core/core/execution/autonomous-build-loop.js
       layer: L1
@@ -9205,8 +9503,27 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:a689451bb7508ba2b7c0ac7b5e1a14fb23d8fddff3bb5f7ea7623e9b1da94103
-      lastVerified: '2026-07-30T19:35:41.424Z'
+      checksum: sha256:0da514947f7f3092acdb8840a3222fadc2954f21fc30e7d2fdabad0fd5728902
+      lastVerified: '2026-10-26T16:20:36.433Z'
+    brownfield-planning:
+      path: .aexos-core/core/execution/brownfield-planning.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/execution/brownfield-planning.js
+      keywords:
+        - brownfield
+        - planning
+      usedBy: []
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: orphan
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:450747e4352cf81a00968c23a4f4d8969b7c2aa184f8df2de58054c2a5b1d205
+      lastVerified: '2026-10-26T16:20:36.454Z'
     build-orchestrator:
       path: .aexos-core/core/execution/build-orchestrator.js
       layer: L1
@@ -9230,8 +9547,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:2dd073c3d961e89a799951979864960788591ebccc8a5de5df25fb2b6ef53a81
-      lastVerified: '2026-07-30T19:35:41.427Z'
+      checksum: sha256:4ed1117b947e511eddafec23ffdeee711674135779a70e4a85e613fe1dea9a59
+      lastVerified: '2026-10-26T16:20:36.480Z'
     build-state-manager:
       path: .aexos-core/core/execution/build-state-manager.js
       layer: L1
@@ -9258,6 +9575,27 @@ entities:
         extensionPoints: []
       checksum: sha256:bbe267a4e95ab9a74e0001a92ab7a205ef661dc8ec077018ca3bf5af5e8fe05c
       lastVerified: '2026-07-30T19:35:41.429Z'
+    capability-coverage:
+      path: .aexos-core/core/execution/capability-coverage.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/execution/capability-coverage.js
+      keywords:
+        - capability
+        - coverage
+      usedBy: []
+      dependencies:
+        - task-contract
+        - outcome-verifier
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: experimental
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:c3ec92b6ecb13f0a2988df26f629990b411e4daea4380a422c2f65e29e5a8c25
+      lastVerified: '2026-10-26T16:20:36.504Z'
     context-injector:
       path: .aexos-core/core/execution/context-injector.js
       layer: L1
@@ -9279,6 +9617,219 @@ entities:
         extensionPoints: []
       checksum: sha256:8b66500165646e7fd141e777a89762e7db005ab0322526a44b982b51de808308
       lastVerified: '2026-07-30T19:35:41.430Z'
+    decision-rubric:
+      path: .aexos-core/core/execution/decision-rubric.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/execution/decision-rubric.js
+      keywords:
+        - decision
+        - rubric
+      usedBy:
+        - research-contract
+        - service
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:d9504ce0fd8930134c9b580e71579b43ffa8915587f7d1720f534db6f3e0d23b
+      lastVerified: '2026-10-26T16:20:36.528Z'
+    durable-evidence:
+      path: .aexos-core/core/execution/durable-evidence.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/execution/durable-evidence.js
+      keywords:
+        - durable
+        - evidence
+      usedBy:
+        - audit
+        - baseline-policy
+        - catalog
+        - contract
+        - database-reliability-index
+        - postgres-adapter
+        - durable-mission
+        - installed-capabilities
+        - collector
+        - research-contract
+        - export
+        - service
+        - store
+        - correlation
+        - authority
+        - compile
+        - conformance
+        - workflow-engineering-sop-contract
+        - lifecycle
+        - native-review
+        - render
+        - runtime-association
+        - workflow-engineering-sop-store
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:3caf585064415be8a66232eede58c9a681227b7ce8104ef55d8f1435a24780f5
+      lastVerified: '2026-10-26T16:20:36.547Z'
+    durable-mission:
+      path: .aexos-core/core/execution/durable-mission.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/execution/durable-mission.js
+      keywords:
+        - durable
+        - mission
+      usedBy: []
+      dependencies:
+        - cerberus-contract
+        - durable-evidence
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: experimental
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:70ab2f1889cf3a8447b721209c56a3584fd3812ec9a5aa9b48b16033fdc967b4
+      lastVerified: '2026-10-26T16:20:36.568Z'
+    execution-binding:
+      path: .aexos-core/core/execution/execution-binding.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/execution/execution-binding.js
+      keywords:
+        - execution
+        - binding
+      usedBy:
+        - runtime-association
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:5dd5bb33617ba9bbfb994de44fc368f81eb30431fcc1c06989efad80bda410ce
+      lastVerified: '2026-10-26T16:20:36.590Z'
+    installed-capabilities-cli:
+      path: .aexos-core/core/execution/installed-capabilities-cli.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/execution/installed-capabilities-cli.js
+      keywords:
+        - installed
+        - capabilities
+        - cli
+      usedBy: []
+      dependencies:
+        - installed-capabilities
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: experimental
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:c675fba47b03c74a3f4b70095e29b1e13f9d8dc0e985aa6f267dc6b92f95447a
+      lastVerified: '2026-10-26T16:20:36.608Z'
+    installed-capabilities:
+      path: .aexos-core/core/execution/installed-capabilities.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/execution/installed-capabilities.js
+      keywords:
+        - installed
+        - capabilities
+      usedBy:
+        - installed-capabilities-cli
+        - selected-hosts
+      dependencies:
+        - durable-evidence
+      externalDeps: []
+      plannedDeps:
+        - core-package-boundary
+        - installed-capability-catalog
+        - installed-capabilities-v1.schema
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:109fe1df1bf379b9f9e501713c64dd0cf13ac7d016269ae77443f82fb67db734
+      lastVerified: '2026-10-26T16:20:36.630Z'
+    local-plan-checker:
+      path: .aexos-core/core/execution/local-plan-checker.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/execution/local-plan-checker.js
+      keywords:
+        - local
+        - plan
+        - checker
+      usedBy: []
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: orphan
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:f6d27c800f12dd50289955214b18b9c7de239c1e396293ec110f09b93fa1edd1
+      lastVerified: '2026-10-26T16:20:36.653Z'
+    local-plan-provider:
+      path: .aexos-core/core/execution/local-plan-provider.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/execution/local-plan-provider.js
+      keywords:
+        - local
+        - plan
+        - provider
+      usedBy: []
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: orphan
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:e0d5d017a9177ca566010c19015dc8e410c6738cc04aecd332dcfa914fa733eb
+      lastVerified: '2026-10-26T16:20:36.673Z'
+    outcome-verifier:
+      path: .aexos-core/core/execution/outcome-verifier.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/execution/outcome-verifier.js
+      keywords:
+        - outcome
+        - verifier
+      usedBy:
+        - agent-runtime
+        - capability-coverage
+        - runtime-association
+      dependencies:
+        - task-contract
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:edf5ff0f4e63f8b22aa4d347d8adbf28d6e2dc1926903d451776b84dedc02150
+      lastVerified: '2026-10-26T16:20:36.699Z'
     parallel-executor:
       path: .aexos-core/core/execution/parallel-executor.js
       layer: L1
@@ -9319,6 +9870,26 @@ entities:
         extensionPoints: []
       checksum: sha256:841477f7c1989613f035150b069ebba4efb4ee9bea4217dc1c7816efe99688e1
       lastVerified: '2026-07-30T19:35:41.433Z'
+    publication-accounting-store:
+      path: .aexos-core/core/execution/publication-accounting-store.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/execution/publication-accounting-store.js
+      keywords:
+        - publication
+        - accounting
+        - store
+      usedBy: []
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: orphan
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:dd127dc7359e48c7e903bcf14cd76275d20b585da284932ebcd7a66e39b8e7de
+      lastVerified: '2026-10-26T16:20:36.771Z'
     rate-limit-manager:
       path: .aexos-core/core/execution/rate-limit-manager.js
       layer: L1
@@ -9378,8 +9949,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:1fb7e0b80e069d074f2efe686c94dcf1c7af19e960e076e462e00a8f3bd4a122
-      lastVerified: '2026-07-30T19:35:41.436Z'
+      checksum: sha256:79ad82f22fe301af1d330c21800268cf967c40c250b01761e1f21c557622f80b
+      lastVerified: '2026-10-26T16:20:36.819Z'
     subagent-dispatcher:
       path: .aexos-core/core/execution/subagent-dispatcher.js
       layer: L1
@@ -9399,8 +9970,32 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:7e48b2a75760c53442c760af971a45ba7edc6205c722296ad92e9d48078c029a
-      lastVerified: '2026-07-30T19:35:41.437Z'
+      checksum: sha256:32b17c8634147fc3ece4afa3b12d2ad1a609d204cc6d8a1719f8de6827805197
+      lastVerified: '2026-10-26T16:20:36.845Z'
+    task-contract:
+      path: .aexos-core/core/execution/task-contract.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/execution/task-contract.js
+      keywords:
+        - task
+        - contract
+      usedBy:
+        - agent-runtime
+        - capability-coverage
+        - outcome-verifier
+        - wave-executor
+        - workflow-map
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:5e3b7451d7b6fc9f54cea2c98d3eaccecd1126a3b1f5902e3a2ad37f4d51c3b3
+      lastVerified: '2026-10-26T16:20:36.868Z'
     wave-executor:
       path: .aexos-core/core/execution/wave-executor.js
       layer: L1
@@ -9411,6 +10006,8 @@ entities:
         - executor
       usedBy: []
       dependencies:
+        - agent-runtime
+        - task-contract
         - rate-limit-manager
       externalDeps: []
       plannedDeps:
@@ -9420,8 +10017,49 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:e9430e98d0ccbca31f6ad1ab75c2197da49944ba286c73e938ea90a47acd24be
-      lastVerified: '2026-07-30T19:35:41.438Z'
+      checksum: sha256:bb0d75484b365b250a7b8f77e9c3bc06165d42e29b7a7ed9f453494c20825801
+      lastVerified: '2026-10-26T16:20:36.893Z'
+    workflow-control-store:
+      path: .aexos-core/core/execution/workflow-control-store.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/execution/workflow-control-store.js
+      keywords:
+        - workflow
+        - control
+        - store
+      usedBy:
+        - runtime-association
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:500395906e28dbabe7790f0647df66a3ff7eb7e7f036fa246b80d1ff8992d5cb
+      lastVerified: '2026-10-26T16:20:36.915Z'
+    workflow-runner:
+      path: .aexos-core/core/execution/workflow-runner.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/execution/workflow-runner.js
+      keywords:
+        - workflow
+        - runner
+      usedBy:
+        - correlation
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:575c6013ccb632a78cf5bc3821cd1d2ce2a7314d0a59bdfa4f3ee64e12f00030
+      lastVerified: '2026-10-26T16:20:36.939Z'
     delegate-cli:
       path: .aexos-core/core/external-executors/delegate-cli.js
       layer: L1
@@ -9471,6 +10109,7 @@ entities:
         - cli
       usedBy:
         - graph-dashboard-index
+        - connect-cli
       dependencies:
         - code-intel-source
         - registry-source
@@ -9810,6 +10449,8 @@ entities:
         - registry-syncer
         - framework-governor
         - ids-index
+        - virtual-office-index
+        - server
         - code-intel-source
         - registry-source
       dependencies: []
@@ -10077,8 +10718,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:4239ac6bcf20d0fa01949f64a3520f2b9cc6cda707268d34e9e8677ff484f03a
-      lastVerified: '2026-09-21T18:19:30.999Z'
+      checksum: sha256:aaeb2326b6529cf6df35cb720672c1f53a31bb073bb9689326fa3c7cff5138eb
+      lastVerified: '2026-10-26T18:13:17.489Z'
     bob-orchestrator:
       path: .aexos-core/core/orchestration/bob-orchestrator.js
       layer: L1
@@ -10178,8 +10819,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:2b634def23b60ae7b9d816074aa5c47eaa0490e920c2e7376c67ecc3cc56f10b
-      lastVerified: '2026-07-31T22:38:48.881Z'
+      checksum: sha256:aad310c80483385c4ed62113d6929e112e72bdfcaa472dbb23e32293d665e8af
+      lastVerified: '2026-10-26T16:20:37.547Z'
     cli-commands:
       path: .aexos-core/core/orchestration/cli-commands.js
       layer: L1
@@ -10243,8 +10884,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:fe2cdf7feeb558da27a1d2f45e6d62b6a4220ce10e078fc34ba3a325b1216eeb
-      lastVerified: '2026-09-21T18:19:31.009Z'
+      checksum: sha256:4fefa4ec808c42d07746273dc8510f42e3751fd3f750fbffb862ebc1a3f0f443
+      lastVerified: '2026-10-26T16:20:37.618Z'
     dashboard-integration:
       path: .aexos-core/core/orchestration/dashboard-integration.js
       layer: L1
@@ -10539,8 +11180,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:0103d5938d84e333368429824f4895c1c569da5060ac9698575ffe82f1e41443
-      lastVerified: '2026-09-21T18:19:31.029Z'
+      checksum: sha256:9432964b76d71bd179a2ee2cfcf66ff3b14666f9da381bbe3abc4a6aab1e3e4c
+      lastVerified: '2026-10-26T18:13:17.505Z'
     message-formatter:
       path: .aexos-core/core/orchestration/message-formatter.js
       layer: L1
@@ -10674,8 +11315,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:b9c12cc77ea4ee2744cfc72eaf8bf8705be3b4c6cdfff6f5aed42c6e07cb6045
-      lastVerified: '2026-09-21T18:19:31.032Z'
+      checksum: sha256:2c7da2f41159911e5ff6d785065e5a259b9f812fc8061414fcce92814c9611c6
+      lastVerified: '2026-10-26T16:20:37.974Z'
     surface-checker:
       path: .aexos-core/core/orchestration/surface-checker.js
       layer: L1
@@ -10796,6 +11437,25 @@ entities:
         extensionPoints: []
       checksum: sha256:0140492ca3e2d99ed757736c1c2858a4356176b3eea37c3a91dbe57b32542110
       lastVerified: '2026-09-21T18:19:31.035Z'
+    workflow-normalizer:
+      path: .aexos-core/core/orchestration/workflow-normalizer.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/orchestration/workflow-normalizer.js
+      keywords:
+        - workflow
+        - normalizer
+      usedBy: []
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: orphan
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:5bbae545e64a31e8256f7df490976881762bb7211f6a72098390b0ef5a07d71b
+      lastVerified: '2026-10-26T16:20:38.111Z'
     workflow-orchestrator:
       path: .aexos-core/core/orchestration/workflow-orchestrator.js
       layer: L1
@@ -10823,8 +11483,51 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:5ee703a4e756011b0f2fadb0f734b96714d0ea4e33891dbc10c4aa9ce3033e8b
-      lastVerified: '2026-09-21T18:19:31.039Z'
+      checksum: sha256:d331e5e0fd00728bf0f463ceff498b21f7eded3acb1b41eb54ce6addc94da01e
+      lastVerified: '2026-10-26T18:13:17.512Z'
+    capability-broker:
+      path: .aexos-core/core/permissions/capability-broker.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/permissions/capability-broker.js
+      keywords:
+        - capability
+        - broker
+      usedBy:
+        - permissions-index
+        - authority
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:35bea0e945dabdcea733a568c0d025d96a03a26cf126c035099727e15ac9942e
+      lastVerified: '2026-10-26T16:20:38.171Z'
+    confined-filesystem:
+      path: .aexos-core/core/permissions/confined-filesystem.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/permissions/confined-filesystem.js
+      keywords:
+        - confined
+        - filesystem
+      usedBy:
+        - operation-guard
+        - correlation
+      dependencies:
+        - path-guard
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:f38067cee5819a9324c1db91aa3e9d4f6ba46b9e972bd2ba583096fc2069dc2a
+      lastVerified: '2026-10-26T16:20:38.195Z'
     dispatch-governance:
       path: .aexos-core/core/permissions/dispatch-governance.js
       layer: L1
@@ -10834,6 +11537,7 @@ entities:
         - dispatch
         - governance
       usedBy:
+        - agent-runtime
         - permissions-index
         - dispatch-adapter
         - pre-dispatch-guard
@@ -10846,8 +11550,28 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:9b5256b8e632c9cd5bb2fef55ded242ef26e7995a71cfdacaf18701d34438152
-      lastVerified: '2026-07-30T19:35:41.553Z'
+      checksum: sha256:2cb510d6d321df22a13ceb702e5804c0dd30ba16013d1f8157e7d63e8d490d90
+      lastVerified: '2026-10-26T16:20:38.221Z'
+    guarded-publication-protocol:
+      path: .aexos-core/core/permissions/guarded-publication-protocol.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/permissions/guarded-publication-protocol.js
+      keywords:
+        - guarded
+        - publication
+        - protocol
+      usedBy: []
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: orphan
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:127d419b1d6ce5ac24c3c8aa34a2563a1f3a3b2324bf3cc4ac19b18ed5bd87ce
+      lastVerified: '2026-10-26T16:20:38.242Z'
     permissions-index:
       path: .aexos-core/core/permissions/index.js
       layer: L1
@@ -10865,6 +11589,7 @@ entities:
         - prompt-guard
         - ssrf-guard
         - dispatch-governance
+        - capability-broker
       externalDeps: []
       plannedDeps:
         - permissions
@@ -10873,8 +11598,48 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:d4c750d4050744f7145977d07e2b5e1f6e20d1d82fa952c4fc12946f65009997
-      lastVerified: '2026-07-30T19:35:41.555Z'
+      checksum: sha256:a74463d0bc93fde535242dbd4db49a6f85922782d0a6bc1c4e1710d1f675f02f
+      lastVerified: '2026-10-26T16:20:38.264Z'
+    native-publication-session:
+      path: .aexos-core/core/permissions/native-publication-session.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/permissions/native-publication-session.js
+      keywords:
+        - native
+        - publication
+        - session
+      usedBy: []
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: orphan
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:58e8aefeae962c8ce57879e3586097a2d719d390f788f8b97a6f7265e5bd80f3
+      lastVerified: '2026-10-26T16:20:38.288Z'
+    native-publication-support:
+      path: .aexos-core/core/permissions/native-publication-support.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/permissions/native-publication-support.js
+      keywords:
+        - native
+        - publication
+        - support
+      usedBy: []
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: orphan
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:4e890120b1ffcb930e2816ff1633f4166485f1a03d17bbc5032bec74260d7136
+      lastVerified: '2026-10-26T16:20:38.310Z'
     operation-guard:
       path: .aexos-core/core/permissions/operation-guard.js
       layer: L1
@@ -10884,10 +11649,12 @@ entities:
         - operation
         - guard
       usedBy:
+        - agent-runtime
         - permissions-index
         - permission-mode.test
       dependencies:
         - permission-mode
+        - confined-filesystem
       externalDeps: []
       plannedDeps: []
       lifecycle: production
@@ -10895,8 +11662,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:f9b1b1bd547145c0d8a0f47534af0678ee852df6236acd05c53e479cb0e3f0bd
-      lastVerified: '2026-07-30T19:35:41.556Z'
+      checksum: sha256:a3e3be97a03100c4d32e8eaf20dbd9c3c245cb6f23852e47b664b3d70126cae0
+      lastVerified: '2026-10-26T16:20:38.331Z'
     path-guard:
       path: .aexos-core/core/permissions/path-guard.js
       layer: L1
@@ -10906,6 +11673,7 @@ entities:
         - path
         - guard
       usedBy:
+        - confined-filesystem
         - permissions-index
         - path-guard.test
       dependencies: []
@@ -10916,8 +11684,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:1bf230cb6ad86e93d43c0bb1d1314705a9db370f11fff3b2b520d0ca8352687d
-      lastVerified: '2026-07-30T19:35:41.558Z'
+      checksum: sha256:6f5a1182383841537a8ff33334eed89a55054237ae02c7ae6f9514ddb44b57ae
+      lastVerified: '2026-10-26T16:20:38.353Z'
     permission-mode:
       path: .aexos-core/core/permissions/permission-mode.js
       layer: L1
@@ -10927,6 +11695,7 @@ entities:
         - permission
         - mode
       usedBy:
+        - agent-runtime
         - permissions-index
         - operation-guard
         - permission-mode.test
@@ -10983,6 +11752,26 @@ entities:
         extensionPoints: []
       checksum: sha256:8197e1c7ce340674c9e32dc2a2c79a70ad89f07e6601824ca890b6db95ce657e
       lastVerified: '2026-07-30T19:35:41.560Z'
+    windows-publication-adapter:
+      path: .aexos-core/core/permissions/windows-publication-adapter.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/permissions/windows-publication-adapter.js
+      keywords:
+        - windows
+        - publication
+        - adapter
+      usedBy: []
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: orphan
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:a1cdd9a5cdc46ee97b8ff34e9f34e72f5afe42f823ad4530fe33bc4f134adeff
+      lastVerified: '2026-10-26T16:20:38.379Z'
     pro-updater:
       path: .aexos-core/core/pro/pro-updater.js
       layer: L1
@@ -11257,6 +12046,163 @@ entities:
         extensionPoints: []
       checksum: sha256:0032a257d9c358583f7d8ca50a7497892ab9a8cc961bf7ca53c1fc890d6c0cf2
       lastVerified: '2026-07-30T19:35:41.570Z'
+    collector:
+      path: .aexos-core/core/research/collector.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/research/collector.js
+      keywords:
+        - collector
+      usedBy:
+        - research-index
+        - service
+      dependencies:
+        - durable-evidence
+        - contract
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:f223ac29f3134b7009d6ad8cf72caf86210872a87c517bdd980472018096f0be
+      lastVerified: '2026-10-26T16:20:38.473Z'
+    research-contract:
+      path: .aexos-core/core/research/contract.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/research/contract.js
+      keywords:
+        - contract
+      usedBy: []
+      dependencies:
+        - decision-rubric
+        - durable-evidence
+      externalDeps: []
+      plannedDeps:
+        - research-v1.schema
+      lifecycle: experimental
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:018b9320a0ad4e5986f9ce3c41930c302377072cdbb4a8f9c3ec4fe10d440110
+      lastVerified: '2026-10-26T16:20:38.495Z'
+    export:
+      path: .aexos-core/core/research/export.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/research/export.js
+      keywords:
+        - export
+      usedBy:
+        - research-index
+        - code-intel-brownfield-index
+      dependencies:
+        - durable-evidence
+        - contract
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:89bc86908656a285871663eba0960fd1d1d6ddbecb4de771599f849da39debe4
+      lastVerified: '2026-10-26T16:20:38.516Z'
+    research-index:
+      path: .aexos-core/core/research/index.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/research/index.js
+      keywords:
+        - index
+      usedBy: []
+      dependencies:
+        - collector
+        - contract
+        - export
+        - service
+        - store
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: experimental
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:347a8d016f56ded225eee9235b7ecf923a78d5a9261134c5557f92ba9585c8fc
+      lastVerified: '2026-10-26T16:20:38.530Z'
+    service:
+      path: .aexos-core/core/research/service.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/research/service.js
+      keywords:
+        - service
+      usedBy:
+        - research-index
+      dependencies:
+        - durable-evidence
+        - decision-rubric
+        - contract
+        - collector
+        - store
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:04065724240cc686c232b6f4d920838871f85e4ebb4c4a4ac31248fbec67db43
+      lastVerified: '2026-10-26T16:20:38.553Z'
+    store:
+      path: .aexos-core/core/research/store.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/research/store.js
+      keywords:
+        - store
+      usedBy:
+        - research-index
+        - service
+        - workflow-engineering-sop-index
+        - lifecycle
+      dependencies:
+        - durable-evidence
+        - contract
+        - writer-lease
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:ddb1c00284767d011dded16ee1ea0481fbdecf000a6b03ef49190ccf7e0266f9
+      lastVerified: '2026-10-26T16:20:38.572Z'
+    writer-lease:
+      path: .aexos-core/core/research/writer-lease.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/research/writer-lease.js
+      keywords:
+        - writer
+        - lease
+      usedBy:
+        - store
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:0634f73ccd5e5f397e0da3a2b838c42966f859603a699b0e68fb3b280e814fc0
+      lastVerified: '2026-10-26T16:20:38.593Z'
     agent-immortality:
       path: .aexos-core/core/resilience/agent-immortality.js
       layer: L1
@@ -11317,8 +12263,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:658dd31ab25952990eedcd341743edae8c62925ef40fb4d107f48dc8e496a5b0
-      lastVerified: '2026-07-30T19:35:41.571Z'
+      checksum: sha256:6b3594a23d2464875836003a5ed6a60ee045e8ebbe5d7b690be5427bf23dd2db
+      lastVerified: '2026-10-26T16:20:38.629Z'
     epic-glue:
       path: .aexos-core/core/sdc/epic-glue.js
       layer: L1
@@ -11431,8 +12377,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:dc3605e8149b0bb7635146fee1906b7a5a537a5569df439a1772148f6c87aec5
-      lastVerified: '2026-07-30T19:35:41.577Z'
+      checksum: sha256:869f3b5f2d2320225f334e755d4bef2edef1cd4cce8aa86ac7771750a7daca0c
+      lastVerified: '2026-10-26T16:20:38.661Z'
     wave-plan:
       path: .aexos-core/core/sdc/wave-plan.js
       layer: L1
@@ -11502,6 +12448,25 @@ entities:
         extensionPoints: []
       checksum: sha256:fb2f7d557a73474a7af8f45ddfb81aea1ba3092c754cdb31494b7966087d5bc1
       lastVerified: '2026-08-03T01:32:56.354Z'
+    security-assessment:
+      path: .aexos-core/core/security/security-assessment.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/security/security-assessment.js
+      keywords:
+        - security
+        - assessment
+      usedBy: []
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: orphan
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:6b868e222c417809f7ae17ccd3ca0183e3374f91c532998c9985cbb1118f396d
+      lastVerified: '2026-10-26T16:20:38.667Z'
     context-detector:
       path: .aexos-core/core/session/context-detector.js
       layer: L1
@@ -11752,6 +12717,435 @@ entities:
         extensionPoints: []
       checksum: sha256:2c6201d4eae049b48890e082569af36a3d70b6de6cfbbc5f78f6f415362518e4
       lastVerified: '2026-07-30T19:35:41.587Z'
+    virtual-office-cli:
+      path: .aexos-core/core/virtual-office/cli.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/virtual-office/cli.js
+      keywords:
+        - cli
+      usedBy: []
+      dependencies:
+        - host-hooks
+        - codex-observer
+        - host-bridge
+        - config-loader
+        - server
+        - connect-cli
+        - correlation-cli
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: experimental
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:bdd56acd15784fb19df28165d893f03118e713ab240e633e7dc28d062745dd97
+      lastVerified: '2026-10-26T16:20:38.929Z'
+    codex-observer:
+      path: .aexos-core/core/virtual-office/codex-observer.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/virtual-office/codex-observer.js
+      keywords:
+        - codex
+        - observer
+      usedBy:
+        - virtual-office-cli
+      dependencies:
+        - host-bridge
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:7f563e17be99acb1df9c81808d486bc1eeb155629e5da48ef89543270af6ad71
+      lastVerified: '2026-10-26T16:20:38.956Z'
+    virtual-office-config-loader:
+      path: .aexos-core/core/virtual-office/config-loader.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/virtual-office/config-loader.js
+      keywords:
+        - config
+        - loader
+      usedBy: []
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: orphan
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:8f40cd69136c28fa43cebd49e3a6145387cc2e7f07d53fd45dfafbccc66f5b17
+      lastVerified: '2026-10-26T16:20:38.977Z'
+    correlation-cli:
+      path: .aexos-core/core/virtual-office/correlation-cli.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/virtual-office/correlation-cli.js
+      keywords:
+        - correlation
+        - cli
+      usedBy:
+        - virtual-office-cli
+      dependencies:
+        - correlation
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:73b5278d96a662a922748a7abafed90393d2efc865dd286b2d3229b08dbd9d7c
+      lastVerified: '2026-10-26T16:20:38.998Z'
+    correlation:
+      path: .aexos-core/core/virtual-office/correlation.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/virtual-office/correlation.js
+      keywords:
+        - correlation
+      usedBy:
+        - correlation-cli
+      dependencies:
+        - durable-evidence
+        - workflow-runner
+        - host-bridge
+        - event-normalizer
+        - confined-filesystem
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:ab7ab811cf533d51982d38c27cf12eadb5669c8e4cebc4e50e256349a86beaef
+      lastVerified: '2026-10-26T16:20:39.028Z'
+    event-normalizer:
+      path: .aexos-core/core/virtual-office/event-normalizer.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/virtual-office/event-normalizer.js
+      keywords:
+        - event
+        - normalizer
+      usedBy:
+        - dashboard-emitter
+        - correlation
+        - host-bridge
+        - host-hooks
+        - virtual-office-index
+        - server
+        - state-projector
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:301885cac544d13c4c27384287b0ca8aa351060da75e5d63c21b6d1c46b6e997
+      lastVerified: '2026-10-26T16:20:39.046Z'
+    host-bridge:
+      path: .aexos-core/core/virtual-office/host-bridge.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/virtual-office/host-bridge.js
+      keywords:
+        - host
+        - bridge
+      usedBy:
+        - dashboard-emitter
+        - virtual-office-cli
+        - codex-observer
+        - correlation
+        - host-hooks
+        - server
+        - bridge
+      dependencies:
+        - event-normalizer
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:59c60ab8dc595475696a28e7d31bf1ebd94dd9abce4099fe009075923ac9790b
+      lastVerified: '2026-10-26T16:20:39.070Z'
+    host-hooks:
+      path: .aexos-core/core/virtual-office/host-hooks.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/virtual-office/host-hooks.js
+      keywords:
+        - host
+        - hooks
+      usedBy:
+        - virtual-office-cli
+        - grok-skills-sync-index
+      dependencies:
+        - event-normalizer
+        - host-bridge
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:b05959f5753858c5def1776eea07c7881ec271202e0637cd4cd2d8743f830cca
+      lastVerified: '2026-10-26T16:20:39.094Z'
+    virtual-office-index:
+      path: .aexos-core/core/virtual-office/index.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/virtual-office/index.js
+      keywords:
+        - index
+      usedBy: []
+      dependencies:
+        - config-loader
+        - event-normalizer
+        - registry-loader
+        - server
+        - state-projector
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: experimental
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:d9a925f12139697f701face25d63d24af4e1bb2e0606af8e94353f97a49dde2c
+      lastVerified: '2026-10-26T16:20:39.112Z'
+    virtual-office-registry-loader:
+      path: .aexos-core/core/virtual-office/registry-loader.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/virtual-office/registry-loader.js
+      keywords:
+        - registry
+        - loader
+      usedBy: []
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: orphan
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:ad49ae26918f2b262946ad00fd4ae79c6dc9d2a6cf10dbf58bb4b699ca44fa2a
+      lastVerified: '2026-10-26T16:20:39.133Z'
+    server:
+      path: .aexos-core/core/virtual-office/server.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/virtual-office/server.js
+      keywords:
+        - server
+      usedBy:
+        - virtual-office-cli
+        - virtual-office-index
+      dependencies:
+        - config-loader
+        - host-bridge
+        - event-normalizer
+        - registry-loader
+        - state-projector
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:1c2838dae3f6af60143481a189ac284d6d290afcda27c3aab02a03c2bb2d98c5
+      lastVerified: '2026-10-26T16:20:39.160Z'
+    state-projector:
+      path: .aexos-core/core/virtual-office/state-projector.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/virtual-office/state-projector.js
+      keywords:
+        - state
+        - projector
+      usedBy:
+        - virtual-office-index
+        - server
+      dependencies:
+        - event-normalizer
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:c7df3c3b0e11546f537b2d0f5bfaae04e20fe158a9f8810e688f7f4bfb74a8a3
+      lastVerified: '2026-10-26T16:20:39.183Z'
+    workflow-map:
+      path: .aexos-core/core/workflow-engineering/workflow-map.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/workflow-engineering/workflow-map.js
+      keywords:
+        - workflow
+        - map
+      usedBy:
+        - compile
+      dependencies:
+        - task-contract
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:ce2020f97f1e699c0c6be7875af4acf88e48729741b7b1427fa784f6586e5a95
+      lastVerified: '2026-10-26T16:20:39.207Z'
+    analyze:
+      path: .aexos-core/core/code-intel/brownfield/analyze.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/code-intel/brownfield/analyze.js
+      keywords:
+        - analyze
+      usedBy:
+        - code-intel-brownfield-index
+      dependencies:
+        - code-intel-client
+        - typescript-snapshot-provider
+        - codebase-mapper
+        - contract
+        - evidence
+        - snapshot
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:07c844f6dfb4ae3f2a455c90e0e48d2bb3806a7c0c2bd8223f7a0522749bb94c
+      lastVerified: '2026-10-26T16:20:39.211Z'
+    code-intel-brownfield-contract:
+      path: .aexos-core/core/code-intel/brownfield/contract.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/code-intel/brownfield/contract.js
+      keywords:
+        - contract
+      usedBy: []
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: orphan
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:d6b2f40b58f0461d88eec4ce682ee32fbf76f2d2265ab23f5b43ff9e7c1fc63c
+      lastVerified: '2026-10-26T16:20:39.233Z'
+    evidence:
+      path: .aexos-core/core/code-intel/brownfield/evidence.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/code-intel/brownfield/evidence.js
+      keywords:
+        - evidence
+      usedBy:
+        - analyze
+        - code-intel-brownfield-export
+        - code-intel-brownfield-index
+        - snapshot
+        - typescript-snapshot-provider
+      dependencies:
+        - contract
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:6b38873a5ac26b12a2f82e8174decbca15a7721b6c8e061ed6b33e7eb735f06e
+      lastVerified: '2026-10-26T16:20:39.258Z'
+    code-intel-brownfield-export:
+      path: .aexos-core/core/code-intel/brownfield/export.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/code-intel/brownfield/export.js
+      keywords:
+        - export
+      usedBy: []
+      dependencies:
+        - contract
+        - evidence
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: experimental
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:386b437da80840b985e72c5a91692e12975b3c437b769013c4e111322e1e5680
+      lastVerified: '2026-10-26T16:20:39.280Z'
+    code-intel-brownfield-index:
+      path: .aexos-core/core/code-intel/brownfield/index.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/code-intel/brownfield/index.js
+      keywords:
+        - index
+      usedBy: []
+      dependencies:
+        - analyze
+        - contract
+        - evidence
+        - export
+        - snapshot
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: experimental
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:c3a8db3cbebf463a3118a3e11afbc4e1377c5cb53e22917c57690efc15a177ce
+      lastVerified: '2026-10-26T16:20:39.299Z'
+    snapshot:
+      path: .aexos-core/core/code-intel/brownfield/snapshot.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/code-intel/brownfield/snapshot.js
+      keywords:
+        - snapshot
+      usedBy:
+        - analyze
+        - code-intel-brownfield-index
+        - typescript-snapshot-provider
+      dependencies:
+        - contract
+        - evidence
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:ef9673a6d3834a529100558317681d2037abf9fec174ecdfcc9e7bd4c0d8eea5
+      lastVerified: '2026-10-26T16:20:39.325Z'
     creation-helper:
       path: .aexos-core/core/code-intel/helpers/creation-helper.js
       layer: L1
@@ -11909,6 +13303,7 @@ entities:
         - code-intel-index
         - code-graph-provider
         - registry-provider
+        - typescript-snapshot-provider
       dependencies: []
       externalDeps: []
       plannedDeps: []
@@ -11940,8 +13335,33 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:72b5ea7cec85a6472d83a64325aa4d77909dbfe6576b7c78025518eb46b2cae9
-      lastVerified: '2026-07-30T19:35:41.596Z'
+      checksum: sha256:88bd03fe054d0f877a41fd4ba2a3ffe9570c971d7d237c71ebe7897e785f4b10
+      lastVerified: '2026-10-26T16:20:39.474Z'
+    typescript-snapshot-provider:
+      path: .aexos-core/core/code-intel/providers/typescript-snapshot-provider.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/code-intel/providers/typescript-snapshot-provider.js
+      keywords:
+        - typescript
+        - snapshot
+        - provider
+      usedBy:
+        - analyze
+      dependencies:
+        - provider-interface
+        - contract
+        - evidence
+        - snapshot
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:698a3f49c6f6358ac2aead7e6a90bee36e4e7b40ebd67eb3a2fe8ed8403ed736
+      lastVerified: '2026-10-26T16:20:39.498Z'
     agent-memory:
       path: .aexos-core/core/doctor/checks/agent-memory.js
       layer: L1
@@ -11961,8 +13381,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:bebdcf9139e1518076ae943fdaaebb77ab2715dfcee61a3faa1c38777b72f9b4
-      lastVerified: '2026-07-30T19:35:41.596Z'
+      checksum: sha256:3cd7100c6d9954543a14bd5f6f8aad348bccb406322587751b36c68504094e3d
+      lastVerified: '2026-10-26T16:20:39.515Z'
     claude-md:
       path: .aexos-core/core/doctor/checks/claude-md.js
       layer: L1
@@ -12014,7 +13434,8 @@ entities:
         - count
       usedBy:
         - doctor-checks-index
-      dependencies: []
+      dependencies:
+        - host-selection
       externalDeps: []
       plannedDeps: []
       lifecycle: production
@@ -12022,8 +13443,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:581bd49a9f8301f86c277e40a631d59ca70df1ab9bd4b1e5c66a770c83bb7fd6
-      lastVerified: '2026-08-03T13:43:42.010Z'
+      checksum: sha256:6af3fb7e6214deab8c1d4cbfaf1e4b76dfc98343e719ec397b8599a6afb95db6
+      lastVerified: '2026-10-26T16:20:39.535Z'
     core-config:
       path: .aexos-core/core/doctor/checks/core-config.js
       layer: L1
@@ -12034,7 +13455,8 @@ entities:
         - config
       usedBy:
         - doctor-checks-index
-      dependencies: []
+      dependencies:
+        - host-selection
       externalDeps: []
       plannedDeps: []
       lifecycle: production
@@ -12042,8 +13464,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:8a1b584d26d48f08cea21a7ee248f0fc6fdf486f850dbbeed511bb5ed3f25310
-      lastVerified: '2026-08-03T13:43:42.010Z'
+      checksum: sha256:ef53f61546b7517180398c3cbdfbea1e82560d5d52d8f9ab370416a6691f1d25
+      lastVerified: '2026-10-26T16:20:39.554Z'
     entity-registry:
       path: .aexos-core/core/doctor/checks/entity-registry.js
       layer: L1
@@ -12081,8 +13503,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:7cfaa923b2a889a11e30499f0ed7a70950c0b5d860eb1c10f37f7e93307705bd
-      lastVerified: '2026-07-30T19:35:41.599Z'
+      checksum: sha256:6af17f43ae6de1de26f525a34018e785701650debec1af7a2ce76c2eed692e02
+      lastVerified: '2026-10-26T16:20:39.571Z'
     git-hooks:
       path: .aexos-core/core/doctor/checks/git-hooks.js
       layer: L1
@@ -12143,8 +13565,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:768bda3c0bbefb4dbca7edd7c58832a7b4504fa7ed6bcd5015428c185aa7145b
-      lastVerified: '2026-09-21T19:49:34.436Z'
+      checksum: sha256:b139a2af29b913dcc86361478dba15acf53a9d4f047758869fa0291f9ffe7288
+      lastVerified: '2026-10-26T18:13:17.559Z'
     ide-sync:
       path: .aexos-core/core/doctor/checks/ide-sync.js
       layer: L1
@@ -12155,7 +13577,8 @@ entities:
         - sync
       usedBy:
         - doctor-checks-index
-      dependencies: []
+      dependencies:
+        - host-selection
       externalDeps: []
       plannedDeps: []
       lifecycle: production
@@ -12163,8 +13586,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:d76cae7efae4c4309e99514671ba9551750078706c4409f8660ee5c7c0ea6326
-      lastVerified: '2026-08-03T13:43:42.012Z'
+      checksum: sha256:2031362459bad367b071461dee151131cc14b2f7d6787d5e9a82fb87538bc46b
+      lastVerified: '2026-10-26T16:20:39.574Z'
     doctor-checks-index:
       path: .aexos-core/core/doctor/checks/index.js
       layer: L1
@@ -12193,6 +13616,7 @@ entities:
         - port-denylist
         - windows-npx-install
         - framework-3way-diff
+        - selected-hosts
       externalDeps: []
       plannedDeps: []
       lifecycle: production
@@ -12200,8 +13624,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:a6aae289d8a25309ae3e5d5eecb55e49cab8b6079c893ebea8de4cc4de3ad015
-      lastVerified: '2026-07-30T19:35:41.612Z'
+      checksum: sha256:20a9bdb2f1261c008b300eab03fc0a433696d7f468ea17f870c4fd7de2247ff0
+      lastVerified: '2026-10-26T16:20:39.602Z'
     node-version:
       path: .aexos-core/core/doctor/checks/node-version.js
       layer: L1
@@ -12241,8 +13665,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:a487113d814402d5ceeeca58be85a925738d2c3593ff6706370e3d22f8452ffc
-      lastVerified: '2026-07-30T19:35:41.612Z'
+      checksum: sha256:d92327e65e7ad1d7fd8244d92705b9e67cd27dbf6b0725eb1a71ef0f9d9007a1
+      lastVerified: '2026-10-26T16:20:39.604Z'
     doctor-checks-port-denylist:
       path: .aexos-core/core/doctor/checks/port-denylist.js
       layer: L1
@@ -12285,6 +13709,28 @@ entities:
         extensionPoints: []
       checksum: sha256:e8f31d236af9dd94b148a63c7bdbdb8c4caa450b184707aaf4ebcbb3eda05cca
       lastVerified: '2026-09-21T19:49:34.446Z'
+    selected-hosts:
+      path: .aexos-core/core/doctor/checks/selected-hosts.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/doctor/checks/selected-hosts.js
+      keywords:
+        - selected
+        - hosts
+      usedBy:
+        - doctor-checks-index
+      dependencies:
+        - host-selection
+        - installed-capabilities
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:12250b1fbe5d274712b6c0cca30b1e4a193662172b624ebc94ef9262badc9c34
+      lastVerified: '2026-10-26T16:20:39.625Z'
     settings-json:
       path: .aexos-core/core/doctor/checks/settings-json.js
       layer: L1
@@ -12295,7 +13741,8 @@ entities:
         - json
       usedBy:
         - doctor-checks-index
-      dependencies: []
+      dependencies:
+        - ide-applicability
       externalDeps: []
       plannedDeps: []
       lifecycle: production
@@ -12303,8 +13750,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:818386dc2c79b4fe9b8cb04aa76670f9624f2c5df50b379ec255170fee0107f3
-      lastVerified: '2026-09-21T13:58:45.881Z'
+      checksum: sha256:343f45ca02a95f62dba4848c1c3bff7b78b3f7bf1c8cc4e9f4282538f7d2b514
+      lastVerified: '2026-10-26T18:13:17.565Z'
     skills-count:
       path: .aexos-core/core/doctor/checks/skills-count.js
       layer: L1
@@ -12315,7 +13762,8 @@ entities:
         - count
       usedBy:
         - doctor-checks-index
-      dependencies: []
+      dependencies:
+        - host-selection
       externalDeps: []
       plannedDeps: []
       lifecycle: production
@@ -12323,8 +13771,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:c14d27ec4def0a1835734367216eb470a5b4692a3f0c5382d1f538d7c2b73ac1
-      lastVerified: '2026-08-03T13:43:42.016Z'
+      checksum: sha256:a4f59c78cd5bd4a07b04d0e0f9f1f05838d004cc72e8819fbc1c35fff5fcb5e7
+      lastVerified: '2026-10-26T16:20:39.645Z'
     windows-npx-install:
       path: .aexos-core/core/doctor/checks/windows-npx-install.js
       layer: L1
@@ -12384,8 +13832,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:ecf8d79ae7a9f23133bcd797be7ffeb6dbbfd156eb615bc331daa9322068fdb5
-      lastVerified: '2026-07-30T19:35:41.616Z'
+      checksum: sha256:728b2ddd71c970bb785dbd3ce66fac47b35d5a6f13ac005ce2b61415a841431c
+      lastVerified: '2026-10-26T16:20:39.664Z'
     code-intel-source:
       path: .aexos-core/core/graph-dashboard/data-sources/code-intel-source.js
       layer: L1
@@ -12884,7 +14332,7 @@ entities:
         constraints: []
         extensionPoints: []
       checksum: sha256:e5eff72bd0599ca063309d6dd3c566dd87c1d1288cf255bc76d0613e5f01f0ba
-      lastVerified: '2026-09-21T18:19:31.095Z'
+      lastVerified: '2026-10-26T16:39:03.863Z'
     epic-4-executor:
       path: .aexos-core/core/orchestration/executors/epic-4-executor.js
       layer: L1
@@ -12907,7 +14355,7 @@ entities:
         constraints: []
         extensionPoints: []
       checksum: sha256:ebef2efe0357e9ef2ac5cc911dc576620044a8fc006f9965bf866abcd1278850
-      lastVerified: '2026-09-21T18:19:31.096Z'
+      lastVerified: '2026-10-26T16:39:03.864Z'
     epic-5-executor:
       path: .aexos-core/core/orchestration/executors/epic-5-executor.js
       layer: L1
@@ -13541,8 +14989,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:66c61552520a245a65a276ebacdc4c5bbc5e8e3d503e60d01a0a9c3c03b6f77d
-      lastVerified: '2026-09-21T14:52:18.765Z'
+      checksum: sha256:f03e5b10888a76dbd14536183a9d043c0d0a93cf695a81b5fb325fda1cc019f9
+      lastVerified: '2026-10-26T18:13:17.594Z'
     generate-constitution:
       path: .aexos-core/core/synapse/scripts/generate-constitution.js
       layer: L1
@@ -13649,6 +15097,399 @@ entities:
         extensionPoints: []
       checksum: sha256:3b927daec51d0a791f3fe4ef9aafc362773450e7cf50eb4b6d8ae9011d70df9a
       lastVerified: '2026-07-30T19:35:41.678Z'
+    bridge:
+      path: .aexos-core/core/virtual-office/cloud/bridge.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/virtual-office/cloud/bridge.js
+      keywords:
+        - bridge
+      usedBy:
+        - connect-cli
+      dependencies:
+        - host-bridge
+      externalDeps: []
+      plannedDeps:
+        - catalog-keys
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:9a0aa8c25e4d8f7fb077fb7860018dd6f2d5a628b2dc716a590d65b6e061bcdb
+      lastVerified: '2026-10-26T18:13:17.596Z'
+    connect-cli:
+      path: .aexos-core/core/virtual-office/cloud/connect-cli.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/virtual-office/cloud/connect-cli.js
+      keywords:
+        - connect
+        - cli
+      usedBy:
+        - virtual-office-cli
+      dependencies:
+        - bridge
+        - cli
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:99ea35f4077e5d653ff51ab75f09468b776d0a4e6878296057e480624da030d7
+      lastVerified: '2026-10-26T18:13:17.596Z'
+    schema:
+      path: .aexos-core/core/virtual-office/cloud/schema.mjs
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/virtual-office/cloud/schema.mjs
+      keywords:
+        - schema
+      usedBy: []
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: orphan
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:2bbb656b14a3a886a84b60818c6236317954c58c5c912579c96d779c0b204bd7
+      lastVerified: '2026-10-26T18:13:17.597Z'
+    app:
+      path: .aexos-core/core/virtual-office/public/app.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/virtual-office/public/app.js
+      keywords:
+        - app
+      usedBy: []
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: orphan
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:5764c31cc141c22ecfa6442a26679862d898c5a9a188d4704d5f208fe56f0afb
+      lastVerified: '2026-10-26T16:20:40.579Z'
+    office-navigation:
+      path: .aexos-core/core/virtual-office/public/office-navigation.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/virtual-office/public/office-navigation.js
+      keywords:
+        - office
+        - navigation
+      usedBy: []
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: orphan
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:505defec3e41c493adbfe4b190bf97d622051726e120393f03ee110bbf7120e9
+      lastVerified: '2026-10-26T16:20:40.600Z'
+    office-presence:
+      path: .aexos-core/core/virtual-office/public/office-presence.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/virtual-office/public/office-presence.js
+      keywords:
+        - office
+        - presence
+      usedBy: []
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: orphan
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:2193cb0946f109d09611548f61c3e7ffb30433b6727820cc340112daaf617c63
+      lastVerified: '2026-10-26T16:20:40.619Z'
+    office-scene:
+      path: .aexos-core/core/virtual-office/public/office-scene.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/virtual-office/public/office-scene.js
+      keywords:
+        - office
+        - scene
+      usedBy: []
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: orphan
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:aff6477bec958f2721caf022b4cddab109ee34893c2aa767793a398cfb287818
+      lastVerified: '2026-10-26T16:20:40.642Z'
+    scene-manifest:
+      path: .aexos-core/core/virtual-office/public/scene-manifest.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/virtual-office/public/scene-manifest.js
+      keywords:
+        - scene
+        - manifest
+      usedBy: []
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: orphan
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:0a89650adab575c405a1e704a4dd2e35f4018c73f542dc4396552773fe84e4f9
+      lastVerified: '2026-10-26T16:20:40.660Z'
+    authority:
+      path: .aexos-core/core/workflow-engineering/sop/authority.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/workflow-engineering/sop/authority.js
+      keywords:
+        - authority
+      usedBy:
+        - workflow-engineering-sop-index
+        - lifecycle
+        - native-review
+      dependencies:
+        - durable-evidence
+        - contract
+        - capability-broker
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:7461b9d47a5f605de4a8fe2ec5518a5f65204db14a8a8dcd407227771ad8ecab
+      lastVerified: '2026-10-26T16:20:40.683Z'
+    compile:
+      path: .aexos-core/core/workflow-engineering/sop/compile.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/workflow-engineering/sop/compile.js
+      keywords:
+        - compile
+      usedBy:
+        - conformance
+        - workflow-engineering-sop-index
+        - runtime-association
+      dependencies:
+        - durable-evidence
+        - workflow-map
+        - contract
+        - lifecycle
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:9cc537edf3f4dd2b0ca3f97dbc19b18ba56e8524cee7c940b422a2993d7c0316
+      lastVerified: '2026-10-26T16:20:40.686Z'
+    conformance:
+      path: .aexos-core/core/workflow-engineering/sop/conformance.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/workflow-engineering/sop/conformance.js
+      keywords:
+        - conformance
+      usedBy:
+        - workflow-engineering-sop-index
+      dependencies:
+        - durable-evidence
+        - contract
+        - lifecycle
+        - compile
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:65cb5b35dc6c652a11f7f7d377998a8544e27ef2b876988309fb9b1ec562d40c
+      lastVerified: '2026-10-26T16:20:40.710Z'
+    workflow-engineering-sop-contract:
+      path: .aexos-core/core/workflow-engineering/sop/contract.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/workflow-engineering/sop/contract.js
+      keywords:
+        - contract
+      usedBy: []
+      dependencies:
+        - durable-evidence
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: experimental
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:c0a19c7c0c6a29368db80a14b4009b8946a0a853800e5f8a6576a05ad76ce13a
+      lastVerified: '2026-10-26T16:20:40.731Z'
+    workflow-engineering-sop-index:
+      path: .aexos-core/core/workflow-engineering/sop/index.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/workflow-engineering/sop/index.js
+      keywords:
+        - index
+      usedBy: []
+      dependencies:
+        - authority
+        - compile
+        - conformance
+        - contract
+        - lifecycle
+        - native-review
+        - render
+        - runtime-association
+        - store
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: experimental
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:e45e83c5cca579f38d84cf12da6520de8531f0957d65c944ce1a410b46895c1a
+      lastVerified: '2026-10-26T16:20:40.750Z'
+    lifecycle:
+      path: .aexos-core/core/workflow-engineering/sop/lifecycle.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/workflow-engineering/sop/lifecycle.js
+      keywords:
+        - lifecycle
+      usedBy:
+        - compile
+        - conformance
+        - workflow-engineering-sop-index
+        - runtime-association
+        - workflow-engineering-sop-store
+      dependencies:
+        - durable-evidence
+        - contract
+        - authority
+        - store
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:3983b63cf94f8e2140bbedb75960d23a2a2f3f03a38c48db7eefcb21737bcd10
+      lastVerified: '2026-10-26T16:20:40.772Z'
+    native-review:
+      path: .aexos-core/core/workflow-engineering/sop/native-review.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/workflow-engineering/sop/native-review.js
+      keywords:
+        - native
+        - review
+      usedBy:
+        - workflow-engineering-sop-index
+      dependencies:
+        - durable-evidence
+        - authority
+        - contract
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:9d7e870cc1a22ae52d4a3daf042a6286c5a601245542fa89bb77574221f37fe6
+      lastVerified: '2026-10-26T16:20:40.795Z'
+    render:
+      path: .aexos-core/core/workflow-engineering/sop/render.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/workflow-engineering/sop/render.js
+      keywords:
+        - render
+      usedBy:
+        - workflow-engineering-sop-index
+      dependencies:
+        - durable-evidence
+        - contract
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:9987d01e31388e74101aae93703b72a7085afabca48b71ac55cc58893fb91403
+      lastVerified: '2026-10-26T16:20:40.816Z'
+    runtime-association:
+      path: .aexos-core/core/workflow-engineering/sop/runtime-association.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/workflow-engineering/sop/runtime-association.js
+      keywords:
+        - runtime
+        - association
+      usedBy:
+        - agent-runtime
+        - workflow-engineering-sop-index
+      dependencies:
+        - durable-evidence
+        - execution-binding
+        - outcome-verifier
+        - workflow-control-store
+        - contract
+        - lifecycle
+        - compile
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:19ecaa20e72d00e61bb2d66e24f9e831516fd94c975315495c78964ba20d23ed
+      lastVerified: '2026-10-26T16:20:40.841Z'
+    workflow-engineering-sop-store:
+      path: .aexos-core/core/workflow-engineering/sop/store.js
+      layer: L1
+      type: module
+      purpose: Entity at .aexos-core/core/workflow-engineering/sop/store.js
+      keywords:
+        - store
+      usedBy: []
+      dependencies:
+        - durable-evidence
+        - contract
+        - lifecycle
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: experimental
+      adaptability:
+        score: 0.4
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:db7bfb4de1ba59aacaf9497e17cb8c799099774edd772f0488f2dbef52b8c404
+      lastVerified: '2026-10-26T16:20:40.864Z'
     build-config:
       path: .aexos-core/core/health-check/checks/deployment/build-config.js
       layer: L1
@@ -14890,6 +16731,7 @@ entities:
         - greenfield-service
         - greenfield-ui
         - spec-pipeline
+        - story-development-cycle
         - story-draft-checklist
       dependencies:
         - analyze-project-structure
@@ -15134,7 +16976,6 @@ entities:
         - publish-npm
         - qa-gate
         - qa-review-story
-        - release-management
         - remove-worktree
         - resolve-github-issue
         - setup-github
@@ -15562,6 +17403,26 @@ entities:
       checksum: sha256:c69fe6960746e26d140f2b154585852e86082f62b1ef2c118a8e00d6c70c3ded
       lastVerified: '2026-09-21T22:49:07.982Z'
     MEMORY:
+      path: .aexos-core/development/agents/aexos-master/MEMORY.md
+      layer: L3
+      type: agent
+      purpose: aexos-master Agent Memory
+      keywords:
+        - memory
+        - aexos-master
+        - agent
+      usedBy: []
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: orphan
+      adaptability:
+        score: 0.3
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:4dd65469bef2270cd697a9fdf599b44656a3bfed31d8a0b9bda6ffffb87c75a8
+      lastVerified: '2026-10-26T16:20:42.168Z'
+    analyst-MEMORY:
       path: .aexos-core/development/agents/analyst/MEMORY.md
       layer: L3
       type: agent
@@ -15581,7 +17442,7 @@ entities:
         constraints: []
         extensionPoints: []
       checksum: sha256:a7ca9fce9dc2122ac16cc9c0c147fced1aea96e593ef0d4d3e8f42ef514d8596
-      lastVerified: '2026-07-30T19:35:41.789Z'
+      lastVerified: '2026-10-26T16:20:42.175Z'
     architect-MEMORY:
       path: .aexos-core/development/agents/architect/MEMORY.md
       layer: L3
@@ -15749,6 +17610,46 @@ entities:
         extensionPoints: []
       checksum: sha256:25947576c56f30624d27c14f996239aa04b038682d5f17ca727f6bc250c38c57
       lastVerified: '2026-07-30T19:35:41.794Z'
+    squad-creator-MEMORY:
+      path: .aexos-core/development/agents/squad-creator/MEMORY.md
+      layer: L3
+      type: agent
+      purpose: squad-creator Agent Memory
+      keywords:
+        - memory
+        - squad-creator
+        - agent
+      usedBy: []
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: orphan
+      adaptability:
+        score: 0.3
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:f0766018f810090b4e4be744d7d26dfb170da9ab10bde55bb162585a18e53cfc
+      lastVerified: '2026-10-26T16:20:42.264Z'
+    ux-design-expert-MEMORY:
+      path: .aexos-core/development/agents/ux-design-expert/MEMORY.md
+      layer: L3
+      type: agent
+      purpose: ux-design-expert Agent Memory
+      keywords:
+        - memory
+        - ux-design-expert
+        - agent
+      usedBy: []
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: orphan
+      adaptability:
+        score: 0.3
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:f1f7ddd3d8df9cdcf538e1849abef42945cef01b2eec7b621053c79a1545e8f9
+      lastVerified: '2026-10-26T16:20:42.272Z'
     ux-MEMORY:
       path: .aexos-core/development/agents/ux/MEMORY.md
       layer: L3
@@ -15944,7 +17845,7 @@ entities:
         constraints: []
         extensionPoints: []
       checksum: sha256:<self-reference>
-      lastVerified: '2026-09-22T04:19:13.232Z'
+      lastVerified: '2026-10-26T18:13:17.822Z'
     learned-patterns:
       path: .aexos-core/data/learned-patterns.yaml
       layer: L3
@@ -16006,8 +17907,8 @@ entities:
         score: 0.5
         constraints: []
         extensionPoints: []
-      checksum: sha256:cd325a8a5e56d896e7121395f459cf6bab57109824c0860561e8bfbcbd8b2904
-      lastVerified: '2026-08-11T19:52:27.595Z'
+      checksum: sha256:84958a3bd9cac7caa09d934c8172fbec687f1d38711971b166ba243588750852
+      lastVerified: '2026-10-26T16:20:42.396Z'
     technical-preferences:
       path: .aexos-core/data/technical-preferences.md
       layer: L3
@@ -16622,6 +18523,7 @@ entities:
       dependencies:
         - sm
         - po
+        - architect
         - dev
         - qa
       externalDeps: []
@@ -16631,8 +18533,8 @@ entities:
         score: 0.4
         constraints: []
         extensionPoints: []
-      checksum: sha256:212cfb74ed3827468fd15eb9d3e4ec3718f83a6ee1179d21b30a7035d8bb529e
-      lastVerified: '2026-07-30T19:35:41.851Z'
+      checksum: sha256:55bfe13122ec966c20f489f63e377706d15e1f027c83083cc407d848795b92da
+      lastVerified: '2026-10-26T16:20:42.798Z'
   utils:
     git-head:
       path: .aexos-core/core/utils/git-head.js
@@ -17007,6 +18909,7 @@ entities:
         - codebase
         - mapper
       usedBy:
+        - analyze
         - architect
       dependencies: []
       externalDeps: []
@@ -17016,8 +18919,8 @@ entities:
         score: 0.7
         constraints: []
         extensionPoints: []
-      checksum: sha256:0d4c8e208cd1e0f8ce9ea0598cbf9c4ddb1e0d6a7afead0cfd32c161d4c54e93
-      lastVerified: '2026-07-30T19:35:41.872Z'
+      checksum: sha256:87ff484c52bad2c1f2afe3c5d1ec258f2508dd619417bbd809a70e51e2d6c925
+      lastVerified: '2026-10-26T16:20:43.153Z'
     collect-tool-usage:
       path: .aexos-core/infrastructure/scripts/collect-tool-usage.js
       layer: L2
@@ -17179,6 +19082,9 @@ entities:
       usedBy:
         - index.esm
         - index
+        - virtual-office-cli
+        - virtual-office-index
+        - server
       dependencies:
         - agent-config-loader
       externalDeps: []
@@ -17815,8 +19721,8 @@ entities:
         score: 0.7
         constraints: []
         extensionPoints: []
-      checksum: sha256:5625dab856728941377cf87fb3fe8be1c87bdab0eed6fec4f878d093c5764a07
-      lastVerified: '2026-09-21T18:19:31.229Z'
+      checksum: sha256:3d36ddee0556a6b328a980c79ee34b8869c100b4d10703c5ac6cf6c9e2d43fb0
+      lastVerified: '2026-10-26T18:13:17.714Z'
     pre-dispatch-guard:
       path: .aexos-core/infrastructure/scripts/pre-dispatch-guard.js
       layer: L2
@@ -18559,8 +20465,8 @@ entities:
         score: 0.7
         constraints: []
         extensionPoints: []
-      checksum: sha256:cbadd09a0473bfb4f74fd34fc42c48c20431fe88fb247deda433e45a7ea46830
-      lastVerified: '2026-07-30T19:35:41.966Z'
+      checksum: sha256:8854a16c66d90d4031dcb9b177e418597e35676d544b5e1c25ffe4bb74fb60bb
+      lastVerified: '2026-10-26T16:20:44.705Z'
     validate-paths:
       path: .aexos-core/infrastructure/scripts/validate-paths.js
       layer: L2
@@ -18932,6 +20838,8 @@ entities:
         - (see
       usedBy: []
       dependencies:
+        - managed-projection
+        - host-hooks
         - agent-parser
       externalDeps: []
       plannedDeps: []
@@ -18940,8 +20848,29 @@ entities:
         score: 0.7
         constraints: []
         extensionPoints: []
-      checksum: sha256:25fb73631fc601a82c383b17e4e40627d1fa4f4d956299da4d94ca1f822733a0
-      lastVerified: '2026-09-21T14:52:18.892Z'
+      checksum: sha256:04946200c1451b4a26ad1a4ce73c112c2bd19844455f69bca52d78145b54ea23
+      lastVerified: '2026-10-26T18:13:17.736Z'
+    managed-projection:
+      path: .aexos-core/infrastructure/scripts/grok-skills-sync/managed-projection.js
+      layer: L2
+      type: script
+      purpose: Entity at .aexos-core/infrastructure/scripts/grok-skills-sync/managed-projection.js
+      keywords:
+        - managed
+        - projection
+      usedBy:
+        - grok-skills-sync-index
+        - grok-skills-sync-validate
+      dependencies: []
+      externalDeps: []
+      plannedDeps: []
+      lifecycle: production
+      adaptability:
+        score: 0.7
+        constraints: []
+        extensionPoints: []
+      checksum: sha256:c1bd804c4bc3357c956a144e73a6b15df68816e390424cc5362ad2a8524f4c97
+      lastVerified: '2026-10-26T18:13:17.736Z'
     grok-skills-sync-validate:
       path: .aexos-core/infrastructure/scripts/grok-skills-sync/validate.js
       layer: L2
@@ -18951,6 +20880,7 @@ entities:
         - validate
       usedBy: []
       dependencies:
+        - managed-projection
         - index
       externalDeps: []
       plannedDeps: []
@@ -18959,8 +20889,8 @@ entities:
         score: 0.7
         constraints: []
         extensionPoints: []
-      checksum: sha256:51b53e8086b72df342e31e27bac5579a6ecf03d2b05999a7a8229a93d1cf343e
-      lastVerified: '2026-09-21T18:46:00.158Z'
+      checksum: sha256:6974c5e98c73f23374180c63cb6f56c71fd625b947448fcf96aa28d16c6f9b4d
+      lastVerified: '2026-10-26T16:20:45.073Z'
     agent-parser:
       path: .aexos-core/infrastructure/scripts/ide-sync/agent-parser.js
       layer: L2
@@ -19032,8 +20962,8 @@ entities:
         score: 0.7
         constraints: []
         extensionPoints: []
-      checksum: sha256:b79c29276117b9c1a8b01e5340cabd6b5e8a5c40dacec204c17219e8f856fb1a
-      lastVerified: '2026-07-30T19:35:41.990Z'
+      checksum: sha256:ee83e0b462d4f5ca94d5be3ab99b830bf4b68f45cc699e744f2c741e009cba2e
+      lastVerified: '2026-10-26T16:20:45.110Z'
     redirect-generator:
       path: .aexos-core/infrastructure/scripts/ide-sync/redirect-generator.js
       layer: L2
@@ -19074,8 +21004,8 @@ entities:
         score: 0.7
         constraints: []
         extensionPoints: []
-      checksum: sha256:768eba65a0f8ff937c34f6f43fe1b4dc990f2d406e592bc1cda0f8ab5b4f7e0b
-      lastVerified: '2026-07-30T19:35:41.991Z'
+      checksum: sha256:c48c8051e69a021e68d589316fdaf030212d5e1a2499909de37a27c6628a4025
+      lastVerified: '2026-10-26T16:20:45.138Z'
     install-llm-routing:
       path: .aexos-core/infrastructure/scripts/llm-routing/install-llm-routing.js
       layer: L2

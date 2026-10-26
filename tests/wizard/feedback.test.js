@@ -29,22 +29,48 @@ jest.mock('cli-progress');
 const originalLog = console.log;
 const originalWarn = console.warn;
 const originalError = console.error;
+const originalNoColor = process.env.NO_COLOR;
+const originalTerm = process.env.TERM;
+const originalTTY = process.stdout.isTTY;
 
 beforeEach(() => {
   console.log = jest.fn();
   console.warn = jest.fn();
   console.error = jest.fn();
+  process.stdout.isTTY = true;
+  delete process.env.NO_COLOR;
+  process.env.TERM = 'xterm';
 });
 
 afterEach(() => {
   console.log = originalLog;
   console.warn = originalWarn;
   console.error = originalError;
+  if (originalTTY === undefined) delete process.stdout.isTTY;
+  else process.stdout.isTTY = originalTTY;
+  if (originalNoColor === undefined) delete process.env.NO_COLOR;
+  else process.env.NO_COLOR = originalNoColor;
+  if (originalTerm === undefined) delete process.env.TERM;
+  else process.env.TERM = originalTerm;
   jest.clearAllMocks();
 });
 
 describe('feedback', () => {
   describe('createSpinner', () => {
+    test.each(['NO_COLOR', 'TERM'])('does not instantiate a cursor renderer in %s mode', (mode) => {
+      if (mode === 'NO_COLOR') process.env.NO_COLOR = '1';
+      else process.env.TERM = 'dumb';
+      const spinner = createSpinner('Pending work');
+      spinner.start().succeed('Files written');
+      const bar = createProgressBar(2);
+      bar.update(1, { task: 'Verified' });
+      bar.stop();
+      expect(require('ora')).not.toHaveBeenCalled();
+      expect(require('cli-progress').SingleBar).not.toHaveBeenCalled();
+      expect(console.log.mock.calls.flat().join('\n')).not.toContain('\x1b');
+      expect(console.log.mock.calls.flat().join('\n')).toContain('PASS Files written');
+    });
+
     test('creates spinner with text', () => {
       const ora = require('ora');
       ora.mockReturnValue({ start: jest.fn(), stop: jest.fn() });
@@ -146,14 +172,41 @@ describe('feedback', () => {
     test('showWelcome displays welcome message', () => {
       showWelcome();
       expect(console.log).toHaveBeenCalled();
-      // Check that multiple lines were logged (heading + info)
-      expect(console.log.mock.calls.length).toBeGreaterThan(1);
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('CYRYX LABS'));
+    });
+    test('plain welcome remains readable without terminal control sequences', () => {
+      process.env.NO_COLOR = '1';
+      showWelcome();
+      const output = console.log.mock.calls.flat().join('\n');
+      expect(output).toContain('Workspace setup / Cyryx Labs');
+      expect(output).not.toContain('\x1b');
     });
 
-    test('showCompletion displays completion message', () => {
-      showCompletion();
-      expect(console.log).toHaveBeenCalled();
-      expect(console.log.mock.calls.length).toBeGreaterThan(1);
+    test('showCompletion preserves a truthful successful completion', () => {
+      showCompletion({
+        depsInstalled: true,
+        envConfigured: true,
+        cyryxCoreInstalled: true,
+        validationResult: { overallStatus: 'success' },
+      });
+      const output = console.log.mock.calls.flat().join('\n');
+      expect(output).toContain('AEXOS installed');
+      expect(output).toContain('Verification: passed');
+      expect(output).not.toContain('Installation needs attention');
+    });
+
+    test('showCompletion reports failure without claiming the project is ready', () => {
+      showCompletion({
+        depsInstalled: false,
+        envConfigured: true,
+        cyryxCoreInstalled: true,
+        validationResult: { overallStatus: 'success' },
+      });
+      const output = console.log.mock.calls.flat().join('\n');
+      expect(output).toContain('Installation needs attention');
+      expect(output).toContain('Dependencies');
+      expect(output).not.toContain('Your AEXOS project is ready');
+      expect(output).not.toContain('Installation complete');
     });
 
     test('showSection displays section header', () => {
@@ -195,4 +248,3 @@ describe('feedback', () => {
     });
   });
 });
-

@@ -1,138 +1,25 @@
-# How to Release a New Version
+# Versioning and releases
 
----
+The supported release procedure is [Release procedure — @aexos/core](guides/release-procedure.md), owned by DevOps under the Constitution. This page is an entry point; the SOP contains the complete transaction and recovery requirements.
 
-## Automated Releases (Recommended)
+## Supported release path
 
-The easiest way to release new versions is through **automatic semantic releases**. Just commit with the right message format and push and everything else happens automatically.
+1. Select the package set, version and channel explicitly. Stable packages use `latest`; beta prereleases use `beta`; other prereleases use `preview`. Keep related package manifests and lockfiles aligned.
+2. Review an isolated candidate at an exact source commit. Preserve the shared working tree and obtain the required checks and normal pull-request approval.
+3. Run `.github/workflows/npm-publish.yml` with the manual `prepare` operation. It validates and seals the actual npm archives and produces an immutable candidate locator.
+4. Review the exact source, completed prepare run, package inventories, archive digests, installed checks and publisher trust.
+5. Run the same workflow with manual `publish`, the reviewed locator and one provisioned authentication strategy. Verify the registry, GitHub release and installed package against the sealed candidate.
 
-### Commit Message Format
+Tag/release-triggered publication and the legacy release workflow are retired. `npm run release` and `npm run release:test` are semantic proposals only; they do not publish a package. Direct package-directory publishing is not the supported transaction.
 
-Use these prefixes to control what type of release happens:
+## Production identity
 
-```bash
-fix: resolve CLI argument parsing bug      # → patch release (4.1.0 → 4.1.1)
-feat: add new agent orchestration mode     # → minor release (4.1.0 → 4.2.0)
-feat!: redesign CLI interface              # → major release (4.1.0 → 5.0.0)
-```
+Current canonical repository: `CyryxLabs/aexos-engine`, repository ID `1380610939` (verified 2026-10-26). The predecessor with ID `1315531746` is `CyryxLabs/aexos-engine-archive-pre-1.0` and is archived. Its earlier PR, run and artifact identities are historical records.
 
-### What Happens Automatically
+Normal protected review and required checks remain in force. Local independent QA supplements GitHub review; it does not supply the required approving review. No release step changes branch protections.
 
-When you push commits with `fix:` or `feat:`, GitHub Actions will:
+## Verification and recovery
 
-1. ✅ Analyze your commit messages
-2. ✅ Bump version in `package.json`
-3. ✅ Generate changelog
-4. ✅ Create git tag
-5. ✅ **Publish to NPM automatically**
-6. ✅ Create GitHub release with notes
+Use the exact qualification commands, supported workflow inputs and provider checks in the [canonical SOP](guides/release-procedure.md). A local test, a successful upload or a tag alone does not establish a completed publication. Unknown or partial write outcomes require provider-state inspection before any further write. Preserve archives, intent and receipts; version removal, asset replacement and tag retargeting are separate decisions.
 
-### Your Simple Workflow
-
-```bash
-# Make your changes
-git add .
-git commit -m "feat: add team collaboration mode"
-git push
-
-# That's it! Release happens automatically 🎉
-# Users can now run: npx @aexos/core (and get the new version)
-```
-
-### Commits That DON'T Trigger Releases
-
-These commit types won't create releases (use them for maintenance):
-
-```bash
-chore: update dependencies     # No release
-docs: fix typo in readme      # No release
-style: format code            # No release
-test: add unit tests          # No release
-```
-
-### Test Your Setup
-
-```bash
-npm run release:test    # Safe to run locally - tests the config
-```
-
----
-
-## Manual Release Methods (Exceptions Only)
-
-⚠️ Only use these methods if you need to bypass the automatic system
-
-### Quick Manual Version Bump
-
-```bash
-npm run version:patch   # 4.1.0 → 4.1.1 (bug fixes)
-npm run version:minor   # 4.1.0 → 4.2.0 (new features)
-npm run version:major   # 4.1.0 → 5.0.0 (breaking changes)
-
-# Then manually publish:
-npm publish
-git push && git push --tags
-```
-
-### Manual GitHub Actions Trigger
-
-You can also trigger releases manually through GitHub Actions workflow dispatch if needed.
-
----
-
-## Troubleshooting
-
-### Release Not Triggered
-
-If your merge to `main` didn't trigger a release:
-
-1. **Check commit messages** - Only `fix:` and `feat:` prefixes trigger releases
-2. **Verify CI passed** - Release only runs if lint, typecheck, and test pass
-3. **Check workflow logs** - Go to Actions → Semantic Release to see details
-
-### Release Failed
-
-Common issues and solutions:
-
-| Error | Solution |
-|-------|----------|
-| `ENOGHTOKEN` | GITHUB_TOKEN secret missing or expired |
-| `ENOPKGAUTH` | NPM_TOKEN secret missing or invalid |
-| `ENOTINHISTORY` | Branch doesn't have proper history (use `fetch-depth: 0`) |
-| `EINVALIDNPMTOKEN` | Regenerate NPM token with publish permissions |
-
-### Skip a Release
-
-To merge without triggering a release, use one of these:
-
-```bash
-# Method 1: Use non-release prefix
-git commit -m "chore: update dependencies"
-
-# Method 2: Add [skip ci] to commit message
-git commit -m "feat: new feature [skip ci]"
-```
-
-### Force a Manual Release
-
-If automatic release fails, you can manually release:
-
-```bash
-npm run version:patch   # or minor/major
-git push && git push --tags
-npm publish
-```
-
----
-
-## Configuration Files
-
-| File | Purpose |
-|------|---------|
-| `.releaserc.json` | Semantic release configuration |
-| `.github/workflows/semantic-release.yml` | GitHub Actions workflow |
-| `package.json` | Version source, npm scripts |
-
----
-
-*Last updated: Story 6.17 - Semantic Release Automation*
+The locally checked-out version and the registry version may differ. Read actual registry metadata before selecting a release; do not assume that unpublished local changes are available through `npx`.

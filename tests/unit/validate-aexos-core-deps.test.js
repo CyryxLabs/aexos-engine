@@ -96,11 +96,22 @@ describe('wizard NODE_PATH fix (INS-4.12)', () => {
 });
 
 describe('doctor npm-packages check (INS-4.12)', () => {
-  test('doctor check validates .aexos-core/node_modules/', () => {
-    const checkPath = path.join(PROJECT_ROOT, '.aexos-core', 'core', 'doctor', 'checks', 'npm-packages.js');
-    const content = fs.readFileSync(checkPath, 'utf8');
-    expect(content).toContain('cyryxCoreNodeModules');
-    expect(content).toContain('.aexos-core');
-    expect(content).toContain('INS-4.12');
+  test('doctor fails missing internal dependencies and passes after installation', async () => {
+    const { run } = require('../../.aexos-core/core/doctor/checks/npm-packages');
+    const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'doctor-core-deps-'));
+    try {
+      const core = path.join(projectRoot, '.aexos-core');
+      fs.mkdirSync(core);
+      fs.writeFileSync(path.join(core, 'package.json'), JSON.stringify({ dependencies: { 'aexos-doctor-test-dependency': '*' } }));
+      const missing = await run({ projectRoot });
+      expect(missing.status).toBe('FAIL');
+      expect(missing.message).toContain('aexos-doctor-test-dependency');
+      const installed = path.join(core, 'node_modules', 'aexos-doctor-test-dependency');
+      fs.mkdirSync(installed, { recursive: true });
+      fs.writeFileSync(path.join(installed, 'package.json'), JSON.stringify({ name: 'aexos-doctor-test-dependency', version: '1.0.0' }));
+      expect((await run({ projectRoot })).status).toBe('PASS');
+    } finally {
+      fs.rmSync(projectRoot, { recursive: true, force: true });
+    }
   });
 });

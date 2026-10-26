@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "aexos.database-audit.fixture-observation/v1",
+  "sourceKind": "fixture",
+  "adapter": { "id": "fixture", "version": "1.0.0", "verified": false },
+  "databaseIdentity": { "fixtureId": "seeded-defects", "postgresMajor": 16 },
+  "observedAt": "2026-10-10T00:00:00.000Z",
+  "coverage": { "catalogVisibility": "partial", "roleGraph": "partial", "coveredSchemas": ["aexos_fixture"] },
+  "schemaObjects": [{
+    "schema": "aexos_fixture", "name": "accounts", "kind": "table",
+    "constraints": [],
+    "expectedConstraints": [{ "id": "accounts_pkey", "type": "primary-key" }],
+    "indexes": [],
+    "expectedIndexes": [{ "id": "expected_tenant_index", "columns": ["tenant_id"], "unique": false }]
+  }],
+  "migrations": {
+    "status": "partial",
+    "expected": [
+      { "id": "001", "order": 1, "hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" },
+      { "id": "002", "order": 2, "hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" }
+    ],
+    "observed": [{ "id": "001", "order": 2, "hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc" }]
+  },
+  "rls": [{
+    "schema": "aexos_fixture", "table": "accounts", "enabled": false, "forced": false,
+    "policies": [{ "id": "open_policy", "command": "ALL", "roles": ["PUBLIC"], "permissive": true, "classification": "seeded-always-true" }],
+    "grants": ["PUBLIC"]
+  }],
+  "privileges": {
+    "status": "partial", "graphTruncated": true,
+    "roles": [{ "id": "fixture_reader", "superuser": false, "bypassRls": true, "canCreateDb": false, "canCreateRole": false }],
+    "grants": [{ "schema": "aexos_fixture", "object": "accounts", "grantee": "PUBLIC", "privilege": "SELECT" }]
+  },
+  "backup": { "status": "partial", "hasSchedule": true, "hasRetention": null, "hasEncryption": false, "latestReceiptVerified": null },
+  "plans": [{
+    "requestId": "accounts-by-tenant", "status": "estimated",
+    "plan": { "nodeType": "Seq Scan", "totalCost": 28000, "planRows": 250000, "planWidth": 64, "children": [] }
+  }],
+  "limitations": ["FIXTURE_DECLARATION_ONLY", "CATALOG_VISIBILITY_PARTIAL"]
+}

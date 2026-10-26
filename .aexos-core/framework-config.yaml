@@ -16,7 +16,7 @@
 # schema version. tests/version-identity.test.js enforces the equality.
 metadata:
   name: "AEXOS (Cyryx)"
-  framework_version: "1.0.0"
+  framework_version: "6.0.0"
 
 markdownExploder: true
 

@@ -1,6 +1,6 @@
 {
   "name": "@aexos/core-internal",
-  "version": "1.0.0",
+  "version": "6.0.0",
   "description": "Internal package manifest for AEXOS framework — declares runtime dependencies consumed by scripts under .aexos-core/. This is NOT published independently; it ships inside @aexos/core (the top-level package). Kept name-distinct from the parent (`-internal` suffix) to avoid npm registry confusion. Version follows the parent package.",
   "private": true,
   "main": "index.js",
@@ -19,6 +19,7 @@
     "highlight.js": "^11.9.0",
     "inquirer": "^8.2.6",
     "js-yaml": "^4.1.0",
+    "pg": "8.23.1",
     "proper-lockfile": "^4.1.2",
     "semver": "^7.7.2",
     "tar": "^7.5.7",

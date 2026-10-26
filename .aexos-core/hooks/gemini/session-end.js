@@ -82,7 +82,7 @@ function updateRecentSessions(sessionDir, sessionId) {
     recent = recent.slice(0, 20);
 
     fs.writeFileSync(indexPath, JSON.stringify(recent, null, 2));
-  } catch (error) {
+  } catch (_error) {
     // Non-critical
   }
 }

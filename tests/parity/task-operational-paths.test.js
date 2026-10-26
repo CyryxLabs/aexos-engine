@@ -222,7 +222,10 @@ describe('task operational dependency contracts', () => {
       for (const heading of [...record.mode_headings, ...record.contract_headings]) {
         expect(text).toContain(heading);
       }
-      if (!record.reviewed_body_correction) {
+      if (record.reviewed_body_correction && typeof record.reviewed_body_correction === 'object') {
+        expect(record.reviewed_body_correction.story).toMatch(/^AEX-\d+\.\d+$/);
+        expect(sha256Text(substantiveProjection(text))).toBe(record.reviewed_body_correction.substantive_projection_sha256);
+      } else if (!record.reviewed_body_correction) {
         expect(sha256Text(substantiveProjection(text))).toBe(
           record.substantive_projection_sha256,
         );

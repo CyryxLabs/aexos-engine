@@ -1,0 +1,83 @@
+{
+  "protocol": "aexos.provenance-intake/v1",
+  "story": "AEX-4.23",
+  "records": [
+    {
+      "repository": "rakolen/aiox-advanced-brain",
+      "exactCommit": "05fe6c6180f52ce77c437dc1f6176bd03a257a59",
+      "source": "code-anatomist/ARCHITECTURE.md sections 33-47 and 74-77",
+      "licenseGrant": {
+        "status": "qualified",
+        "scope": "Packaging and educational material only; no copied-code permission is claimed."
+      },
+      "selectedRequirement": "Bounded brownfield architecture evidence with source lineage and explicit uncertainty.",
+      "excludedAssets": [
+        "source code",
+        "domain-decoder assets",
+        "personas",
+        "methodologies",
+        "course text",
+        "fixtures"
+      ],
+      "localOwner": "AEXOS code intelligence",
+      "localImplementationPaths": [
+        ".aexos-core/core/code-intel/brownfield/",
+        ".aexos-core/core/code-intel/providers/typescript-snapshot-provider.js"
+      ],
+      "independentlyAuthoredFixtures": ["tests/fixtures/brownfield/"],
+      "acceptanceTests": [
+        "tests/unit/code-intel/brownfield-contract.test.js",
+        "tests/unit/code-intel/brownfield-analysis.test.js",
+        "tests/unit/code-intel/brownfield-export.test.js",
+        "tests/cli/brownfield.test.js"
+      ],
+      "maintenance": "Update or delete this record with the local implementation and tests when the behavior changes.",
+      "importedCode": false
+    },
+    {
+      "repository": "CyryxLabs/AEXOS",
+      "exactCommit": "local independently authored fixture set for AEX-4.23",
+      "source": "Story AEX-4.23 and bounded implementation design",
+      "licenseGrant": { "status": "project-owned", "scope": "Local implementation and fixtures." },
+      "selectedRequirement": "False-positive, confinement, determinism, source-span, unsupported-language, and no-mutation controls.",
+      "excludedAssets": ["consumer source", "external fixtures", "paid provider output"],
+      "localOwner": "AEXOS code intelligence",
+      "localImplementationPaths": ["tests/fixtures/brownfield/"],
+      "independentlyAuthoredFixtures": ["tests/fixtures/brownfield/monorepo", "tests/fixtures/brownfield/greenfield"],
+      "acceptanceTests": ["tests/unit/code-intel/brownfield-analysis.test.js"],
+      "maintenance": "Keep fixture claims narrower than installed or independent acceptance.",
+      "importedCode": false
+    }
+  ],
+  "implementationLog": [
+    {
+      "decision": "REUSE",
+      "searched": [
+        ".aexos-core/infrastructure/scripts/codebase-mapper.js",
+        ".aexos-core/core/code-intel/",
+        ".aexos-core/core/permissions/confined-filesystem.js"
+      ],
+      "result": "Reused the canonical mapper through its immutable snapshot adapter, explicit CodeIntelClient provider injection, provider interface, and confined descriptor reads."
+    },
+    {
+      "decision": "ADAPT",
+      "searched": [
+        ".aexos-core/core/code-intel/providers/registry-provider.js",
+        ".aexos-core/core/code-intel/providers/provider-interface.js",
+        ".aexos-core/core/execution/durable-evidence.js",
+        ".aexos-core/core/workflow-engineering/workflow-map.js"
+      ],
+      "result": "Adapted existing provider and stable-hash conventions for a syntax-only snapshot provider and canonical evidence lineage."
+    },
+    {
+      "decision": "CREATE",
+      "searched": [
+        ".aexos-core/core/code-intel/",
+        ".aexos-core/cli/commands/",
+        "tests/unit/code-intel/",
+        "tests/fixtures/"
+      ],
+      "result": "No bounded brownfield contract, immutable snapshot evidence exporter, matching CLI command, or suitable independent fixtures existed; created only the AEX-4.23-owned files."
+    }
+  ]
+}

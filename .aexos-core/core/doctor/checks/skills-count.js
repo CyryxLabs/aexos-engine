@@ -13,6 +13,8 @@
 const path = require('path');
 const fs = require('fs');
 
+const { claudeApplicability } = require('../host-selection');
+
 const name = 'skills-count';
 
 function countSkillFiles(dir) {
@@ -67,6 +69,9 @@ function countSourceAgents(sourceAgentsDir) {
 }
 
 async function run(context) {
+  const applicability = claudeApplicability(context, name);
+  if (applicability) return applicability;
+
   const skillsDir = path.join(context.projectRoot, '.claude', 'skills');
   const agentSkillsDir = path.join(skillsDir, 'AEXOS', 'agents');
   const sourceAgentsDir = path.join(context.projectRoot, '.aexos-core', 'development', 'agents');

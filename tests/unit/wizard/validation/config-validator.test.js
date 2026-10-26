@@ -1,4 +1,4 @@
-// Wizard test - uses describeIntegration due to file dependencies
+// Fully mocked configuration validation runs in the default unit suite.
 /**
  * Unit Tests: Config Validator
  * Story 1.8 - Task 1.8.2 (QA Fix - Coverage Improvement)
@@ -34,6 +34,9 @@ describe('Config Validator', () => {
         if (path === '.aexos-core/core-config.yaml') {
           return 'markdownExploder:\n  enabled: true\nqa: {}\nprd: {}\narchitecture: {}\n';
         }
+        if (path === '.mcp.json') {
+          return JSON.stringify({ mcpServers: {} });
+        }
         return '';
       });
 
@@ -51,6 +54,11 @@ describe('Config Validator', () => {
 
       // Then
       expect(result.success).toBe(true);
+      expect(result.errors).toEqual([]);
+      expect(result.checks.find(c => c.component === 'MCP Config')).toMatchObject({
+        status: 'success',
+        message: expect.stringContaining('0 MCPs'),
+      });
       const envCheck = result.checks.find(c => c.component === 'Environment Config');
       expect(envCheck).toBeDefined();
       expect(envCheck.status).toBe('success');
@@ -299,6 +307,40 @@ describe('Config Validator', () => {
       expect(mcpCheck).toBeDefined();
       expect(mcpCheck.status).toBe('success');
       expect(mcpCheck.message).toContain('2 MCPs');
+      expect(result.success).toBe(true);
+      expect(result.errors).toEqual([]);
+    });
+
+    it.each([
+      ['missing mcpServers', {}],
+      ['scalar mcpServers', { mcpServers: 'invalid' }],
+    ])('rejects %s without reporting configuration success', async (_label, mcpConfig) => {
+      const files = {
+        '.env': 'NODE_ENV=development\n',
+        '.aexos-core/core-config.yaml': 'qa: {}\nprd: {}\narchitecture: {}\n',
+        '.gitignore': '.env\nnode_modules\n.env.local\n*.key\n*.pem\n.aexos/install-log.txt\n',
+        '.mcp.json': JSON.stringify(mcpConfig),
+      };
+      fs.existsSync.mockImplementation(file => Object.hasOwn(files, file));
+      fs.readFileSync.mockImplementation(file => {
+        if (!Object.hasOwn(files, file)) throw new Error('Unexpected fixture read');
+        return files[file];
+      });
+      yaml.load.mockReturnValue({ markdownExploder: {}, qa: {}, prd: {}, architecture: {} });
+
+      const result = await validateConfigs({ coreConfig: '.aexos-core/core-config.yaml' });
+
+      expect(result.success).toBe(false);
+      expect(result.errors).toEqual([{
+        severity: 'medium',
+        message: '.mcp.json missing mcpServers key',
+        file: '.mcp.json',
+        code: 'MCP_CONFIG_INVALID_SCHEMA',
+      }]);
+      expect(result.warnings).toEqual([]);
+      expect(result.checks).not.toContainEqual(expect.objectContaining({
+        component: 'MCP Config', status: 'success',
+      }));
     });
 
     it('should handle missing .mcp.json (optional)', async () => {
@@ -324,6 +366,8 @@ describe('Config Validator', () => {
       expect(mcpCheck).toBeDefined();
       expect(mcpCheck.status).toBe('skipped');
       expect(mcpCheck.message).toContain('optional');
+      expect(result.success).toBe(true);
+      expect(result.errors).toEqual([]);
     });
 
     it('should detect invalid JSON in .mcp.json', async () => {
@@ -348,6 +392,7 @@ describe('Config Validator', () => {
       const result = await validateConfigs({});
 
       // Then
+      expect(result.success).toBe(false);
       expect(result.errors).toEqual(
         expect.arrayContaining([
           expect.objectContaining({

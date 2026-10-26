@@ -63,6 +63,29 @@ describe('ide-sync commandValidate --ide filter', () => {
   });
 
   it('validates only requested IDE when --ide is provided', async () => {
-    await expect(commandValidate({ ide: 'gemini', strict: true, verbose: false })).resolves.toBeUndefined();
+    await expect(commandValidate({ ide: 'gemini', strict: true, verbose: false })).resolves.toMatchObject({ summary: { pass: true } });
+  });
+
+  it('leaves successful quiet validation to the calling installer summary', async () => {
+    const output = jest.spyOn(console, 'log').mockImplementation(() => {});
+    try {
+      const result = await commandValidate({ ide: 'gemini', quiet: true });
+      expect(result.summary.pass).toBe(true);
+      expect(output).not.toHaveBeenCalled();
+    } finally {
+      output.mockRestore();
+    }
+  });
+
+  it('retains failure details even when quiet was requested', async () => {
+    await fs.remove(path.join(tmpRoot, '.gemini', 'rules', 'AEXOS', 'agents', 'dev.md'));
+    const output = jest.spyOn(console, 'log').mockImplementation(() => {});
+    try {
+      const result = await commandValidate({ ide: 'gemini', quiet: true });
+      expect(result.summary.pass).toBe(false);
+      expect(output.mock.calls.flat().join('\n')).toContain('FAIL');
+    } finally {
+      output.mockRestore();
+    }
   });
 });

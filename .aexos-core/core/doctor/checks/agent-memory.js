@@ -25,6 +25,14 @@ const EXPECTED_AGENTS = [
   'devops',
 ];
 
+function readInstalledAgents(projectRoot) {
+  const directory = path.join(projectRoot, '.aexos-core', 'development', 'agents');
+  return fs.readdirSync(directory, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
+    .map((entry) => entry.name.slice(0, -3))
+    .sort();
+}
+
 async function run(context) {
   const agentsDir = path.join(context.projectRoot, '.aexos-core', 'development', 'agents');
 
@@ -37,7 +45,11 @@ async function run(context) {
     };
   }
 
-  const missing = EXPECTED_AGENTS.filter(
+  const expected = readInstalledAgents(context.projectRoot);
+  if (!expected.length) {
+    return { check: name, status: 'FAIL', message: 'No installed agent definitions found; memory coverage cannot be verified', fixCommand: 'npx @aexos/core install --force' };
+  }
+  const missing = expected.filter(
     (agent) => !fs.existsSync(path.join(agentsDir, agent, 'MEMORY.md')),
   );
 
@@ -45,19 +57,19 @@ async function run(context) {
     return {
       check: name,
       status: 'PASS',
-      message: `${EXPECTED_AGENTS.length}/${EXPECTED_AGENTS.length} MEMORY.md files present`,
+      message: `${expected.length}/${expected.length} installed-agent MEMORY.md files present`,
       fixCommand: null,
     };
   }
 
-  const present = EXPECTED_AGENTS.length - missing.length;
+  const present = expected.length - missing.length;
 
   return {
     check: name,
     status: 'WARN',
-    message: `${present}/${EXPECTED_AGENTS.length} MEMORY.md files present (missing: ${missing.join(', ')})`,
+    message: `${present}/${expected.length} installed-agent MEMORY.md files present (missing: ${missing.join(', ')})`,
     fixCommand: 'aexos doctor --fix',
   };
 }
 
-module.exports = { name, run, EXPECTED_AGENTS };
+module.exports = { name, run, EXPECTED_AGENTS, readInstalledAgents };

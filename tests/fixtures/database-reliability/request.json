@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "aexos.database-audit.request/v1",
+  "auditId": "fixture-audit",
+  "connectionRef": "approved-fixture-db",
+  "dialect": "postgresql",
+  "expectedMajor": 16,
+  "capability": "database:readonly-audit",
+  "schemas": ["aexos_fixture"],
+  "checks": ["schema", "indexes", "migration", "rls", "privileges", "plans", "backup-readiness"],
+  "limits": {
+    "connectTimeoutMs": 5000,
+    "statementTimeoutMs": 2000,
+    "lockTimeoutMs": 250,
+    "idleTransactionTimeoutMs": 3000,
+    "totalAuditTimeoutMs": 30000,
+    "maxStatements": 64,
+    "maxRowsPerCheck": 1000,
+    "maxRowsTotal": 5000,
+    "maxMetadataBytes": 4194304,
+    "maxStringBytes": 16384,
+    "maxPlanBytes": 262144,
+    "maxPlanDepth": 32,
+    "maxPlanNodes": 1000,
+    "maxManifestBytes": 1048576
+  },
+  "planRequests": [{
+    "id": "accounts-by-tenant",
+    "relation": { "schema": "aexos_fixture", "name": "accounts" },
+    "projection": ["id"],
+    "equalityPredicates": [{ "column": "tenant_id", "valueType": "int4", "value": 7 }],
+    "orderBy": ["id"],
+    "limit": 25
+  }],
+  "migrationManifestRef": "fixture-manifest-v1",
+  "backupEvidenceRef": "fixture-backup-metadata-v1",
+  "redaction": { "mode": "minimal" }
+}

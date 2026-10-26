@@ -1,0 +1,20 @@
+{
+  "protocol": "aexos.provenance-intake/v1",
+  "story": "AEX-4.25",
+  "recordedAt": "2026-10-10T00:00:00.000Z",
+  "upstream": {
+    "repository": "rakolen/aiox-advanced-brain",
+    "pin": "05fe6c6180f52ce77c437dc1f6176bd03a257a59",
+    "sourcePaths": ["squads/aiox-sop/README.md", "squads/aiox-sop/ARCHITECTURE.md", "LICENSE"],
+    "sections": ["REPORT.md: Advanced Brain", "REPORT.md: E7", "REPORT.md: Wave 3", "squads-brain.md: aiox-sop disposition"],
+    "license": "Qualified grant covers packaging and original educational material; third-party rights are not transferred. Requirement inspiration only, with no upstream code, fixture, prompt, methodology or persona text imported."
+  },
+  "includedIdeas": ["versioned SOP identity", "human and machine linkage", "lifecycle and conformance requirements"],
+  "excluded": ["wholesale pack import", "vendor integrations", "persona text", "external service integration", "second workflow runner"],
+  "localAuthorship": {
+    "implementation": ".aexos-core/core/workflow-engineering/sop/",
+    "fixtures": "tests/fixtures/sop/",
+    "tests": "tests/unit/workflow-engineering/sop-*.test.js",
+    "maintainer": "AEXOS workflow engineering"
+  }
+}

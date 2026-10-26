@@ -1,0 +1,11 @@
+{
+  "observations": [
+    {
+      "locator": "https://example.test/research/b?version=1",
+      "accessClass": "public",
+      "availability": "available",
+      "retrievedAt": "2026-10-10T12:01:00.000Z",
+      "content": "Beta evidence supports comparison inputs."
+    }
+  ]
+}

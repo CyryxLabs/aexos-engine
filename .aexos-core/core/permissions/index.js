@@ -35,6 +35,7 @@ const pathGuard = require('./path-guard');
 const promptGuard = require('./prompt-guard');
 const ssrfGuard = require('./ssrf-guard');
 const dispatchGovernance = require('./dispatch-governance');
+const capabilityBroker = require('./capability-broker');
 
 /**
  * Create a pre-configured guard instance
@@ -144,6 +145,7 @@ module.exports = {
   promptGuard,
   ssrfGuard,
   dispatchGovernance,
+  capabilityBroker,
   // Convenience re-exports (most common entry points)
   validateWrite: pathGuard.validateWrite,
   isWriteAllowed: pathGuard.isWriteAllowed,
@@ -152,6 +154,13 @@ module.exports = {
   validateUrl: ssrfGuard.validateUrl,
   isUrlAllowed: ssrfGuard.isUrlAllowed,
   assertDispatchGovernance: dispatchGovernance.assertDispatchGovernance,
+  createDispatchGovernance: dispatchGovernance.createDispatchGovernance,
+  getDefaultDispatchGovernance: dispatchGovernance.getDefaultDispatchGovernance,
+  hashDispatchIntent: dispatchGovernance.hashDispatchIntent,
+  redactGovernanceDecision: dispatchGovernance.redactGovernanceDecision,
+  CapabilityBroker: capabilityBroker.CapabilityBroker,
+  CapabilityBrokerError: capabilityBroker.CapabilityBrokerError,
+  createCapabilityBroker: capabilityBroker.createCapabilityBroker,
   createGuard,
   checkOperation,
   getModeBadge,

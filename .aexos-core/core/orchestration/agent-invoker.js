@@ -156,6 +156,7 @@ class AgentInvoker extends EventEmitter {
    * @param {number} [options.maxRetries=3] - Max retries for transient failures (AC6)
    * @param {boolean} [options.validateOutput=true] - Validate task output (AC5)
    * @param {Function} [options.executor] - Custom executor function
+   * @param {boolean} [options.simulate=false] - Explicit non-execution preview
    */
   constructor(options = {}) {
     super();
@@ -165,6 +166,7 @@ class AgentInvoker extends EventEmitter {
     this.maxRetries = options.maxRetries ?? 3;
     this.validateOutput = options.validateOutput ?? true;
     this.executor = options.executor || null;
+    this.simulate = options.simulate === true;
 
     // Paths
     this.agentsDir = path.join(this.projectRoot, '.aexos-core', 'development', 'agents');
@@ -225,10 +227,18 @@ class AgentInvoker extends EventEmitter {
       const result = await this._executeWithRetry(() => this._executeTask(agent, task, context), {
         invocation,
       });
+      if (this.simulate && !this.executor && result?.status === 'simulated') {
+        invocation.status = 'simulated';
+        invocation.result = result;
+        invocation.duration = Date.now() - startTime;
+        invocation.completedAt = new Date().toISOString();
+        this.emit('invocationSimulated', invocation);
+        return { success: false, executed: false, simulated: true, status: 'simulated', invocationId, agentName, taskPath, result, duration: invocation.duration };
+      }
       const declaredCompletion = result && typeof result === 'object' && !Array.isArray(result) &&
         (result.status != null ? ['success', 'completed', 'APPROVED'].includes(result.status) : result.success === true);
-      if (!declaredCompletion || result.success === false || result.simulated === true) {
-        throw new Error(result?.error || result?.message || 'Agent execution did not complete');
+      if (!declaredCompletion || result.success === false || result.executed === false || result.simulated === true) {
+        throw new Error(result?.error || 'Agent executor did not execute successfully');
       }
 
       // Validate output if schema exists (AC5)
@@ -464,7 +474,17 @@ class AgentInvoker extends EventEmitter {
       );
     }
 
-    throw new Error('Agent executor is not configured; task remains pending');
+    if (!this.simulate) throw new Error('No agent executor configured; task was not executed');
+    // Simulation must be explicitly requested and never certifies execution.
+    return {
+      status: 'simulated',
+      message: `Task ${task.name} simulated for @${agent.name}; no work executed`,
+      context: {
+        agentName: agent.name,
+        taskName: task.name,
+      },
+      timestamp: new Date().toISOString(),
+    };
   }
 
   /**

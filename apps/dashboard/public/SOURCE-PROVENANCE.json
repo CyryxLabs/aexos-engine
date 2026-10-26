@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "source": ".aexos-core/core/virtual-office/public",
+  "purpose": "Reviewed build-copy of the existing AEXOS Virtual Office world for the private authenticated dashboard",
+  "copiedUnchanged": {
+    "scene-manifest.js": "0a89650adab575c405a1e704a4dd2e35f4018c73f542dc4396552773fe84e4f9",
+    "office-navigation.js": "505defec3e41c493adbfe4b190bf97d622051726e120393f03ee110bbf7120e9",
+    "office-presence.js": "2193cb0946f109d09611548f61c3e7ffb30433b6727820cc340112daaf617c63",
+    "office-scene.js": "aff6477bec958f2721caf022b4cddab109ee34893c2aa767793a398cfb287818"
+  },
+  "assets": {
+    "count": 26,
+    "copyRule": "Every file under public/assets is byte-identical to the source directory"
+  },
+  "dashboardAdaptations": [
+    "index.html adds authentication, project selection, and one-time token setup",
+    "app.js replaces local SSE with authenticated bounded five-second polling",
+    "styles.css adds responsive authentication and project setup presentation"
+  ]
+}

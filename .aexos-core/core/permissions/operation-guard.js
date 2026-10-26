@@ -9,6 +9,12 @@
  */
 
 const { PermissionMode } = require('./permission-mode');
+const { ConfinedFilesystem, inspectTarget } = require('./confined-filesystem');
+const path = require('node:path');
+const { OPERATIONS, rejected } = require(path.resolve(__dirname, 'guarded-publication-protocol.js'));
+const { inspectNativeCandidateIdentity, productionSupportFor, verifyNativeCandidateAuthorization }
+  = require(path.resolve(__dirname, 'native-publication-support.js'));
+const { verifyNativeFiniteSessionAuthorization } = require(path.resolve(__dirname, 'native-publication-session.js'));
 
 class OperationGuard {
   /**
@@ -174,6 +180,72 @@ class OperationGuard {
     this.operationLog = [];
   }
 
+  /** Recheck mutable permission and native authorization at phase acceptance. */
+  async revalidateFilesystemAuthority(operations, context = {}) {
+    const currentPermission = new PermissionMode(this.permissionMode.projectRoot);
+    await currentPermission.load();
+    const fail = (code) => { const error = new Error(code); error.code = code; throw error; };
+    for (const operation of operations) {
+      if (currentPermission.canPerform(operation.operation === 'read' ? 'read' : 'write').allowed !== true) {
+        fail('PERMISSION_REQUIRED');
+      }
+    }
+    if (operations.some((operation) => OPERATIONS.includes(operation.operation))) {
+      const sessionDenial = verifyNativeFiniteSessionAuthorization(context.nativeFiniteSessionAuthorization,
+        this.permissionMode.projectRoot);
+      if (sessionDenial) fail(sessionDenial);
+      let identity;
+      try { identity = inspectNativeCandidateIdentity(); }
+      catch { fail('NATIVE_PREREQUISITE_UNAVAILABLE'); }
+      if (!productionSupportFor(identity)) {
+        const denial = verifyNativeCandidateAuthorization(context.nativeValidationAuthorization,
+          this.permissionMode.projectRoot, identity);
+        if (denial) fail(denial);
+      }
+    }
+  }
+
+  async dispatchFilesystem(request = {}, context = {}) {
+    if (!request || typeof request !== 'object' || Array.isArray(request)) request = {};
+    const recordDenial = (code) => {
+      this.operationLog.push({ operation: ['read', 'create', 'delete', 'move', 'overwrite'].includes(request.operation) ? request.operation : 'invalid', decision: 'denied', code });
+      this.operationLog = this.operationLog.slice(-100);
+    };
+    const operation = request.operation === 'read' ? 'read' : 'write';
+    if (OPERATIONS.includes(request.operation)) {
+      if (typeof context.verifyAuthority !== 'function') return rejected('AUTHORITY_REQUIRED');
+      await context.verifyAuthority();
+      await this.permissionMode.load();
+      if (this.permissionMode.canPerform('write').allowed !== true) return rejected('PERMISSION_REQUIRED');
+      const result = await new ConfinedFilesystem({ projectRoot: this.permissionMode.projectRoot }).dispatch(request, {
+        ...context,
+        verifyAuthority: async () => {
+          await context.verifyAuthority();
+          const currentPermission = new PermissionMode(this.permissionMode.projectRoot);
+          await currentPermission.load();
+          if (currentPermission.canPerform('write').allowed !== true) throw new Error('PERMISSION_REQUIRED');
+        },
+      });
+      this.operationLog.push({ operation: request.operation, decision: result.success ? 'allowed' : 'blocked',
+        code: result.code, phase: result.phase });
+      this.operationLog = this.operationLog.slice(-100);
+      return result;
+    }
+    const target = inspectTarget(request.operation, request.target, this.permissionMode.projectRoot);
+    if (!target.allowed) {
+      recordDenial(target.code);
+      return { success: false, status: 'denied', code: target.code, reason: target.reason };
+    }
+    await this.permissionMode.load();
+    if (this.permissionMode.canPerform(operation).allowed !== true) {
+      recordDenial('PERMISSION_REQUIRED');
+      return { success: false, status: 'denied', code: 'PERMISSION_REQUIRED', reason: 'Current permission mode does not authorize this structured operation.' };
+    }
+    return new ConfinedFilesystem({ projectRoot: this.permissionMode.projectRoot,
+      audit: (record) => { this.operationLog.push(record); this.operationLog = this.operationLog.slice(-100); },
+    }).dispatch(request);
+  }
+
   /**
    * Classify an operation type based on tool and parameters
    * @param {string} tool - Tool name (Read, Write, Edit, Bash, etc.)
@@ -210,8 +282,8 @@ class OperationGuard {
       return 'execute';
     }
 
-    // Default to read (safe)
-    return 'read';
+    // Unknown tools have no established read-only contract.
+    return 'execute';
   }
 
   /**
@@ -221,13 +293,6 @@ class OperationGuard {
    */
   classifyBashCommand(command) {
     const normalizedCmd = command.trim().toLowerCase();
-
-    // Check safe commands first (most specific match)
-    for (const safe of OperationGuard.SAFE_COMMANDS) {
-      if (normalizedCmd.startsWith(safe.toLowerCase())) {
-        return 'read';
-      }
-    }
 
     // Check destructive patterns
     for (const pattern of OperationGuard.DESTRUCTIVE_PATTERNS) {
@@ -242,6 +307,17 @@ class OperationGuard {
         return 'write';
       }
     }
+
+    // Prefixes cannot establish safety for shell composition, substitutions or
+    // redirection. Let the permission mode govern these as execution.
+    if (/[;&|<>`\r\n]|\$\(/.test(command)) return 'execute';
+    for (const safe of OperationGuard.SAFE_COMMANDS) {
+      const prefix = safe.toLowerCase();
+      if (normalizedCmd === prefix) return 'read';
+    }
+    // Only this bounded argument grammar is whitelisted. Arbitrary options may
+    // execute subprocesses, write output, mutate branches or change API methods.
+    if (/^ls(?: -[alh]+)+$/.test(normalizedCmd)) return 'read';
 
     // Default unknown bash commands to execute
     return 'execute';

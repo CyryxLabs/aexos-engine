@@ -38,14 +38,14 @@ describe('Grok installer surface', () => {
     });
   });
 
-  test('records Grok in explicit and default core configuration', () => {
+  test('records explicit Grok selection without changing a CLI-only selection', () => {
     const explicit = yaml.load(generateCoreConfig({ selectedIDEs: ['grok'] }));
     expect(explicit.ide.selected).toEqual(['grok']);
     expect(explicit.ide.configs.grok).toBe(true);
 
     const defaults = yaml.load(generateCoreConfig({ selectedIDEs: [] }));
-    expect(defaults.ide.selected).toContain('grok');
-    expect(defaults.ide.configs.grok).toBe(true);
+    expect(defaults.ide.selected).toEqual([]);
+    expect(defaults.ide.configs.grok).toBe(false);
   });
 
   test('generates and strictly validates the installed project-local surface', () => {

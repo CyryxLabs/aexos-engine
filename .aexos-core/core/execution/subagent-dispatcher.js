@@ -110,7 +110,8 @@ class SubagentDispatcher extends EventEmitter {
     // Retry configuration
     this.maxRetries = config.maxRetries || 2;
     this.retryDelay = config.retryDelay || 2000;
-    this.claudeTimeout = config.claudeTimeout || 10 * 60 * 1000;
+    this.claudeTimeout = Number.isFinite(config.claudeTimeout) && config.claudeTimeout > 0
+      ? Math.min(config.claudeTimeout, 10 * 60 * 1000) : 10 * 60 * 1000;
 
     // Dependencies
     this.memoryQuery = config.memoryQuery || (MemoryQuery ? new MemoryQuery() : null);
@@ -699,7 +700,7 @@ class SubagentDispatcher extends EventEmitter {
     }
 
     return new Promise((resolve, reject) => {
-      const args = ['--print', '--dangerously-skip-permissions'];
+      const args = ['--print'];
 
       const child = spawn('claude', args, {
         cwd: this.rootPath,
@@ -712,16 +713,23 @@ class SubagentDispatcher extends EventEmitter {
       let stderr = '';
       let stdinError = null;
       let settled = false;
+      const watchdog = setTimeout(() => {
+        child.kill?.();
+        rejectOnce(new Error('Claude CLI timed out; native permission enforcement remains enabled'));
+      }, this.claudeTimeout);
+      watchdog.unref?.();
 
       const resolveOnce = (result) => {
         if (settled) return;
         settled = true;
+        clearTimeout(watchdog);
         resolve(result);
       };
 
       const rejectOnce = (error) => {
         if (settled) return;
         settled = true;
+        clearTimeout(watchdog);
         reject(error);
       };
 

@@ -220,6 +220,7 @@ async function validateMCPConfig(results) {
         file: mcpConfigPath,
         code: 'MCP_CONFIG_INVALID_SCHEMA',
       });
+      results.success = false;
       return;
     }
 

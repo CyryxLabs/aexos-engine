@@ -59,15 +59,69 @@ function loadCompatibilityContract(contractPath) {
 }
 
 function normalizeResult(input) {
-  if (!input || typeof input !== 'object') {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
     return { ok: false, errors: ['Validator returned invalid result'], warnings: [] };
   }
+  if ((Object.hasOwn(input, 'errors') && (!Array.isArray(input.errors)
+    || input.errors.some((error) => typeof error !== 'string')))
+    || (Object.hasOwn(input, 'skipped') && typeof input.skipped !== 'boolean')) {
+    return { ok: false, errors: ['Validator returned malformed error or skipped fields'], warnings: [] };
+  }
   return {
-    ok: Boolean(input.ok),
+    ok: input.ok === true && input.skipped !== true
+      && (!Array.isArray(input.errors) || input.errors.length === 0),
     errors: Array.isArray(input.errors) ? input.errors : [],
     warnings: Array.isArray(input.warnings) ? input.warnings : [],
     metrics: input.metrics || {},
+    ...(input.evidenceLevel ? { evidenceLevel: input.evidenceLevel } : {}),
+    ...(input.hostRuntime ? { hostRuntime: input.hostRuntime } : {}),
+    ...(input.findings ? { findings: input.findings } : {}),
   };
+}
+
+function validatorErrorMessage(error) {
+  try {
+    return error && typeof error.message === 'string' ? error.message : String(error);
+  } catch (_error) {
+    return 'Unknown validator error';
+  }
+}
+
+function runGrokProjection(projectRoot, validate) {
+  const evidence = {
+    evidenceLevel: 'generated-projection-comparison',
+    hostRuntime: 'NOT_ASSESSED',
+  };
+  try {
+    // Resolve from this distribution, not from an unrelated project's scripts.
+    const validator = validate || require('./grok-skills-sync/validate').validateGrokProjection;
+    const report = validator({ projectRoot });
+    const validShape = report && typeof report === 'object' && !Array.isArray(report)
+      && report.schemaVersion === 1
+      && typeof report.valid === 'boolean'
+      && (!Object.hasOwn(report, 'skipped') || report.skipped === false)
+      && Number.isSafeInteger(report.checked) && report.checked > 0
+      && Array.isArray(report.findings)
+      && report.findings.every((finding) => finding && typeof finding.path === 'string'
+        && ['missing', 'different', 'ownership-drift', 'stale-managed'].includes(finding.status))
+      && report.evidenceLevel === evidence.evidenceLevel
+      && report.hostRuntime === evidence.hostRuntime;
+    if (!validShape) {
+      return { ok: false, errors: ['Grok validator returned invalid or skipped projection evidence'], warnings: [], ...evidence };
+    }
+    const errors = report.findings.map((finding) => `${finding.status}: ${finding.path}`);
+    if (!report.valid && errors.length === 0) errors.push('Grok projection validation failed');
+    return {
+      ok: report.valid && errors.length === 0,
+      errors,
+      warnings: [],
+      metrics: { checked: report.checked },
+      findings: report.findings,
+      ...evidence,
+    };
+  } catch (error) {
+    return { ok: false, errors: [`Grok projection validation failed: ${validatorErrorMessage(error)}`], warnings: [], ...evidence };
+  }
 }
 
 function escapeRegex(value) {
@@ -244,12 +298,16 @@ function runParityValidation(options = {}, deps = {}) {
     { id: 'github-copilot-sync', exec: () => runSync('github-copilot', projectRoot) },
     { id: 'antigravity-sync', exec: () => runSync('antigravity', projectRoot) },
     { id: 'codex-skills', exec: () => runCodexSkills({ projectRoot, strict: true, quiet: true }) },
+    { id: 'grok-projection', exec: () => runGrokProjection(projectRoot, deps.validateGrokProjection) },
     { id: 'paths', exec: () => runPaths({ projectRoot }) },
   ];
 
   const results = checks.map((check) => {
-    const normalized = normalizeResult(check.exec());
-    return { id: check.id, ...normalized };
+    try {
+      return { id: check.id, ...normalizeResult(check.exec()) };
+    } catch (error) {
+      return { id: check.id, ok: false, errors: [`Validator failed: ${validatorErrorMessage(error)}`], warnings: [] };
+    }
   });
   const resultById = Object.fromEntries(results.map((r) => [r.id, r]));
   const contractViolations = validateCompatibilityContract(contract, resultById, {
@@ -307,6 +365,9 @@ function formatHumanReport(result) {
   }
   for (const check of result.checks) {
     lines.push(`${check.ok ? '✅' : '❌'} ${check.id}`);
+    if (check.evidenceLevel) {
+      lines.push(`- evidence: ${check.evidenceLevel}; host runtime: ${check.hostRuntime}`);
+    }
     if (check.errors.length > 0) {
       lines.push(...check.errors.map((e) => `- ${e}`));
     }

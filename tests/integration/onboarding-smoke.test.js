@@ -62,7 +62,9 @@ describe('Onboarding smoke flow (CYRYX-DIFF-4.0.5)', () => {
     expect(initHelp).toContain('--template');
 
     const versionOutput = runNode(cliBin, ['--version'], tempDir).trim();
-    expect(versionOutput).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(versionOutput).toMatch(
+      /^\d+\.\d+\.\d+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/,
+    );
   });
 
   it('validates onboarding docs keep an objective first-value path', async () => {

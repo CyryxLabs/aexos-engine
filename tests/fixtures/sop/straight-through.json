@@ -1,0 +1,191 @@
+{
+  "protocol": "aexos.sop/v1",
+  "sopId": "release-note",
+  "version": 1,
+  "lifecycleState": "Draft",
+  "title": "Publish a release note",
+  "purpose": "Create and verify one bounded release note artifact.",
+  "ownerRole": "operator",
+  "authors": [
+    "author"
+  ],
+  "scope": {
+    "included": [
+      "Local release note"
+    ],
+    "excluded": [
+      "Deployment"
+    ],
+    "projectId": "fixture-project"
+  },
+  "actors": [
+    {
+      "id": "author",
+      "name": "Author",
+      "type": "role"
+    },
+    {
+      "id": "operator",
+      "name": "Operator",
+      "type": "role"
+    },
+    {
+      "id": "reviewer",
+      "name": "Reviewer",
+      "type": "role"
+    },
+    {
+      "id": "approver",
+      "name": "Approver",
+      "type": "role"
+    },
+    {
+      "id": "activator",
+      "name": "Activator",
+      "type": "role"
+    }
+  ],
+  "systems": [
+    {
+      "id": "repository",
+      "name": "Repository",
+      "type": "filesystem"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "release-data",
+      "description": "Verified release data",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "id": "release-note",
+      "description": "Verified release note",
+      "required": true
+    }
+  ],
+  "preconditions": [
+    {
+      "id": "source-ready",
+      "description": "Release source is ready",
+      "required": true,
+      "stepId": null
+    }
+  ],
+  "steps": [
+    {
+      "id": "write-note",
+      "name": "Write note",
+      "instructions": "Write the release note from the verified input.",
+      "owner": "operator",
+      "kind": "deterministic",
+      "dependsOn": [],
+      "systems": [
+        "repository"
+      ],
+      "capabilities": [],
+      "inputs": [
+        {
+          "name": "releaseData",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "note",
+          "kind": "file",
+          "path": "artifacts/release-note.md"
+        }
+      ],
+      "verify": [
+        {
+          "type": "file-exists",
+          "target": "artifacts/release-note.md"
+        }
+      ],
+      "evidenceObligationIds": [
+        "note-exists"
+      ],
+      "sideEffects": false,
+      "approvalRequired": false
+    }
+  ],
+  "branches": [],
+  "exceptions": [],
+  "approvals": [
+    {
+      "id": "semantic-review",
+      "stage": "review",
+      "roleId": "reviewer",
+      "independent": true,
+      "prohibitedRoleIds": [
+        "author",
+        "operator"
+      ]
+    },
+    {
+      "id": "business-approval",
+      "stage": "approve",
+      "roleId": "approver",
+      "independent": true,
+      "prohibitedRoleIds": [
+        "author",
+        "operator"
+      ]
+    },
+    {
+      "id": "activation",
+      "stage": "activate",
+      "roleId": "activator",
+      "independent": true,
+      "prohibitedRoleIds": [
+        "author",
+        "operator"
+      ]
+    },
+    {
+      "id": "replacement",
+      "stage": "supersede",
+      "roleId": "activator",
+      "independent": true,
+      "prohibitedRoleIds": [
+        "author",
+        "operator"
+      ]
+    }
+  ],
+  "evidenceObligations": [
+    {
+      "id": "note-exists",
+      "description": "Artifact exists and passed its checker",
+      "required": true,
+      "stepId": "write-note",
+      "artifact": {
+        "id": "note",
+        "kind": "file",
+        "path": "artifacts/release-note.md"
+      },
+      "requiredChecks": [
+        {
+          "type": "file-exists",
+          "target": "artifacts/release-note.md"
+        }
+      ],
+      "requiredOrigin": "runtime",
+      "maxAgeMs": 86400000
+    }
+  ],
+  "conformance": {
+    "maxReceiptAgeMs": 31536000000,
+    "allowSkips": false,
+    "allowedSkipApprovalIds": [],
+    "requireRealOrigin": true,
+    "requiredEnvironment": "test"
+  },
+  "lifecyclePolicy": {
+    "maxReviewAgeMs": 86400000
+  }
+}

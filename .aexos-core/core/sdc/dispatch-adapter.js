@@ -6,7 +6,8 @@
 'use strict';
 
 const {
-  assertDispatchGovernance,
+  createDispatchGovernance,
+  redactGovernanceDecision,
   DispatchGovernanceError,
 } = require('../permissions/dispatch-governance');
 
@@ -38,12 +39,19 @@ function createDispatchAdapter(options = {}) {
   if (!Number.isInteger(maxParallel) || maxParallel < 1) {
     maxParallel = mode === 'parallel' ? 2 : 1;
   }
+  const governance = options.governanceController || createDispatchGovernance({
+    tokenSecret: options.governanceTokenSecret,
+    tokenTtlMs: options.governanceTokenTtlMs,
+    clock: options.clock,
+  });
 
   /**
    * @param {{ story: object, run: (story: object) => Promise<*>| * }} args
    */
   async function dispatchStory({ story, run }) {
     const storyId = (story && (story.storyId || story.id)) || 'unknown';
+    let tokenClaims;
+    let workerResult;
     try {
       const childIntent =
         typeof options.intent === 'function'
@@ -63,37 +71,57 @@ function createDispatchAdapter(options = {}) {
           `Automated dispatch blocked for ${storyId}: provide the exact child model intent.`,
         );
       }
-      const governance = assertDispatchGovernance({
+      const estimatedCostUsd = typeof options.estimatedCostUsd === 'function'
+        ? options.estimatedCostUsd(story)
+        : options.estimatedCostUsd;
+      const exactIntent = JSON.stringify(
+        {
+          story: story
+            ? {
+              storyId: story.storyId || story.id,
+              status: story.status,
+              dependsOn: story.dependsOn,
+              fileList: story.fileList,
+            }
+            : {},
+          intent: childIntent,
+          context: childContext,
+        },
+      );
+      const governanceRequest = {
+        agentId: options.agentId || 'sdc-dispatch-adapter',
         budgetCeilingUsd: options.budgetCeilingUsd,
+        budgetScope: options.budgetScope,
+        estimatedCostUsd,
         task: 'develop',
-        intent: JSON.stringify(
-          {
-            story: story
-              ? {
-                storyId: story.storyId || story.id,
-                status: story.status,
-                dependsOn: story.dependsOn,
-                fileList: story.fileList,
-              }
-              : {},
-            intent: childIntent,
-            context: childContext,
-          },
-        ),
+        intent: exactIntent,
         story: story && (story.absPath || story.path || story.storyPath || story),
         projectRoot: options.projectRoot,
         requiresStory: true,
-      });
-      const result = await Promise.resolve(
-        run(story, { intent: childIntent, context: childContext, governance }),
+      };
+      const decision = governance.evaluate(governanceRequest);
+      tokenClaims = governance.verify(decision.token, governanceRequest);
+      workerResult = await Promise.resolve(
+        run(story, {
+          intent: childIntent,
+          context: childContext,
+          governance: redactGovernanceDecision(decision),
+        }),
       );
-      return { storyId, ok: true, result };
+      return { storyId, ok: true, result: workerResult };
     } catch (error) {
       return {
         storyId,
         ok: false,
         error: error instanceof Error ? error.message : String(error),
+        code: error?.code,
       };
+    } finally {
+      if (tokenClaims) {
+        const actualCostUsd = workerResult?.usage?.costUsd
+          ?? workerResult?.metadata?.costUsd;
+        governance.settle(tokenClaims, actualCostUsd);
+      }
     }
   }
 
@@ -134,6 +162,7 @@ function createDispatchAdapter(options = {}) {
   return {
     mode,
     maxParallel,
+    governance,
     dispatchStory,
     runBatch,
   };

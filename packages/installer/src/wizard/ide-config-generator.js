@@ -11,7 +11,8 @@ const fs = require('fs-extra');
 const path = require('path');
 const yaml = require('js-yaml');
 const inquirer = require('inquirer');
-const ora = require('ora');
+const { createSpinner: ora } = require('./feedback');
+const { getTerminalCapabilities, promptPlainQuestions } = require('./install-experience');
 const { spawnSync } = require('child_process');
 const { getIDEConfig } = require('../config/ide-configs');
 const { captureIdeState } = require('./ide-state-snapshot');
@@ -206,7 +207,8 @@ async function promptFileExists(filePath, options = {}) {
     { name: 'Skip', value: 'skip' },
   );
 
-  const { action } = await inquirer.prompt([
+  const prompt = options.prompt || (getTerminalCapabilities().plain ? promptPlainQuestions : (questions) => inquirer.prompt(questions));
+  const { action } = await prompt([
     {
       type: 'list',
       name: 'action',
@@ -584,6 +586,13 @@ async function generateIDEConfigs(selectedIDEs, wizardState, options = {}) {
       spinner.start(`Configuring ${ide.name}...`);
 
       try {
+        if (ide.managedProjection) {
+          const { syncGrok } = requireCyryxCoreModule('.aexos-core', 'infrastructure', 'scripts', 'grok-skills-sync', 'index');
+          const result = syncGrok({ projectRoot, quiet: true });
+          createdFiles.push(...result.written, result.manifest);
+          spinner.succeed(`Generated Grok projection: ${result.agents} agents / ${result.files} files (native execution not verified)`);
+          continue;
+        }
         // Create directory if needed
         const configPath = path.join(projectRoot, ide.configFile);
         const configDir = path.dirname(configPath);
@@ -609,6 +618,7 @@ async function generateIDEConfigs(selectedIDEs, wizardState, options = {}) {
             ci: options.ci,
             yes: options.yes,
             skipPrompts: options.skipPrompts,
+            prompt: options.prompt,
           });
 
           if (userAction === 'skip') {
@@ -804,6 +814,7 @@ async function generateIDEConfigs(selectedIDEs, wizardState, options = {}) {
         }
 
       } catch (error) {
+        if (error.code === 'AEXOS_INSTALL_CANCELLED') { spinner.stop(); throw error; }
         spinner.fail(`Failed to configure ${ide.name}`);
         errors.push({ ide: ide.name, error: error.message });
 
@@ -821,6 +832,7 @@ async function generateIDEConfigs(selectedIDEs, wizardState, options = {}) {
     };
 
   } catch (error) {
+    if (error.code === 'AEXOS_INSTALL_CANCELLED') throw error;
     return {
       success: false,
       files: [],
@@ -835,7 +847,11 @@ async function generateIDEConfigs(selectedIDEs, wizardState, options = {}) {
  * Show success summary after config generation
  * @param {Object} result - Result from generateIDEConfigs
  */
-function showSuccessSummary(result) {
+function showSuccessSummary(result, options = {}) {
+  if (options.compact) {
+    console.log(`  PASS Host configuration: ${result.files.length} file(s) created or merged`);
+    return;
+  }
   if (result.files.length === 0) {
     console.log('\nNo IDE configurations created.');
     return;
@@ -1497,30 +1513,42 @@ function generateCodexSkills(projectRoot) {
 }
 
 /**
- * Generate the complete project-local Grok Build surface from canonical AEXOS
- * agents. Missing canonical sources are an installation error because a partial
- * `.grok` tree cannot satisfy the selected IDE contract.
+ * Remove the retired generic AEXOS skill projection that Codex discovers in
+ * addition to the canonical project-local `.codex/skills` surface.
+ *
+ * Only the AEXOS namespace is removed. Generic workflow skills that a user or
+ * another tool placed directly under `.agents/skills` remain untouched.
+ *
  * @param {string} projectRoot - Project root directory
- * @returns {{agents: number, files: number, written: string[], skipped: false}}
+ * @returns {Promise<{removed: number, skipped: boolean}>} Cleanup result
  */
-function generateGrokSkills(projectRoot, options = {}) {
-  const sourceDir = path.join(projectRoot, '.aexos-core', 'development', 'agents');
-  const grokRoot = path.join(projectRoot, '.grok');
-  if (!fs.existsSync(sourceDir)) {
-    throw new Error(`Canonical Grok agent source not found: ${sourceDir}`);
+async function cleanLegacyGenericAexosSkills(projectRoot) {
+  const legacyNamespace = path.join(projectRoot, '.agents', 'skills', 'AEXOS');
+
+  if (!await fs.pathExists(legacyNamespace)) {
+    return { removed: 0, skipped: true };
   }
-  const { syncGrok } = loadGrokSkillsSync();
-  const result = syncGrok({
-    projectRoot,
-    sourceDir,
-    grokRoot,
-    dryRun: options.dryRun === true,
-    quiet: true,
-  });
+
+  async function countSkillFiles(directory) {
+    const entries = await fs.readdir(directory, { withFileTypes: true });
+    let count = 0;
+
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        count += await countSkillFiles(path.join(directory, entry.name));
+      } else if (entry.name === 'SKILL.md') {
+        count += 1;
+      }
+    }
+
+    return count;
+  }
+
+  const removed = await countSkillFiles(legacyNamespace);
+  await fs.remove(legacyNamespace);
+
   return {
-    agents: result.agents || 0,
-    files: result.files || 0,
-    written: result.written || [],
+    removed,
     skipped: false,
   };
 }
@@ -1689,6 +1717,28 @@ async function copyExtraCommandFiles(projectRoot, _sourceRoot, _options = {}) {
   };
 }
 
+function generateGrokSkills(projectRoot, options = {}) {
+  const sourceDir = path.join(projectRoot, '.aexos-core', 'development', 'agents');
+  const grokRoot = path.join(projectRoot, '.grok');
+  if (!fs.existsSync(sourceDir)) {
+    throw new Error(`Canonical Grok agent source not found: ${sourceDir}`);
+  }
+  const { syncGrok } = loadGrokSkillsSync();
+  const result = syncGrok({
+    projectRoot,
+    sourceDir,
+    grokRoot,
+    dryRun: options.dryRun === true,
+    quiet: true,
+  });
+  return {
+    agents: result.agents || 0,
+    files: result.files || 0,
+    written: result.written || [],
+    skipped: false,
+  };
+}
+
 module.exports = {
   generateIDEConfigs,
   showSuccessSummary,
@@ -1706,6 +1756,7 @@ module.exports = {
   copySkillFiles,
   generateCodexSkills,
   generateGrokSkills,
+  cleanLegacyGenericAexosSkills,
   copyExtraCommandFiles,
   copyGeminiHooksFolder,
   createGeminiSettings,

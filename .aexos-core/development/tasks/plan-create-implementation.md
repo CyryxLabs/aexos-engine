@@ -1,3 +1,26 @@
+---
+contractVersion: 1
+inputs:
+  - name: story
+    type: path
+    required: true
+  - name: output
+    type: path
+    required: true
+  - name: brownfieldEvidence
+    type: path
+    required: false
+produces:
+  - name: output
+    kind: report
+    path: "{output}"
+verify:
+  - type: file-exists
+    target: "{output}"
+  - type: checklist
+    ref: selected-sdlc-phase
+---
+
 # Execution Pipeline: Create Implementation Plan
 
 > **Phase:** 1 - Plan

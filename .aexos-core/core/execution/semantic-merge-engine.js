@@ -16,7 +16,7 @@
  * Based on Auto-Claude's merge system architecture.
  */
 
-const { execSync } = require('child_process');
+const { execSync, spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const EventEmitter = require('events');
@@ -813,22 +813,20 @@ Provide ONLY the merged code in a code block. No explanations outside the code b
    * Call Claude CLI for merge resolution
    */
   async callClaude(prompt) {
-    return new Promise((resolve, reject) => {
-      try {
-        // Use Claude CLI in print mode
-        const result = execSync(
-          `claude --print --dangerously-skip-permissions -p "${prompt.replace(/"/g, '\\"').replace(/\n/g, '\\n')}"`,
-          {
-            encoding: 'utf8',
-            maxBuffer: 10 * 1024 * 1024,
-            timeout: 120000,
-          },
-        );
-        resolve(result);
-      } catch (error) {
-        reject(new Error(`Claude CLI error: ${error.message}`));
-      }
+    if (typeof prompt !== 'string' || !prompt.trim()) throw new Error('Claude CLI requires a non-empty prompt');
+    const result = spawnSync('claude', ['--print'], {
+      input: prompt,
+      encoding: 'utf8',
+      shell: false,
+      windowsHide: true,
+      maxBuffer: 10 * 1024 * 1024,
+      timeout: 120000,
+      killSignal: 'SIGKILL',
     });
+    if (result.error || result.signal || result.status !== 0) {
+      throw new Error('Claude CLI error: ' + (result.error?.code || result.signal || ('exit ' + result.status)));
+    }
+    return result.stdout;
   }
 
   /**

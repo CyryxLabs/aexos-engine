@@ -1,0 +1,337 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "aexos.installed-capabilities/v1",
+  "title": "Detached Core Free artifact capability inventory",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "distribution",
+    "package",
+    "payload",
+    "catalogHash",
+    "capabilities",
+    "installation",
+    "paid",
+    "exclusions"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "aexos.installed-capabilities/v1"
+    },
+    "distribution": {
+      "const": "core-free"
+    },
+    "package": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "version",
+        "sha256",
+        "bytes"
+      ],
+      "properties": {
+        "name": {
+          "const": "@aexos/core"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100663296
+        }
+      }
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "digest",
+        "files"
+      ],
+      "properties": {
+        "digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "files": {
+          "type": "array",
+          "maxItems": 12000,
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "path",
+              "bytes",
+              "sha256"
+            ],
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512
+              },
+              "bytes": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 33554432
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            }
+          }
+        }
+      }
+    },
+    "catalogHash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "capabilities": {
+      "type": "array",
+      "maxItems": 256,
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "version",
+          "owner",
+          "packagedPaths",
+          "license",
+          "provenance",
+          "support",
+          "activation",
+          "evidenceLevel",
+          "dependencies",
+          "configuration",
+          "hosts"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{0,63}$"
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "owner": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "packagedPaths": {
+            "type": "array",
+            "maxItems": 12000,
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "path",
+                "bytes",
+                "sha256"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 512
+                },
+                "bytes": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 33554432
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                }
+              }
+            }
+          },
+          "license": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "path",
+              "sha256"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512
+              },
+              "path": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            }
+          },
+          "provenance": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "path",
+              "sha256"
+            ],
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            }
+          },
+          "support": {
+            "enum": [
+              "packaged",
+              "implemented-unverified"
+            ]
+          },
+          "activation": {
+            "const": "free-no-entitlement"
+          },
+          "evidenceLevel": {
+            "const": "artifact-inspected"
+          },
+          "dependencies": {
+            "type": "array",
+            "maxItems": 256,
+            "minItems": 0,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "name",
+                "declaredRuntime",
+                "runtime"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 512
+                },
+                "declaredRuntime": {
+                  "type": "boolean"
+                },
+                "runtime": {
+                  "const": "NOT_ASSESSED"
+                }
+              }
+            }
+          },
+          "configuration": {
+            "type": "array",
+            "maxItems": 64,
+            "minItems": 0,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            }
+          },
+          "hosts": {
+            "type": "array",
+            "maxItems": 4,
+            "minItems": 4,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "host",
+                "nativeExecution"
+              ],
+              "properties": {
+                "host": {
+                  "enum": [
+                    "codex",
+                    "claude-code",
+                    "gemini",
+                    "grok"
+                  ]
+                },
+                "nativeExecution": {
+                  "const": "NOT_ASSESSED"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "installation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "dependencies"
+      ],
+      "properties": {
+        "status": {
+          "const": "NOT_ASSESSED"
+        },
+        "dependencies": {
+          "const": "NOT_ASSESSED"
+        }
+      }
+    },
+    "paid": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "acquisition",
+        "activation"
+      ],
+      "properties": {
+        "state": {
+          "const": "absent"
+        },
+        "acquisition": {
+          "const": "NOT_ASSESSED"
+        },
+        "activation": {
+          "const": "NOT_ASSESSED"
+        }
+      }
+    },
+    "exclusions": {
+      "type": "array",
+      "maxItems": 32,
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512
+      }
+    }
+  }
+}

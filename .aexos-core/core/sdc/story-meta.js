@@ -57,16 +57,18 @@ function firstMatch(text, patterns) {
 function normalizeStatus(raw) {
   if (!raw) return 'Unknown';
   const s = raw.toLowerCase().replace(/\s+/g, ' ').trim();
-  if (s.includes('done') || s === 'complete' || s === 'closed') return 'Done';
-  if (s.includes('in review') || s.includes('inreview') || s.includes('ready for review')) {
+  // Interpret the lifecycle label, not words in a trailing progress note.
+  // A draft that says "implementation pending" must never pass validation.
+  if (/^draft\b/.test(s)) return 'Draft';
+  if (/^(blocked|halted|halt)\b/.test(s)) return 'Blocked';
+  if (/^(done|complete|completed|closed)\b/.test(s)) return 'Done';
+  if (/^(in review|inreview|ready for review)\b/.test(s)) {
     return 'InReview';
   }
-  if (s.includes('in progress') || s.includes('inprogress') || s.includes('implement')) {
+  if (/^(in progress|inprogress|implementing|implementation)\b/.test(s)) {
     return 'InProgress';
   }
-  if (s === 'ready' || s.startsWith('ready ') || s.includes('approved')) return 'Ready';
-  if (s.includes('draft')) return 'Draft';
-  if (s.includes('blocked') || s.includes('halt')) return 'Blocked';
+  if (/^(ready|approved)\b/.test(s)) return 'Ready';
   // Keep original token casing lightly
   return raw.trim();
 }

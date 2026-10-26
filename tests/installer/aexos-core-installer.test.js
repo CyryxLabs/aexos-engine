@@ -14,6 +14,7 @@ const {
   copyDirectoryWithRootReplacement,
   generateFileHashes,
   generateVersionJson,
+  _testing,
 } = require('../../packages/installer/src/installer/aexos-core-installer');
 
 describe('AEXOS Core Installer - Version Tracking', () => {
@@ -28,6 +29,53 @@ describe('AEXOS Core Installer - Version Tracking', () => {
     if (tempDir && fs.existsSync(tempDir)) {
       await fs.remove(tempDir);
     }
+  });
+
+  describe('core dependency installation', () => {
+    it('anchors npm to .aexos-core with argv-safe production-only flags', async () => {
+      const targetCyryxCore = path.join(tempDir, 'project with spaces & literals', '.aexos-core');
+      const execute = jest.fn().mockResolvedValue({ stdout: '', stderr: '' });
+      const resolveInvocation = jest.fn().mockReturnValue({
+        command: process.execPath,
+        prefixArgs: ['C:\\npm path\\npm-cli.js'],
+        execOptions: {},
+      });
+
+      await _testing.installCoreDependencies(targetCyryxCore, {
+        resolveNpmInvocation: resolveInvocation,
+        execFileAsync: execute,
+      });
+
+      expect(resolveInvocation).toHaveBeenCalledTimes(1);
+      expect(execute).toHaveBeenCalledWith(
+        process.execPath,
+        [
+          'C:\\npm path\\npm-cli.js',
+          'install',
+          '--prefix',
+          targetCyryxCore,
+          '--omit=dev',
+          '--ignore-scripts',
+          '--workspaces=false',
+          '--include-workspace-root=false',
+          '--no-audit',
+          '--no-fund',
+        ],
+        expect.objectContaining({
+          cwd: targetCyryxCore,
+          timeout: 60000,
+          windowsHide: true,
+        }),
+      );
+    });
+
+    it('propagates npm failure so the installer retains a false dependency outcome', async () => {
+      const failure = new Error('bounded npm failure');
+      await expect(_testing.installCoreDependencies('C:\\target\\.aexos-core', {
+        resolveNpmInvocation: () => ({ command: 'node', prefixArgs: ['npm-cli.js'], execOptions: {} }),
+        execFileAsync: jest.fn().mockRejectedValue(failure),
+      })).rejects.toBe(failure);
+    });
   });
 
   describe('generateFileHashes', () => {
@@ -221,6 +269,70 @@ describe('AEXOS Core Installer - Version Tracking', () => {
 
       expect(result.success).toBe(true);
       expect(await fs.readFile(existingMemoryPath, 'utf8')).toBe('custom project memory');
+    });
+
+    it('should install the complete project-local Virtual Office scene footprint', async () => {
+      const sourceDir = path.join(tempDir, 'package-source');
+      const targetDir = path.join(tempDir, 'project');
+      const officeSource = path.join(sourceDir, 'core', 'virtual-office', 'public');
+      await fs.ensureDir(path.join(officeSource, 'assets'));
+      await fs.writeFile(path.join(officeSource, 'index.html'), '<main>Office</main>', 'utf8');
+      await fs.writeFile(path.join(officeSource, 'scene-manifest.js'), 'window.SCENE = {};', 'utf8');
+      await fs.writeFile(path.join(officeSource, 'app.js'), 'window.APP = {};', 'utf8');
+      await fs.writeFile(
+        path.join(officeSource, 'assets', 'cyryx-agent-identity-a-v5.png'),
+        Buffer.from([0x89, 0x50, 0x4e, 0x47]),
+      );
+      await fs.writeFile(
+        path.join(officeSource, 'assets', 'cyryx-campus-command-hall-v1.png'),
+        Buffer.from([0x89, 0x50, 0x4e, 0x47]),
+      );
+      await fs.writeFile(
+        path.join(officeSource, 'assets', 'cyryx-labs-official-lockup-v1.png'),
+        Buffer.from([0x89, 0x50, 0x4e, 0x47]),
+      );
+      await fs.writeFile(
+        path.join(officeSource, 'assets', 'paulo-petruff-ceo-standing-v1.png'),
+        Buffer.from([0x89, 0x50, 0x4e, 0x47]),
+      );
+      await fs.writeFile(
+        path.join(officeSource, 'assets', 'paulo-petruff-ceo-workstation-v1.png'),
+        Buffer.from([0x89, 0x50, 0x4e, 0x47]),
+      );
+
+      const result = await installCyryxCore({
+        targetDir,
+        sourceDir,
+        projectType: 'greenfield',
+        packageVersion: '9.9.9',
+      });
+
+      const installedOffice = path.join(
+        targetDir,
+        '.aexos-core',
+        'core',
+        'virtual-office',
+        'public',
+      );
+      expect(result.success).toBe(true);
+      expect(await fs.pathExists(path.join(installedOffice, 'index.html'))).toBe(true);
+      expect(await fs.pathExists(path.join(installedOffice, 'scene-manifest.js'))).toBe(true);
+      expect(await fs.pathExists(path.join(installedOffice, 'app.js'))).toBe(true);
+      expect(await fs.pathExists(
+        path.join(installedOffice, 'assets', 'cyryx-agent-identity-a-v5.png'),
+      )).toBe(true);
+      expect(await fs.pathExists(
+        path.join(installedOffice, 'assets', 'cyryx-campus-command-hall-v1.png'),
+      )).toBe(true);
+      expect(await fs.pathExists(
+        path.join(installedOffice, 'assets', 'cyryx-labs-official-lockup-v1.png'),
+      )).toBe(true);
+      expect(await fs.pathExists(
+        path.join(installedOffice, 'assets', 'paulo-petruff-ceo-standing-v1.png'),
+      )).toBe(true);
+      expect(await fs.pathExists(
+        path.join(installedOffice, 'assets', 'paulo-petruff-ceo-workstation-v1.png'),
+      )).toBe(true);
     });
   });
 

@@ -16,6 +16,13 @@ const {
 
 describe('generate-install-manifest', () => {
   describe('FOLDERS_TO_COPY', () => {
+    it('shares the actual installer copy boundary including runtime schemas and presets', () => {
+      const installer = require('../../packages/installer/src/installer/aexos-core-installer');
+      expect(FOLDERS_TO_COPY).toBe(installer.FOLDERS_TO_COPY);
+      expect(ROOT_FILES_TO_COPY).toBe(installer.ROOT_FILES_TO_COPY);
+      expect(FOLDERS_TO_COPY).toEqual(expect.arrayContaining(['schemas', 'presets']));
+      expect(ROOT_FILES_TO_COPY).toContain('constitution.md');
+    });
     it('should include v2.1 modular structure folders', () => {
       expect(FOLDERS_TO_COPY).toContain('core');
       expect(FOLDERS_TO_COPY).toContain('development');

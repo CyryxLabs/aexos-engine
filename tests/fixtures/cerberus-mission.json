@@ -1,0 +1,32 @@
+{
+  "protocol": "aexos.mission/v1",
+  "missionId": "fixture-mission",
+  "projectId": "project-one",
+  "story": {
+    "storyId": "AEX-2.10",
+    "path": "docs/framework/epics/aexos-evolution/STORY-AEX-2.10-DURABLE-MISSIONS.md"
+  },
+  "steps": [
+    {
+      "stepId": "ingest-fixture",
+      "request": {
+        "protocol": "aexos.cerberus/v1",
+        "requestId": "request-fixture-mission",
+        "idempotencyKey": "idempotency-fixture-mission",
+        "operation": "ingest",
+        "projectId": "project-one",
+        "payload": {
+          "source": {
+            "id": "fixture",
+            "type": "txt",
+            "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          },
+          "document": {
+            "encoding": "utf8",
+            "data": "mission private fixture"
+          }
+        }
+      }
+    }
+  ]
+}

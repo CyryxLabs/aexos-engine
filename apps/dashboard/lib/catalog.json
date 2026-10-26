@@ -1,0 +1,1472 @@
+{
+  "version": 1,
+  "squads": [
+    {
+      "id": "aexos-core",
+      "name": "AEXOS Core",
+      "domain": "Framework orchestration and governance",
+      "description": "",
+      "entryAgent": "aexos-master",
+      "agents": [
+        {
+          "key": "aexos-core/aexos-master",
+          "id": "aexos-master",
+          "name": "Zeus",
+          "title": "AEXOS Master Orchestrator & Framework Developer",
+          "squadId": "aexos-core"
+        },
+        {
+          "key": "aexos-core/analyst",
+          "id": "analyst",
+          "name": "Sirius",
+          "title": "Business Analyst",
+          "squadId": "aexos-core"
+        },
+        {
+          "key": "aexos-core/architect",
+          "id": "architect",
+          "name": "Vega",
+          "title": "Architect",
+          "squadId": "aexos-core"
+        },
+        {
+          "key": "aexos-core/data-engineer",
+          "id": "data-engineer",
+          "name": "Ceres",
+          "title": "Database Architect & Operations Engineer",
+          "squadId": "aexos-core"
+        },
+        {
+          "key": "aexos-core/dev",
+          "id": "dev",
+          "name": "Vulcan",
+          "title": "Full Stack Developer",
+          "squadId": "aexos-core"
+        },
+        {
+          "key": "aexos-core/devops",
+          "id": "devops",
+          "name": "Polaris",
+          "title": "GitHub Repository Manager & DevOps Specialist",
+          "squadId": "aexos-core"
+        },
+        {
+          "key": "aexos-core/pm",
+          "id": "pm",
+          "name": "Janus",
+          "title": "Product Manager",
+          "squadId": "aexos-core"
+        },
+        {
+          "key": "aexos-core/po",
+          "id": "po",
+          "name": "Themis",
+          "title": "Product Owner",
+          "squadId": "aexos-core"
+        },
+        {
+          "key": "aexos-core/qa",
+          "id": "qa",
+          "name": "Argus",
+          "title": "Test Architect & Quality Advisor",
+          "squadId": "aexos-core"
+        },
+        {
+          "key": "aexos-core/sm",
+          "id": "sm",
+          "name": "Chronos",
+          "title": "Scrum Master",
+          "squadId": "aexos-core"
+        },
+        {
+          "key": "aexos-core/squad-creator",
+          "id": "squad-creator",
+          "name": "Arkantos",
+          "title": "Squad Creator",
+          "squadId": "aexos-core"
+        },
+        {
+          "key": "aexos-core/ux-design-expert",
+          "id": "ux-design-expert",
+          "name": "Iris",
+          "title": "UX/UI Designer & Design System Architect",
+          "squadId": "aexos-core"
+        }
+      ]
+    },
+    {
+      "id": "apex",
+      "name": "apex",
+      "domain": "apex",
+      "description": "",
+      "entryAgent": "apex-lead",
+      "agents": [
+        {
+          "key": "apex/a11y-eng",
+          "id": "a11y-eng",
+          "name": "Sara",
+          "title": "Accessibility Engineer — Universal Access",
+          "squadId": "apex"
+        },
+        {
+          "key": "apex/apex-lead",
+          "id": "apex-lead",
+          "name": "Emil",
+          "title": "Design Engineering Lead & Squad Orchestrator",
+          "squadId": "apex"
+        },
+        {
+          "key": "apex/cross-plat-eng",
+          "id": "cross-plat-eng",
+          "name": "Fernando",
+          "title": "Design Engineer — Cross-Platform",
+          "squadId": "apex"
+        },
+        {
+          "key": "apex/css-eng",
+          "id": "css-eng",
+          "name": "Josh",
+          "title": "Design Engineer — CSS Architecture",
+          "squadId": "apex"
+        },
+        {
+          "key": "apex/design-sys-eng",
+          "id": "design-sys-eng",
+          "name": "Diana",
+          "title": "Design System Designer/Engineer — Token Guardian",
+          "squadId": "apex"
+        },
+        {
+          "key": "apex/frontend-arch",
+          "id": "frontend-arch",
+          "name": "Arch",
+          "title": "Staff Frontend Architect — Technical Authority",
+          "squadId": "apex"
+        },
+        {
+          "key": "apex/interaction-dsgn",
+          "id": "interaction-dsgn",
+          "name": "Ahmad",
+          "title": "Senior Product Designer (Interaction)",
+          "squadId": "apex"
+        },
+        {
+          "key": "apex/mobile-eng",
+          "id": "mobile-eng",
+          "name": "Krzysztof",
+          "title": "Design Engineer — React Native",
+          "squadId": "apex"
+        },
+        {
+          "key": "apex/motion-eng",
+          "id": "motion-eng",
+          "name": "Matt",
+          "title": "Motion Engineer — Animation & Choreography",
+          "squadId": "apex"
+        },
+        {
+          "key": "apex/perf-eng",
+          "id": "perf-eng",
+          "name": "Addy",
+          "title": "Performance Engineer — Core Web Vitals",
+          "squadId": "apex"
+        },
+        {
+          "key": "apex/qa-visual",
+          "id": "qa-visual",
+          "name": "Andy",
+          "title": "Frontend QA Engineer — Visual Regression",
+          "squadId": "apex"
+        },
+        {
+          "key": "apex/qa-xplatform",
+          "id": "qa-xplatform",
+          "name": "Michal",
+          "title": "Frontend QA Engineer — Cross-Platform Testing",
+          "squadId": "apex"
+        },
+        {
+          "key": "apex/react-eng",
+          "id": "react-eng",
+          "name": "Kent",
+          "title": "Design Engineer — React/Server Components",
+          "squadId": "apex"
+        },
+        {
+          "key": "apex/spatial-eng",
+          "id": "spatial-eng",
+          "name": "Paul",
+          "title": "Design Engineer — Spatial & 3D",
+          "squadId": "apex"
+        },
+        {
+          "key": "apex/web-intel",
+          "id": "web-intel",
+          "name": "Kilian",
+          "title": "Web Intelligence Engineer — Design Extraction Specialist",
+          "squadId": "apex"
+        }
+      ]
+    },
+    {
+      "id": "board",
+      "name": "Board Squad",
+      "domain": "Board of Directors — Governance, Risk and Oversight",
+      "description": "",
+      "entryAgent": "board-chief",
+      "agents": [
+        {
+          "key": "board/audit-lead",
+          "id": "audit-lead",
+          "name": "Tally",
+          "title": "Audit Lead",
+          "squadId": "board"
+        },
+        {
+          "key": "board/board-chief",
+          "id": "board-chief",
+          "name": "Chair",
+          "title": "Board Squad Chief",
+          "squadId": "board"
+        },
+        {
+          "key": "board/governance-counsel",
+          "id": "governance-counsel",
+          "name": "Charter",
+          "title": "Governance Counsel",
+          "squadId": "board"
+        },
+        {
+          "key": "board/risk-oversight",
+          "id": "risk-oversight",
+          "name": "Bulwark",
+          "title": "Risk Oversight Lead",
+          "squadId": "board"
+        },
+        {
+          "key": "board/succession-lead",
+          "id": "succession-lead",
+          "name": "Lineage",
+          "title": "Succession Lead",
+          "squadId": "board"
+        }
+      ]
+    },
+    {
+      "id": "brand",
+      "name": "Brand Squad",
+      "domain": "brand_identity",
+      "description": "",
+      "entryAgent": "brand-chief",
+      "agents": [
+        {
+          "key": "brand/alexandra-watkins",
+          "id": "alexandra-watkins",
+          "name": "Alexandra Watkins",
+          "title": "Naming Alchemist & Brand Language Architect",
+          "squadId": "brand"
+        },
+        {
+          "key": "brand/april-dunford",
+          "id": "april-dunford",
+          "name": "April Dunford",
+          "title": "Positioning Master & Competitive Strategy Expert",
+          "squadId": "brand"
+        },
+        {
+          "key": "brand/brand-chief",
+          "id": "brand-chief",
+          "name": "Brand Chief",
+          "title": "Brand Squad Orchestrator",
+          "squadId": "brand"
+        },
+        {
+          "key": "brand/emily-heyward",
+          "id": "emily-heyward",
+          "name": "Emily Heyward",
+          "title": "Brand Builder & Movement Architect",
+          "squadId": "brand"
+        },
+        {
+          "key": "brand/marty-neumeier",
+          "id": "marty-neumeier",
+          "name": "Marty Neumeier",
+          "title": "Brand Strategist & Diagnostician",
+          "squadId": "brand"
+        },
+        {
+          "key": "brand/michael-johnson",
+          "id": "michael-johnson",
+          "name": "Michael Johnson",
+          "title": "Visual Identity Architect & Brand Identity Designer",
+          "squadId": "brand"
+        },
+        {
+          "key": "brand/sagi-haviv",
+          "id": "sagi-haviv",
+          "name": "Sagi Haviv",
+          "title": "Logo Design Master & Identity Mark Strategist",
+          "squadId": "brand"
+        }
+      ]
+    },
+    {
+      "id": "business-admin",
+      "name": "Business Administration Squad",
+      "domain": "Business Administration — Finance, People, Legal and Process",
+      "description": "",
+      "entryAgent": "admin-chief",
+      "agents": [
+        {
+          "key": "business-admin/admin-chief",
+          "id": "admin-chief",
+          "name": "Steward",
+          "title": "Business Administration Squad Chief",
+          "squadId": "business-admin"
+        },
+        {
+          "key": "business-admin/finance-lead",
+          "id": "finance-lead",
+          "name": "Abacus",
+          "title": "Finance Lead",
+          "squadId": "business-admin"
+        },
+        {
+          "key": "business-admin/legal-ops",
+          "id": "legal-ops",
+          "name": "Codex",
+          "title": "Legal Operations Lead",
+          "squadId": "business-admin"
+        },
+        {
+          "key": "business-admin/people-lead",
+          "id": "people-lead",
+          "name": "Roster",
+          "title": "People Lead",
+          "squadId": "business-admin"
+        },
+        {
+          "key": "business-admin/process-lead",
+          "id": "process-lead",
+          "name": "Sluice",
+          "title": "Process Lead",
+          "squadId": "business-admin"
+        }
+      ]
+    },
+    {
+      "id": "ceo",
+      "name": "CEO Squad",
+      "domain": "Chief Executive — Strategy, Capital and Organisation",
+      "description": "",
+      "entryAgent": "ceo-chief",
+      "agents": [
+        {
+          "key": "ceo/capital-allocator",
+          "id": "capital-allocator",
+          "name": "Ledger",
+          "title": "Capital Allocator",
+          "squadId": "ceo"
+        },
+        {
+          "key": "ceo/ceo-chief",
+          "id": "ceo-chief",
+          "name": "Regent",
+          "title": "CEO Squad Chief",
+          "squadId": "ceo"
+        },
+        {
+          "key": "ceo/org-designer",
+          "id": "org-designer",
+          "name": "Lattice",
+          "title": "Organisation Designer",
+          "squadId": "ceo"
+        },
+        {
+          "key": "ceo/stakeholder-lead",
+          "id": "stakeholder-lead",
+          "name": "Herald",
+          "title": "Stakeholder Communication Lead",
+          "squadId": "ceo"
+        },
+        {
+          "key": "ceo/strategy-lead",
+          "id": "strategy-lead",
+          "name": "Kernel",
+          "title": "Strategy Lead",
+          "squadId": "ceo"
+        }
+      ]
+    },
+    {
+      "id": "claude-code-mastery",
+      "name": "Claude Code Mastery Squad",
+      "domain": "Claude Code — Full Spectrum Expertise",
+      "description": "",
+      "entryAgent": "claude-mastery-chief",
+      "agents": [
+        {
+          "key": "claude-code-mastery/claude-mastery-chief",
+          "id": "claude-mastery-chief",
+          "name": "Warden",
+          "title": "Claude Code Mastery Orchestrator",
+          "squadId": "claude-code-mastery"
+        },
+        {
+          "key": "claude-code-mastery/config-engineer",
+          "id": "config-engineer",
+          "name": "Sigil",
+          "title": "Claude Code Configuration Engineer",
+          "squadId": "claude-code-mastery"
+        },
+        {
+          "key": "claude-code-mastery/hooks-architect",
+          "id": "hooks-architect",
+          "name": "Latch",
+          "title": "Hooks Architect",
+          "squadId": "claude-code-mastery"
+        },
+        {
+          "key": "claude-code-mastery/mcp-integrator",
+          "id": "mcp-integrator",
+          "name": "Piper",
+          "title": "MCP Integration Architect & Tool Composition Specialist",
+          "squadId": "claude-code-mastery"
+        },
+        {
+          "key": "claude-code-mastery/project-integrator",
+          "id": "project-integrator",
+          "name": "Conduit",
+          "title": "Project Integration Architect",
+          "squadId": "claude-code-mastery"
+        },
+        {
+          "key": "claude-code-mastery/roadmap-sentinel",
+          "id": "roadmap-sentinel",
+          "name": "Vigil",
+          "title": "Claude Code Roadmap Sentinel & Plan-First Strategist",
+          "squadId": "claude-code-mastery"
+        },
+        {
+          "key": "claude-code-mastery/skill-craftsman",
+          "id": "skill-craftsman",
+          "name": "Anvil",
+          "title": "Skill Craftsman",
+          "squadId": "claude-code-mastery"
+        },
+        {
+          "key": "claude-code-mastery/swarm-orchestrator",
+          "id": "swarm-orchestrator",
+          "name": "Nexus",
+          "title": "Swarm Orchestrator & Multi-Agent Architect",
+          "squadId": "claude-code-mastery"
+        }
+      ]
+    },
+    {
+      "id": "curator",
+      "name": "curator",
+      "domain": "curator",
+      "description": "",
+      "entryAgent": "curator-chief",
+      "agents": [
+        {
+          "key": "curator/brendan-kane",
+          "id": "brendan-kane",
+          "name": "Brendan Kane",
+          "title": "Viral Architect & Hook Point Engineer",
+          "squadId": "curator"
+        },
+        {
+          "key": "curator/content-miner-pro",
+          "id": "content-miner-pro",
+          "name": "Content Miner Pro",
+          "title": "Advanced Content Mining & Moment Extraction",
+          "squadId": "curator"
+        },
+        {
+          "key": "curator/curator-chief",
+          "id": "curator-chief",
+          "name": "Curator Chief",
+          "title": "Content Curation Orchestrator",
+          "squadId": "curator"
+        },
+        {
+          "key": "curator/data-curator",
+          "id": "data-curator",
+          "name": "Data Curator",
+          "title": "News, Trends & Data Curator",
+          "squadId": "curator"
+        },
+        {
+          "key": "curator/ffmpeg-cutter",
+          "id": "ffmpeg-cutter",
+          "name": "Ffmpeg Cutter",
+          "title": "Ffmpeg Cutter Specialist",
+          "squadId": "curator"
+        },
+        {
+          "key": "curator/jonah-berger",
+          "id": "jonah-berger",
+          "name": "Jonah Berger",
+          "title": "Shareability Architect & Contagious Content Expert",
+          "squadId": "curator"
+        },
+        {
+          "key": "curator/ken-burns",
+          "id": "ken-burns",
+          "name": "Ken Burns",
+          "title": "Documentary Narrative Architect",
+          "squadId": "curator"
+        },
+        {
+          "key": "curator/matthew-dicks",
+          "id": "matthew-dicks",
+          "name": "Matthew Dicks",
+          "title": "Story Architect & Transformation Hunter",
+          "squadId": "curator"
+        },
+        {
+          "key": "curator/mrbeast",
+          "id": "mrbeast",
+          "name": "MrBeast",
+          "title": "Retention Architect & Content Systems Engineer",
+          "squadId": "curator"
+        },
+        {
+          "key": "curator/robert-mckee",
+          "id": "robert-mckee",
+          "name": "Robert McKee",
+          "title": "Story Architect & Scene Structure Master",
+          "squadId": "curator"
+        },
+        {
+          "key": "curator/timestamp-cataloger",
+          "id": "timestamp-cataloger",
+          "name": "Timestamp Cataloger",
+          "title": "Dialogue Cataloger & Timestamp Indexer",
+          "squadId": "curator"
+        },
+        {
+          "key": "curator/walter-murch",
+          "id": "walter-murch",
+          "name": "Walter Murch",
+          "title": "Master Editor & Cut Decision Architect",
+          "squadId": "curator"
+        }
+      ]
+    },
+    {
+      "id": "customer-success",
+      "name": "Customer Success Squad",
+      "domain": "Customer Success — Onboarding, Retention and Expansion",
+      "description": "",
+      "entryAgent": "cs-chief",
+      "agents": [
+        {
+          "key": "customer-success/advocacy-lead",
+          "id": "advocacy-lead",
+          "name": "Chorus",
+          "title": "Advocacy & Loyalty Lead",
+          "squadId": "customer-success"
+        },
+        {
+          "key": "customer-success/cs-chief",
+          "id": "cs-chief",
+          "name": "Anchor",
+          "title": "Customer Success Squad Chief",
+          "squadId": "customer-success"
+        },
+        {
+          "key": "customer-success/onboarding-lead",
+          "id": "onboarding-lead",
+          "name": "Threshold",
+          "title": "Onboarding & Activation Lead",
+          "squadId": "customer-success"
+        },
+        {
+          "key": "customer-success/retention-lead",
+          "id": "retention-lead",
+          "name": "Tenure",
+          "title": "Retention & Account Health Lead",
+          "squadId": "customer-success"
+        },
+        {
+          "key": "customer-success/voice-lead",
+          "id": "voice-lead",
+          "name": "Auricle",
+          "title": "Voice of the Customer Lead",
+          "squadId": "customer-success"
+        }
+      ]
+    },
+    {
+      "id": "deep-research",
+      "name": "Deep Research Squad",
+      "domain": "Evidence-Based Research Pipeline",
+      "description": "",
+      "entryAgent": "dr-orchestrator",
+      "agents": [
+        {
+          "key": "deep-research/booth",
+          "id": "booth",
+          "name": "Andrew Booth",
+          "title": "Research Methodology Selector & Search Strategy Designer",
+          "squadId": "deep-research"
+        },
+        {
+          "key": "deep-research/cochrane",
+          "id": "cochrane",
+          "name": "Archie Cochrane",
+          "title": "Father of Evidence-Based Medicine - Evidence Synthesis Auditor",
+          "squadId": "deep-research"
+        },
+        {
+          "key": "deep-research/creswell",
+          "id": "creswell",
+          "name": "John W. Creswell",
+          "title": "Research Design Architect & Mixed Methods Specialist",
+          "squadId": "deep-research"
+        },
+        {
+          "key": "deep-research/dr-orchestrator",
+          "id": "dr-orchestrator",
+          "name": "DR Orchestrator",
+          "title": "Deep Research Pipeline Coordinator & Use Case Router",
+          "squadId": "deep-research"
+        },
+        {
+          "key": "deep-research/forsgren",
+          "id": "forsgren",
+          "name": "Nicole Forsgren",
+          "title": "Co-creator of DORA Metrics - Technical Performance Diagnostician",
+          "squadId": "deep-research"
+        },
+        {
+          "key": "deep-research/gilad",
+          "id": "gilad",
+          "name": "Benjamin Gilad",
+          "title": "Co-founder of Competitive Intelligence - Competitive Intelligence Strategist",
+          "squadId": "deep-research"
+        },
+        {
+          "key": "deep-research/higgins",
+          "id": "higgins",
+          "name": "Eliot Higgins",
+          "title": "Founder of Bellingcat - OSINT Investigator & Source Verifier",
+          "squadId": "deep-research"
+        },
+        {
+          "key": "deep-research/ioannidis",
+          "id": "ioannidis",
+          "name": "John Ioannidis",
+          "title": "Founder of Meta-Research - Research Quality Auditor",
+          "squadId": "deep-research"
+        },
+        {
+          "key": "deep-research/kahneman",
+          "id": "kahneman",
+          "name": "Daniel Kahneman",
+          "title": "Nobel Prize Economics 2002 - Decision Quality Auditor & Bias Detector",
+          "squadId": "deep-research"
+        },
+        {
+          "key": "deep-research/klein",
+          "id": "klein",
+          "name": "Gary Klein",
+          "title": "Father of Naturalistic Decision Making - Expert Pattern Analyst & Sensemaking Specialist",
+          "squadId": "deep-research"
+        },
+        {
+          "key": "deep-research/sackett",
+          "id": "sackett",
+          "name": "David Sackett",
+          "title": "Research Question Architect & EBM Framework Designer",
+          "squadId": "deep-research"
+        }
+      ]
+    },
+    {
+      "id": "dispatch",
+      "name": "dispatch",
+      "domain": "dispatch",
+      "description": "",
+      "entryAgent": "dispatch-chief",
+      "agents": [
+        {
+          "key": "dispatch/dispatch-chief",
+          "id": "dispatch-chief",
+          "name": "Dispatch Chief",
+          "title": "Pipeline Orchestrator",
+          "squadId": "dispatch"
+        },
+        {
+          "key": "dispatch/quality-gate",
+          "id": "quality-gate",
+          "name": "Quality Gate",
+          "title": "Quality Gate Specialist",
+          "squadId": "dispatch"
+        },
+        {
+          "key": "dispatch/task-router",
+          "id": "task-router",
+          "name": "Task Router",
+          "title": "Dynamic Task-to-Agent Router",
+          "squadId": "dispatch"
+        },
+        {
+          "key": "dispatch/wave-planner",
+          "id": "wave-planner",
+          "name": "Wave Planner",
+          "title": "DAG Optimizer & Queue Theorist",
+          "squadId": "dispatch"
+        }
+      ]
+    },
+    {
+      "id": "education",
+      "name": "education",
+      "domain": "educational curriculum engineering",
+      "description": "",
+      "entryAgent": "education-chief",
+      "agents": [
+        {
+          "key": "education/bjork-engineer",
+          "id": "bjork-engineer",
+          "name": "Robert Bjork",
+          "title": "Desirable Difficulties Engineer - Memory & Retention",
+          "squadId": "education"
+        },
+        {
+          "key": "education/bloom-diagnostician",
+          "id": "bloom-diagnostician",
+          "name": "bloom-diagnostician",
+          "title": "Classify learning objectives using Bloom's Taxonomy (revised: Remember → Understand → Apply → Analyze → Evaluate → Create). Define mastery thresholds per obj...",
+          "squadId": "education"
+        },
+        {
+          "key": "education/clark-validator",
+          "id": "clark-validator",
+          "name": "Ruth Colvin Clark",
+          "title": "Evidence-Based Validator - Myth Buster & Decision Scientist",
+          "squadId": "education"
+        },
+        {
+          "key": "education/education-chief",
+          "id": "education-chief",
+          "name": "Education Chief",
+          "title": "Education Engineering Orchestrator",
+          "squadId": "education"
+        },
+        {
+          "key": "education/ericsson-coach",
+          "id": "ericsson-coach",
+          "name": "Ericsson Coach",
+          "title": "Deliberate Practice Architect",
+          "squadId": "education"
+        },
+        {
+          "key": "education/fsrs-scheduler",
+          "id": "fsrs-scheduler",
+          "name": "FSRS Scheduler",
+          "title": "Spaced Repetition Architect",
+          "squadId": "education"
+        },
+        {
+          "key": "education/keller-motivator",
+          "id": "keller-motivator",
+          "name": "Keller Motivator",
+          "title": "Motivational Design Architect",
+          "squadId": "education"
+        },
+        {
+          "key": "education/mayer-presenter",
+          "id": "mayer-presenter",
+          "name": "Richard Mayer",
+          "title": "Multimedia Learning Architect - Cognitive Load Optimizer",
+          "squadId": "education"
+        },
+        {
+          "key": "education/mec-compliance",
+          "id": "mec-compliance",
+          "name": "mec-compliance",
+          "title": "Compliance gate for Brazilian education law. Classify course type (livre/FIC/técnico/graduação/pós). Load applicable regulatory requirements. Validate curric...",
+          "squadId": "education"
+        },
+        {
+          "key": "education/merrill-designer",
+          "id": "merrill-designer",
+          "name": "David Merrill",
+          "title": "First Principles Instructor - Problem-Centered Learning",
+          "squadId": "education"
+        },
+        {
+          "key": "education/moore-filter",
+          "id": "moore-filter",
+          "name": "moore-filter",
+          "title": "First gate in the education pipeline. Apply Action Mapping to determine if a course/training is actually the right solution. Filter knowledge gaps (course ne...",
+          "squadId": "education"
+        },
+        {
+          "key": "education/novak-mapper",
+          "id": "novak-mapper",
+          "name": "Novak Mapper",
+          "title": "Domain Researcher & Concept Cartographer",
+          "squadId": "education"
+        },
+        {
+          "key": "education/rosenshine-teacher",
+          "id": "rosenshine-teacher",
+          "name": "Rosenshine Teacher",
+          "title": "Master of Effective Instruction",
+          "squadId": "education"
+        },
+        {
+          "key": "education/sweller-analyst",
+          "id": "sweller-analyst",
+          "name": "sweller-analyst",
+          "title": "Analyze and optimize cognitive load in instructional materials. Identify extraneous load sources. Maximize germane load. Apply the 15+ CLT instructional effe...",
+          "squadId": "education"
+        },
+        {
+          "key": "education/thalheimer-assessor",
+          "id": "thalheimer-assessor",
+          "name": "Thalheimer Assessor",
+          "title": "Transfer Validation Guardian",
+          "squadId": "education"
+        },
+        {
+          "key": "education/wiggins-architect",
+          "id": "wiggins-architect",
+          "name": "Grant Wiggins",
+          "title": "Backward Design Architect - Understanding by Design",
+          "squadId": "education"
+        }
+      ]
+    },
+    {
+      "id": "kaizen",
+      "name": "kaizen",
+      "domain": "kaizen",
+      "description": "",
+      "entryAgent": "kaizen-chief",
+      "agents": [
+        {
+          "key": "kaizen/bottleneck-hunter",
+          "id": "bottleneck-hunter",
+          "name": "Bottleneck Hunter",
+          "title": "System Constraint Analyst & Flow Optimizer",
+          "squadId": "kaizen"
+        },
+        {
+          "key": "kaizen/capability-mapper",
+          "id": "capability-mapper",
+          "name": "Capability Mapper",
+          "title": "Competency Gap Analyst & Resource Strategist",
+          "squadId": "kaizen"
+        },
+        {
+          "key": "kaizen/cost-analyst",
+          "id": "cost-analyst",
+          "name": "Cost Analyst",
+          "title": "FinOps Analyst & ROI Strategist",
+          "squadId": "kaizen"
+        },
+        {
+          "key": "kaizen/kaizen-chief",
+          "id": "kaizen-chief",
+          "name": "Kaizen Chief",
+          "title": "Ecosystem Intelligence Orchestrator",
+          "squadId": "kaizen"
+        },
+        {
+          "key": "kaizen/performance-tracker",
+          "id": "performance-tracker",
+          "name": "Performance Tracker",
+          "title": "Squad Performance Analyst & Metrics Diagnostician",
+          "squadId": "kaizen"
+        },
+        {
+          "key": "kaizen/tech-radar",
+          "id": "tech-radar",
+          "name": "Tech Radar",
+          "title": "Technology Evaluator & Fitness Function Architect",
+          "squadId": "kaizen"
+        },
+        {
+          "key": "kaizen/topology-analyst",
+          "id": "topology-analyst",
+          "name": "Topology Analyst",
+          "title": "Squad Structure Analyst & Cognitive Load Diagnostician",
+          "squadId": "kaizen"
+        }
+      ]
+    },
+    {
+      "id": "kaizen-v2",
+      "name": "kaizen-v2",
+      "domain": "kaizen-v2",
+      "description": "",
+      "entryAgent": "kaizen-v2-chief",
+      "agents": [
+        {
+          "key": "kaizen-v2/kaizen-v2-bottleneck-hunter",
+          "id": "kaizen-v2-bottleneck-hunter",
+          "name": "Kaizen V2 Bottleneck Hunter",
+          "title": "System Constraint Analyst & Flow Optimizer",
+          "squadId": "kaizen-v2"
+        },
+        {
+          "key": "kaizen-v2/kaizen-v2-capability-mapper",
+          "id": "kaizen-v2-capability-mapper",
+          "name": "Kaizen V2 Capability Mapper",
+          "title": "Competency Gap Analyst & Resource Strategist",
+          "squadId": "kaizen-v2"
+        },
+        {
+          "key": "kaizen-v2/kaizen-v2-chief",
+          "id": "kaizen-v2-chief",
+          "name": "Kaizen V2 Chief",
+          "title": "Ecosystem Intelligence Orchestrator (v2 — Daily + Weekly)",
+          "squadId": "kaizen-v2"
+        },
+        {
+          "key": "kaizen-v2/kaizen-v2-cost-analyst",
+          "id": "kaizen-v2-cost-analyst",
+          "name": "Kaizen V2 Cost Analyst",
+          "title": "FinOps Analyst & ROI Strategist",
+          "squadId": "kaizen-v2"
+        },
+        {
+          "key": "kaizen-v2/kaizen-v2-memory-keeper",
+          "id": "kaizen-v2-memory-keeper",
+          "name": "Kaizen V2 Memory Keeper",
+          "title": "Tier 0 Sensorial — Daily Intelligence Curator",
+          "squadId": "kaizen-v2"
+        },
+        {
+          "key": "kaizen-v2/kaizen-v2-performance-tracker",
+          "id": "kaizen-v2-performance-tracker",
+          "name": "Kaizen V2 Performance Tracker",
+          "title": "Squad Performance Analyst & Metrics Diagnostician",
+          "squadId": "kaizen-v2"
+        },
+        {
+          "key": "kaizen-v2/kaizen-v2-tech-radar",
+          "id": "kaizen-v2-tech-radar",
+          "name": "Kaizen V2 Tech Radar",
+          "title": "Technology Evaluator & Fitness Function Architect",
+          "squadId": "kaizen-v2"
+        },
+        {
+          "key": "kaizen-v2/kaizen-v2-topology-analyst",
+          "id": "kaizen-v2-topology-analyst",
+          "name": "Kaizen V2 Topology Analyst",
+          "title": "Squad Structure Analyst & Cognitive Load Diagnostician",
+          "squadId": "kaizen-v2"
+        }
+      ]
+    },
+    {
+      "id": "legal-analyst",
+      "name": "legal-analyst",
+      "domain": "legal-analyst",
+      "description": "",
+      "entryAgent": "legal-chief",
+      "agents": [
+        {
+          "key": "legal-analyst/barbosa-classifier",
+          "id": "barbosa-classifier",
+          "name": "barbosa-classifier",
+          "title": "Classificar processos judiciais usando as Tabelas Processuais Unificadas (TPU) e o Sistema de Gestao de Tabelas (SGT) do CNJ. Definir classe processual, assu...",
+          "squadId": "legal-analyst"
+        },
+        {
+          "key": "legal-analyst/barroso-strategist",
+          "id": "barroso-strategist",
+          "name": "barroso-strategist",
+          "title": "Estrategista argumentativo. Aplica tecnicas de argumentacao juridica, ponderacao de principios (Alexy), proporcionalidade (adequacao, necessidade, proporcion...",
+          "squadId": "legal-analyst"
+        },
+        {
+          "key": "legal-analyst/carmem-relator",
+          "id": "carmem-relator",
+          "name": "carmem-relator",
+          "title": "Analista de Relatores. Estuda o perfil de Ministros, Desembargadores e Juizes Relatores para mapear tendencias de voto, linhas argumentativas preferidas, div...",
+          "squadId": "legal-analyst"
+        },
+        {
+          "key": "legal-analyst/cnj-compliance",
+          "id": "cnj-compliance",
+          "name": "cnj-compliance",
+          "title": "Verificar e garantir conformidade de toda analise processual com as Resolucoes do CNJ, particularmente o projeto DATAJUD (Res. 331/2020), a PDPJ (Res. 335/20...",
+          "squadId": "legal-analyst"
+        },
+        {
+          "key": "legal-analyst/datajud-formatter",
+          "id": "datajud-formatter",
+          "name": "datajud-formatter",
+          "title": "Formatador de dados judiciais. Estrutura toda a saida conforme o schema DATAJUD do CNJ (Res. 331/2020) e organiza a apresentacao com navegabilidade inspirada...",
+          "squadId": "legal-analyst"
+        },
+        {
+          "key": "legal-analyst/fachin-precedent",
+          "id": "fachin-precedent",
+          "name": "fachin-precedent",
+          "title": "Analista de precedentes. Identifica ratio decidendi vs obiter dictum. Aplica distinguishing (CPC Art. 489 par. 1o, VI) e identifica overruling. Referencia: C...",
+          "squadId": "legal-analyst"
+        },
+        {
+          "key": "legal-analyst/fux-procedural",
+          "id": "fux-procedural",
+          "name": "fux-procedural",
+          "title": "Verificar admissibilidade processual: pressupostos processuais (subjetivos e objetivos), condicoes da acao (legitimidade, interesse, possibilidade juridica),...",
+          "squadId": "legal-analyst"
+        },
+        {
+          "key": "legal-analyst/legal-chief",
+          "id": "legal-chief",
+          "name": "Legal Chief",
+          "title": "Orquestrador de Analise Processual",
+          "squadId": "legal-analyst"
+        },
+        {
+          "key": "legal-analyst/marinoni-quality",
+          "id": "marinoni-quality",
+          "name": "marinoni-quality",
+          "title": "Controlador de qualidade de precedentes. Verifica se os precedentes citados estao vigentes, se a ratio decidendi foi corretamente identificada, se o stare de...",
+          "squadId": "legal-analyst"
+        },
+        {
+          "key": "legal-analyst/mendes-researcher",
+          "id": "mendes-researcher",
+          "name": "mendes-researcher",
+          "title": "Conduzir pesquisa jurisprudencial aprofundada com foco em materia constitucional. Mapear precedentes do STF (ADI, ADC, ADPF, RE com repercussao geral), prece...",
+          "squadId": "legal-analyst"
+        },
+        {
+          "key": "legal-analyst/moraes-analyst",
+          "id": "moraes-analyst",
+          "name": "moraes-analyst",
+          "title": "Analisar questoes envolvendo direitos e garantias fundamentais (CF/88 Art. 5o), direitos sociais (Art. 6o-11), tratados internacionais de direitos humanos, e...",
+          "squadId": "legal-analyst"
+        },
+        {
+          "key": "legal-analyst/nunes-quantitative",
+          "id": "nunes-quantitative",
+          "name": "nunes-quantitative",
+          "title": "Jurimetrista. Aplica metodos quantitativos e estatisticos para analisar decisoes judiciais. Calcula taxas de procedencia, valores medios, tendencias temporai...",
+          "squadId": "legal-analyst"
+        },
+        {
+          "key": "legal-analyst/theodoro-validator",
+          "id": "theodoro-validator",
+          "name": "theodoro-validator",
+          "title": "Validador de fundamentacao processual. Aplica Teoria Geral do Processo para verificar se a analise esta completa, coerente e processualmente valida. Verifica...",
+          "squadId": "legal-analyst"
+        },
+        {
+          "key": "legal-analyst/toffoli-aggregator",
+          "id": "toffoli-aggregator",
+          "name": "toffoli-aggregator",
+          "title": "Consolidar precedentes judiciais dispersos em um mapa coerente. Especialista em mecanismos de uniformizacao: IRDR (Incidente de Resolucao de Demandas Repetit...",
+          "squadId": "legal-analyst"
+        },
+        {
+          "key": "legal-analyst/weber-indexer",
+          "id": "weber-indexer",
+          "name": "weber-indexer",
+          "title": "Indexar, categorizar e organizar tematicamente os acordaos e precedentes encontrados na pesquisa. Aplicar Tesauro Juridico do CNJ, classificacao TPU de assun...",
+          "squadId": "legal-analyst"
+        }
+      ]
+    },
+    {
+      "id": "marketing",
+      "name": "Marketing Squad",
+      "domain": "Marketing — Brand, Demand and Measurement",
+      "description": "",
+      "entryAgent": "marketing-chief",
+      "agents": [
+        {
+          "key": "marketing/analytics-lead",
+          "id": "analytics-lead",
+          "name": "Cipher",
+          "title": "Analytics Lead",
+          "squadId": "marketing"
+        },
+        {
+          "key": "marketing/brand-lead",
+          "id": "brand-lead",
+          "name": "Salience",
+          "title": "Brand Lead",
+          "squadId": "marketing"
+        },
+        {
+          "key": "marketing/content-lead",
+          "id": "content-lead",
+          "name": "Quill",
+          "title": "Content Lead",
+          "squadId": "marketing"
+        },
+        {
+          "key": "marketing/demand-lead",
+          "id": "demand-lead",
+          "name": "Cadence",
+          "title": "Demand Lead",
+          "squadId": "marketing"
+        },
+        {
+          "key": "marketing/funnel-lead",
+          "id": "funnel-lead",
+          "name": "Weir",
+          "title": "Funnel Lead",
+          "squadId": "marketing"
+        },
+        {
+          "key": "marketing/marketing-chief",
+          "id": "marketing-chief",
+          "name": "Beacon",
+          "title": "Marketing Squad Chief",
+          "squadId": "marketing"
+        },
+        {
+          "key": "marketing/offer-lead",
+          "id": "offer-lead",
+          "name": "Bounty",
+          "title": "Offer Lead",
+          "squadId": "marketing"
+        }
+      ]
+    },
+    {
+      "id": "ops",
+      "name": "Operations Squad",
+      "domain": "Operations — Reliability, Flow and Continuous Improvement",
+      "description": "",
+      "entryAgent": "ops-chief",
+      "agents": [
+        {
+          "key": "ops/flow-lead",
+          "id": "flow-lead",
+          "name": "Throat",
+          "title": "Flow Lead",
+          "squadId": "ops"
+        },
+        {
+          "key": "ops/incident-lead",
+          "id": "incident-lead",
+          "name": "Klaxon",
+          "title": "Incident Lead",
+          "squadId": "ops"
+        },
+        {
+          "key": "ops/lean-lead",
+          "id": "lean-lead",
+          "name": "Kaizen",
+          "title": "Lean Lead",
+          "squadId": "ops"
+        },
+        {
+          "key": "ops/ops-chief",
+          "id": "ops-chief",
+          "name": "Fulcrum",
+          "title": "Operations Squad Chief",
+          "squadId": "ops"
+        },
+        {
+          "key": "ops/reliability-lead",
+          "id": "reliability-lead",
+          "name": "Keel",
+          "title": "Reliability Lead",
+          "squadId": "ops"
+        }
+      ]
+    },
+    {
+      "id": "products",
+      "name": "Products Squad",
+      "domain": "Product Management — Discovery to Monetisation",
+      "description": "",
+      "entryAgent": "products-chief",
+      "agents": [
+        {
+          "key": "products/discovery-lead",
+          "id": "discovery-lead",
+          "name": "Sonar",
+          "title": "Continuous Discovery Lead",
+          "squadId": "products"
+        },
+        {
+          "key": "products/experimentation-lead",
+          "id": "experimentation-lead",
+          "name": "Vernier",
+          "title": "Experimentation Lead",
+          "squadId": "products"
+        },
+        {
+          "key": "products/jobs-analyst",
+          "id": "jobs-analyst",
+          "name": "Plumb",
+          "title": "Jobs Analyst",
+          "squadId": "products"
+        },
+        {
+          "key": "products/positioning-lead",
+          "id": "positioning-lead",
+          "name": "Datum",
+          "title": "Positioning Lead",
+          "squadId": "products"
+        },
+        {
+          "key": "products/pricing-strategist",
+          "id": "pricing-strategist",
+          "name": "Assay",
+          "title": "Pricing Strategist",
+          "squadId": "products"
+        },
+        {
+          "key": "products/product-strategist",
+          "id": "product-strategist",
+          "name": "Lodestar",
+          "title": "Product Strategist",
+          "squadId": "products"
+        },
+        {
+          "key": "products/products-chief",
+          "id": "products-chief",
+          "name": "Helm",
+          "title": "Products Squad Chief",
+          "squadId": "products"
+        }
+      ]
+    },
+    {
+      "id": "sales",
+      "name": "Sales Squad",
+      "domain": "Sales — Qualification, Method and Negotiation",
+      "description": "",
+      "entryAgent": "sales-chief",
+      "agents": [
+        {
+          "key": "sales/method-lead",
+          "id": "method-lead",
+          "name": "Forge",
+          "title": "Sales Method Lead",
+          "squadId": "sales"
+        },
+        {
+          "key": "sales/negotiation-lead",
+          "id": "negotiation-lead",
+          "name": "Tether",
+          "title": "Negotiation Lead",
+          "squadId": "sales"
+        },
+        {
+          "key": "sales/pipeline-ops",
+          "id": "pipeline-ops",
+          "name": "Conveyor",
+          "title": "Pipeline Operations Lead",
+          "squadId": "sales"
+        },
+        {
+          "key": "sales/qualification-lead",
+          "id": "qualification-lead",
+          "name": "Sieve",
+          "title": "Qualification Lead",
+          "squadId": "sales"
+        },
+        {
+          "key": "sales/sales-chief",
+          "id": "sales-chief",
+          "name": "Vanguard",
+          "title": "Sales Squad Chief",
+          "squadId": "sales"
+        }
+      ]
+    },
+    {
+      "id": "security",
+      "name": "Security",
+      "domain": "Security assessment and release verdict",
+      "description": "",
+      "entryAgent": "security-chief",
+      "agents": [
+        {
+          "key": "security/ai-security-lead",
+          "id": "ai-security-lead",
+          "name": "Harness",
+          "title": "Agentic AI Security Lead",
+          "squadId": "security"
+        },
+        {
+          "key": "security/appsec-lead",
+          "id": "appsec-lead",
+          "name": "Bastion",
+          "title": "Application Security Lead",
+          "squadId": "security"
+        },
+        {
+          "key": "security/offensive-lead",
+          "id": "offensive-lead",
+          "name": "Rook",
+          "title": "Offensive Security Validation Lead",
+          "squadId": "security"
+        },
+        {
+          "key": "security/platform-lead",
+          "id": "platform-lead",
+          "name": "Provenance",
+          "title": "Platform and Supply Chain Security Lead",
+          "squadId": "security"
+        },
+        {
+          "key": "security/security-chief",
+          "id": "security-chief",
+          "name": "Aegis",
+          "title": "Security Assessment Chief",
+          "squadId": "security"
+        },
+        {
+          "key": "security/threat-model-lead",
+          "id": "threat-model-lead",
+          "name": "Stride",
+          "title": "Threat Modeling Lead",
+          "squadId": "security"
+        }
+      ]
+    },
+    {
+      "id": "seo",
+      "name": "SEO Expert Squad",
+      "domain": "seo",
+      "description": "",
+      "entryAgent": "seo-chief",
+      "agents": [
+        {
+          "key": "seo/ai-visibility-optimizer",
+          "id": "ai-visibility-optimizer",
+          "name": "AI Visibility Optimizer",
+          "title": "Generative Engine Optimization (GEO) Specialist",
+          "squadId": "seo"
+        },
+        {
+          "key": "seo/content-quality-assessor",
+          "id": "content-quality-assessor",
+          "name": "Content Quality Assessor",
+          "title": "E-E-A-T & Content Quality Specialist",
+          "squadId": "seo"
+        },
+        {
+          "key": "seo/on-page-optimizer",
+          "id": "on-page-optimizer",
+          "name": "On-Page Optimizer",
+          "title": "On-Page SEO Specialist",
+          "squadId": "seo"
+        },
+        {
+          "key": "seo/performance-engineer",
+          "id": "performance-engineer",
+          "name": "Performance Engineer",
+          "title": "Core Web Vitals & Page Speed Specialist",
+          "squadId": "seo"
+        },
+        {
+          "key": "seo/schema-architect",
+          "id": "schema-architect",
+          "name": "Schema Architect",
+          "title": "Structured Data & Entity SEO Specialist",
+          "squadId": "seo"
+        },
+        {
+          "key": "seo/seo-chief",
+          "id": "seo-chief",
+          "name": "SEO Chief",
+          "title": "SEO Orchestrator & Audit Director",
+          "squadId": "seo"
+        },
+        {
+          "key": "seo/site-architect",
+          "id": "site-architect",
+          "name": "Site Architect",
+          "title": "Site Architecture & Internal Linking Specialist",
+          "squadId": "seo"
+        },
+        {
+          "key": "seo/technical-auditor",
+          "id": "technical-auditor",
+          "name": "Technical SEO Auditor",
+          "title": "Technical SEO Specialist",
+          "squadId": "seo"
+        }
+      ]
+    },
+    {
+      "id": "squad-creator",
+      "name": "squad-creator",
+      "domain": "Squad Creator",
+      "description": "",
+      "entryAgent": "squad-chief",
+      "agents": [
+        {
+          "key": "squad-creator/squad-chief",
+          "id": "squad-chief",
+          "name": "Squad Architect",
+          "title": "Squad Creator & Domain Architect",
+          "squadId": "squad-creator"
+        }
+      ]
+    },
+    {
+      "id": "workflow-engineering",
+      "name": "Workflow Engineering",
+      "domain": "Business process discovery, task decomposition and governed automation design",
+      "description": "",
+      "entryAgent": "workflow-chief",
+      "agents": [
+        {
+          "key": "workflow-engineering/automation-architecture-lead",
+          "id": "automation-architecture-lead",
+          "name": "Relay",
+          "title": "Automation Architecture Lead",
+          "squadId": "workflow-engineering"
+        },
+        {
+          "key": "workflow-engineering/process-discovery-lead",
+          "id": "process-discovery-lead",
+          "name": "Cartographer",
+          "title": "Process Discovery Lead",
+          "squadId": "workflow-engineering"
+        },
+        {
+          "key": "workflow-engineering/task-contract-lead",
+          "id": "task-contract-lead",
+          "name": "Atom",
+          "title": "Task Contract Engineering Lead",
+          "squadId": "workflow-engineering"
+        },
+        {
+          "key": "workflow-engineering/workflow-chief",
+          "id": "workflow-chief",
+          "name": "Conductor",
+          "title": "Workflow Engineering Chief",
+          "squadId": "workflow-engineering"
+        },
+        {
+          "key": "workflow-engineering/workflow-modeling-lead",
+          "id": "workflow-modeling-lead",
+          "name": "Graph",
+          "title": "Workflow Modeling Lead",
+          "squadId": "workflow-engineering"
+        },
+        {
+          "key": "workflow-engineering/workflow-qa-lead",
+          "id": "workflow-qa-lead",
+          "name": "Gauge",
+          "title": "Workflow Quality Lead",
+          "squadId": "workflow-engineering"
+        }
+      ]
+    }
+  ]
+}

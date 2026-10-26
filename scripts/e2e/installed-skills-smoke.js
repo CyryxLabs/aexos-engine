@@ -32,6 +32,13 @@ const agentSet = (process.env.AEXOS_E2E_AGENT_SET || 'dev,qa,aexos-master')
   .split(',')
   .map((agent) => agent.trim())
   .filter(Boolean);
+const selectedIde = process.env.AEXOS_E2E_IDE || null;
+const supportedTestHosts = new Set(['claude-code', 'codex']);
+if (selectedIde !== null && !supportedTestHosts.has(selectedIde)) {
+  throw new Error(
+    `AEXOS_E2E_IDE must be one of: ${[...supportedTestHosts].join(', ')} (received ${selectedIde})`,
+  );
+}
 const defaultCommandTimeoutMs = parseTimeoutEnv('AEXOS_E2E_COMMAND_TIMEOUT_MS', 120000);
 const npmInstallTimeoutMs = parseTimeoutEnv('AEXOS_E2E_NPM_INSTALL_TIMEOUT_MS', 420000);
 const npmInstallFlags = ['--no-audit', '--fund=false'];
@@ -108,7 +115,9 @@ function run(command, args, options = {}) {
 }
 
 function runInstalledCli(args, options = {}) {
-  return run('npm', ['exec', '--offline', '--', 'aexos-core', ...args], options);
+  const installedCliPath = path.join(projectRoot, packageInstallRelativePath, 'bin', 'aexos.js');
+  assertAbsolutePathExists(installedCliPath, 'file');
+  return run('node', [installedCliPath, ...args], options);
 }
 
 function assertPathExists(relativePath, type = 'any') {
@@ -169,6 +178,60 @@ function parseDoctorJson(output) {
   }
 }
 
+function parseChildReceipt(output, expectedHost) {
+  const receipt = output
+    .trim()
+    .split(/\r?\n/)
+    .reverse()
+    .find((line) => line.startsWith('{'));
+  if (!receipt) fail(`Missing child receipt for ${expectedHost}`, output);
+
+  let parsed;
+  try {
+    parsed = JSON.parse(receipt);
+  } catch {
+    fail(`Invalid child receipt for ${expectedHost}`, receipt);
+  }
+  if (parsed.status !== 'passed' || parsed.selected_ide !== expectedHost) {
+    fail(`Child receipt did not confirm ${expectedHost}`, receipt);
+  }
+  return parsed;
+}
+
+function resolveTarball() {
+  const tarballPath = process.env.AEXOS_E2E_TARBALL && path.resolve(process.env.AEXOS_E2E_TARBALL);
+  if (tarballPath) {
+    assertAbsolutePathExists(tarballPath, 'file');
+    log('Using the supplied packaged artifact');
+    return tarballPath;
+  }
+
+  log('Packing local aexos-core package');
+  run('npm', ['pack', '--pack-destination', packDir], { cwd: repoRoot, timeout: 180000 });
+  const tarballs = fs.readdirSync(packDir).filter((entry) => entry.endsWith('.tgz'));
+  if (tarballs.length !== 1) {
+    fail(`Expected exactly one packed tarball, found ${tarballs.length}`, tarballs.join('\n'));
+  }
+  return path.join(packDir, tarballs[0]);
+}
+
+function runHostMatrix() {
+  const tarballPath = resolveTarball();
+  const receipts = [];
+  for (const host of supportedTestHosts) {
+    log(`Running isolated ${host} journey`);
+    const output = run('node', [__filename], {
+      cwd: repoRoot,
+      timeout: npmInstallTimeoutMs + 360000,
+      env: { AEXOS_E2E_IDE: host, AEXOS_E2E_TARBALL: tarballPath },
+    });
+    receipts.push(parseChildReceipt(output, host));
+  }
+  const hosts = receipts.map((receipt) => receipt.selected_ide);
+  log(`PASS: installed project skills E2E completed for hosts: ${hosts.join(', ')}`);
+  console.log(JSON.stringify({ status: 'passed', hosts, receipts }));
+}
+
 function cleanup() {
   if (keepTemp) {
     log(`Keeping temp root: ${tempRoot}`);
@@ -182,23 +245,16 @@ function cleanup() {
 
 async function main() {
   log(`Repo root: ${repoRoot}`);
+  if (selectedIde === null) {
+    runHostMatrix();
+    return;
+  }
   log(`Temp project: ${projectRoot}`);
+  log(`Selected IDE host: ${selectedIde}`);
 
   fs.mkdirSync(projectRoot, { recursive: true });
 
-  let tarballPath = process.env.AEXOS_E2E_TARBALL && path.resolve(process.env.AEXOS_E2E_TARBALL);
-  if (tarballPath) {
-    assertAbsolutePathExists(tarballPath, 'file');
-    log('Using the supplied packaged artifact');
-  } else {
-    log('Packing local aexos-core package');
-    run('npm', ['pack', '--pack-destination', packDir], { cwd: repoRoot, timeout: 180000 });
-    const tarballs = fs.readdirSync(packDir).filter((entry) => entry.endsWith('.tgz'));
-    if (tarballs.length !== 1) {
-      fail(`Expected exactly one packed tarball, found ${tarballs.length}`, tarballs.join('\n'));
-    }
-    tarballPath = path.join(packDir, tarballs[0]);
-  }
+  const tarballPath = resolveTarball();
 
   log('Creating brownfield test project');
   run('npm', ['init', '-y'], { cwd: projectRoot });
@@ -233,7 +289,7 @@ async function main() {
   }
 
   log('Running installed aexos install in CI mode');
-  runInstalledCli(['install', '--ci', '--yes', '--ide', 'claude-code'], {
+  runInstalledCli(['install', '--ci', '--yes', '--ide', selectedIde], {
     cwd: projectRoot,
     timeout: 240000,
     env: {
@@ -248,9 +304,12 @@ async function main() {
   log('Validating installed skill and agent artifacts');
   assertPathExists('.aexos-core', 'dir');
   assertPathExists('.aexos-core/development/agents', 'dir');
-  assertPathExists('.claude/skills/AEXOS/agents', 'dir');
-  assertPathExists('.codex/agents', 'dir');
-  assertPathExists('.codex/skills', 'dir');
+  if (selectedIde === 'claude-code') {
+    assertPathExists('.claude/skills/AEXOS/agents', 'dir');
+  } else {
+    assertPathExists('.codex/agents', 'dir');
+    assertPathExists('.codex/skills', 'dir');
+  }
 
   for (const agent of agentSet) {
     const claudeSkill = `.claude/skills/AEXOS/agents/${agent}/SKILL.md`;
@@ -261,20 +320,22 @@ async function main() {
 
     assertPathExists(sourceAgent, 'file');
 
-    const claudeSkillContent = assertNoSourceRepoLeak(claudeSkill);
-    assertContains(claudeSkillContent, 'activation_type: pipeline', claudeSkill);
-    assertContains(
-      claudeSkillContent,
-      `Source: .aexos-core/development/agents/${agent}.md`,
-      claudeSkill,
-    );
+    if (selectedIde === 'claude-code') {
+      const claudeSkillContent = assertNoSourceRepoLeak(claudeSkill);
+      assertContains(claudeSkillContent, 'activation_type: pipeline', claudeSkill);
+      assertContains(
+        claudeSkillContent,
+        `Source: .aexos-core/development/agents/${agent}.md`,
+        claudeSkill,
+      );
+    } else {
+      const codexAgentContent = assertNoSourceRepoLeak(codexAgent);
+      assertContains(codexAgentContent, `id: ${agent}`, codexAgent);
 
-    const codexAgentContent = assertNoSourceRepoLeak(codexAgent);
-    assertContains(codexAgentContent, `id: ${agent}`, codexAgent);
-
-    const codexSkillContent = assertNoSourceRepoLeak(codexSkill);
-    assertContains(codexSkillContent, `name: ${codexSkillId}`, codexSkill);
-    assertContains(codexSkillContent, `.aexos-core/development/agents/${agent}.md`, codexSkill);
+      const codexSkillContent = assertNoSourceRepoLeak(codexSkill);
+      assertContains(codexSkillContent, `name: ${codexSkillId}`, codexSkill);
+      assertContains(codexSkillContent, `.aexos-core/development/agents/${agent}.md`, codexSkill);
+    }
   }
 
   log(`Activating installed agents: ${agentSet.join(', ')}`);
@@ -307,9 +368,9 @@ async function main() {
     fail('Installed doctor reported FAIL results', JSON.stringify(doctor, null, 2));
   }
 
-  log(`PASS: installed project skills E2E completed for ${agentSet.length} agents`);
+  log(`PASS: installed project skills E2E completed for ${agentSet.length} agents on ${selectedIde}`);
   console.log(JSON.stringify({ status: 'passed', isolated_consumer: projectRoot,
-    package_root: path.join(projectRoot, 'node_modules', '@aexos', 'core') }));
+    package_root: path.join(projectRoot, 'node_modules', '@aexos', 'core'), selected_ide: selectedIde }));
 }
 
 main()

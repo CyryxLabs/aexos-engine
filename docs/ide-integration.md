@@ -6,19 +6,25 @@
 
 Guide for integrating AEXOS with supported IDEs and AI development platforms.
 
-**Version:** 4.2.11
-**Last Updated:** 2026-02-16
+**Last Updated:** 2026-09-08
 
 ---
 
-## Compatibility Contract (AEXOS 4.2.11)
+## Compatibility Contract
 
 The IDE matrix is enforced by a versioned contract:
 
-- Contract file: `.aexos-core/infrastructure/contracts/compatibility/aexos-4.2.11.yaml`
+- Default contract file: `.aexos-core/infrastructure/contracts/compatibility/aexos-4.0.4.yaml`
 - Validator: `npm run validate:parity`
 
 If matrix claims in this document diverge from validator results, parity validation fails.
+
+The contract's historical identifier is not the current npm package version.
+This repository gate compares generated files and integration configuration; a
+passing gate alone does not certify native host hooks, provider permissions or
+cross-host session execution. Custom contracts change required-check assertions,
+but all registered validators still execute. In a project with only one selected
+host, absent other hosts may therefore fail the overall repository parity gate.
 
 ---
 
@@ -26,7 +32,7 @@ If matrix claims in this document diverge from validator results, parity validat
 
 AEXOS supports multiple AI-powered development platforms. Choose the one that best fits your workflow.
 
-### Quick Status Matrix (AEXOS 4.2.11)
+### Quick Status Matrix
 
 | IDE/CLI | Overall Status | How to Activate an Agent | Auto-Checks Before/After Actions | Workaround if Limited |
 | --- | --- | --- | --- | --- |
@@ -36,10 +42,12 @@ AEXOS supports multiple AI-powered development platforms. Choose the one that be
 | Cursor | Limited | `@agent` + synced rules | Not available | Follow synced rules and run validators manually (`npm run validate:parity`) |
 | GitHub Copilot | Limited | chat modes + repo instructions | Not available | Use repo instructions and VS Code MCP config for context |
 | AntiGravity | Limited | workflow-driven activation | Not available | Use generated workflows and run validators manually |
+| Grok Build | Projection only | `/aexos-dev`, `/aexos-qa` and generated skills | Native runtime not assessed | Validate managed files with `npm run validate:grok-projection` in this checkout; native hooks and provider execution need separate verification |
 
 Legend:
 - `Works`: fully recommended for new users in AEXOS 4.2.11.
 - `Limited`: usable with the documented workaround.
+- `Projection only`: generated managed content is validated against canonical sources; native runtime acceptance is `NOT_ASSESSED`.
 - `Not available`: this IDE does not offer this capability; use the workaround instead.
 
 ### What You Lose Without Full Auto-Checks
@@ -79,6 +87,24 @@ If your goal is to get started as fast as possible:
 ---
 
 ## Setup Instructions
+
+### Grok Build
+
+Select Grok in the installer to create the managed `.grok/` projection. Other
+host directories are optional and need not be installed. In the framework
+checkout, `npm run sync:skills:grok` generates the projection and
+`npm run validate:grok-projection` checks it without rewriting the target.
+`npm run validate:parity -- --json` includes the same validator as
+`grok-projection`, with an observed file count and
+`evidenceLevel: generated-projection-comparison`, `hostRuntime: NOT_ASSESSED`.
+Missing files, managed-content differences, ownership drift and stale managed
+entries fail validation. User content outside managed sections remains owned by
+the user. Run a sync only when you intend to update generated files.
+
+These are maintainer scripts in the checkout or installed Core package; a new
+project need not have corresponding npm scripts in its own `package.json`.
+Native Grok hooks, authority enforcement and communication with other providers
+are separate acceptance work; generated-file parity does not establish them.
 
 ### Claude Code
 

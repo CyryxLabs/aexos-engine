@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "fixture.shared-record",
+  "type": "object",
+  "required": ["id", "active"],
+  "properties": {
+    "id": { "type": "string" },
+    "active": { "type": "boolean" }
+  }
+}

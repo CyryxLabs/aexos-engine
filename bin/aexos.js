@@ -16,6 +16,52 @@ const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 const args = process.argv.slice(2);
 const command = args[0];
 
+function parseInitExecutionFlags(initArgs) {
+  const ci = initArgs.includes('--ci');
+  const yes = initArgs.includes('--yes') || initArgs.includes('-y');
+  return {
+    ci,
+    yes,
+    force: initArgs.includes('--force') || yes || ci,
+    quiet: initArgs.includes('--quiet') || ci,
+  };
+}
+
+function formatInstallerHelp(text, width = process.stdout.columns || 80) {
+  const columns = Math.max(24, width);
+  const wrap = (line, indent = '') => {
+    const words = line.trim().split(/\s+/);
+    const lines = [];
+    let current = indent;
+    for (const word of words) {
+      if (current.trim() && current.length + word.length + 1 > columns) {
+        lines.push(current);
+        current = indent;
+      }
+      current += `${current.trim() ? ' ' : ''}${word}`;
+    }
+    lines.push(current);
+    return lines.join('\n');
+  };
+  return text.split('\n').map((line) => {
+    // Preserve executable commands as single logical lines for copy/paste.
+    if (line.trim().startsWith('npx ') || line.length <= columns) return line;
+    const option = line.match(/^ {2}(\S.*?)(?: {2,})(\S.*)$/);
+    if (option) return `  ${option[1]}\n${wrap(option[2], '    ')}`;
+    return wrap(line, line.match(/^\s*/)[0]);
+  }).join('\n');
+}
+
+function installerRecovery(projectRoot = process.cwd()) {
+  // Never turn terminal control characters in a path into an executable command.
+  // eslint-disable-next-line no-control-regex
+  const safePath = !/[\x00-\x1f\x7f]/.test(projectRoot);
+  const location = !safePath ? 'Open a terminal in the installation target.' : process.platform === 'win32'
+    ? `Set-Location -LiteralPath '${projectRoot.replace(/'/g, "''")}'`
+    : `cd -- '${projectRoot.replace(/'/g, "'\\''")}'`;
+  return [location, 'npx @aexos/core doctor', 'Resolve the reported issue, then retry:', 'npx @aexos/core install'].join('\n');
+}
+
 // Helper: Run initialization wizard
 async function runWizard(options = {}) {
   if (options.force || options.yes || options.ci) {
@@ -55,8 +101,11 @@ async function runWizard(options = {}) {
     const { runWizard: executeWizard } = require(wizardPath);
     await executeWizard(options);
   } catch (error) {
-    console.error('❌ Wizard error:', error.message);
-    process.exit(1);
+    if (error.code !== 'AEXOS_INSTALL_CANCELLED') {
+      console.error('Installation failed:', error.message);
+      console.error('\nRecovery\n' + installerRecovery());
+    }
+    process.exit(error.exitCode || 1);
   }
 }
 
@@ -77,6 +126,15 @@ USAGE:
   aexos sdc plan <story.md>          # Lean full-sdc plan/progress
   aexos sdc next <story-id>          # Next SDC phase + skill
   aexos wave plan --stories a,b      # Lean wave-execute DAG plan
+  aexos security assess findings.json # Security squad release verdict
+  aexos workflow map process.json      # Compile process to task contracts
+  aexos research status <run-id> --state-dir <path> --json
+                                       # Inspect local research evidence
+  aexos capabilities --json            # Inspect structural task coverage
+  aexos capabilities --verify=outcome.json # Verify declared delivery checks
+  aexos capabilities --rank=rubric.json # Rank source-referenced alternatives
+  aexos cerberus ingest request.json --worker <path>
+  aexos office                       # Open the local real-time Virtual Office
   aexos-delegate codex -t <slug>     # Delegate implementation to external executor
   npx @aexos/core enterprise upgrade --target . --dry-run --enterprise-source <path>
                                        # Plan Pro to Enterprise upgrade
@@ -795,7 +853,7 @@ async function runUninstall(options = {}) {
 
 // Helper: Show install help
 function showInstallHelp() {
-  console.log(`
+  console.log(formatInstallerHelp(`
 Usage: npx @aexos/core install [options]
 
 Install AEXOS in the current directory.
@@ -821,12 +879,13 @@ Smart Merge (Brownfield):
 Exit Codes:
   0  Installation successful
   1  Installation failed
+  130  Installation cancelled
 
 Examples:
   # Interactive installation
   npx @aexos/core install
 
-  # Force reinstall without prompts
+  # Allow reinstall; review choices interactively
   npx @aexos/core install --force
 
   # Brownfield: merge configs automatically
@@ -840,13 +899,13 @@ Examples:
 
   # Preview what would be installed
   npx @aexos/core install --dry-run
-`);
+`));
 }
 
 // Helper: Create new project
 // Helper: Show init help
 function showInitHelp() {
-  console.log(`
+  console.log(formatInstallerHelp(`
 Usage: npx @aexos/core init <project-name> [options]
 
 Create a new AEXOS project in a new directory named <project-name>.
@@ -855,22 +914,24 @@ use "npx @aexos/core install", which takes no name.
 
 Options:
   --force              Force creation in non-empty directory
-  --skip-install       Skip npm dependency installation
-  --template <name>    Use specific template (default: default)
+  --yes, -y            Accept defaults and allow an existing project directory
+  --ci                 Non-interactive CI mode (--yes --quiet)
+  --quiet              Minimal output; use defaults without prompts
+  --skip-install       Skip project dependencies; install framework requirements
+  --template <name>     Compatibility option (default: default)
   -t <name>            Shorthand for --template
   -h, --help           Show this help message
 
-Available Templates:
-  default     Full installation with all agents, tasks, and workflows
-  minimal     Essential files only (dev agent + basic tasks)
-  enterprise  Everything + dashboards + team integrations
+Accepted template values: default, minimal, enterprise.
+These currently install the same standard framework content.
 
 Examples:
   npx @aexos/core init my-project
+  npx @aexos/core init my-project --ci
   npx @aexos/core init my-project --template minimal
   npx @aexos/core init my-project --force --skip-install
   npx @aexos/core init . --template enterprise
-`);
+`));
 }
 
 async function initProject() {
@@ -884,7 +945,8 @@ async function initProject() {
   }
 
   // 3. Parse flags
-  const isForce = initArgs.includes('--force');
+  const executionFlags = parseInitExecutionFlags(initArgs);
+  const isForce = executionFlags.force;
   const skipInstall = initArgs.includes('--skip-install');
 
   // Template with argument
@@ -927,8 +989,9 @@ async function initProject() {
 
   // 5. Handle "." to install in current directory
   const isCurrentDir = projectName === '.';
-  const targetPath = isCurrentDir ? process.cwd() : path.join(process.cwd(), projectName);
-  const displayName = isCurrentDir ? path.basename(process.cwd()) : projectName;
+  const targetPath = isCurrentDir ? process.cwd() : path.resolve(process.cwd(), projectName);
+  const invocationCwd = process.cwd();
+  let createdDirectory = false;
 
   // 6. Check if directory exists
   if (fs.existsSync(targetPath) && !isCurrentDir) {
@@ -939,23 +1002,21 @@ async function initProject() {
       process.exit(1);
     }
     if (contents.length > 0 && isForce) {
-      console.log(`⚠️  Using --force: overwriting existing directory: ${projectName}`);
-    } else {
+      if (!executionFlags.quiet) console.log(`Using existing directory (--force): ${projectName}`);
+    } else if (!executionFlags.quiet) {
       console.log(`✓ Using existing empty directory: ${projectName}`);
     }
   } else if (!fs.existsSync(targetPath)) {
     fs.mkdirSync(targetPath, { recursive: true });
-    console.log(`✓ Created directory: ${projectName}`);
+    createdDirectory = true;
   }
 
-  console.log(`Creating new AEXOS project: ${displayName}`);
-  if (template !== 'default') {
-    console.log(`Template: ${template}`);
+  if (!executionFlags.quiet && template !== 'default') {
+    console.log(`Requested template: ${template} (compatibility alias; standard installation)`);
   }
-  if (skipInstall) {
+  if (!executionFlags.quiet && skipInstall) {
     console.log('Skip install: enabled');
   }
-  console.log('');
 
   // 7. Change to project directory (if not already there)
   if (!isCurrentDir) {
@@ -966,13 +1027,27 @@ async function initProject() {
   await runWizard({
     template,
     skipInstall,
-    force: isForce,
+    ...executionFlags,
+    invocationCwd,
+    projectRoot: targetPath,
+    createdDirectory,
   });
 }
 
 // Command routing (async main function)
 async function main() {
   switch (command) {
+    case 'office':
+      // AEXOS Virtual Office - Story AEX-3.6
+      try {
+        const { run } = require('../.aexos-core/core/virtual-office/cli');
+        await run(args.slice(1));
+      } catch (error) {
+        console.error(`❌ Virtual Office error: ${error.message}`);
+        process.exit(1);
+      }
+      break;
+
     case 'workers':
       // Service Discovery CLI - Story 2.7
       try {
@@ -1044,6 +1119,81 @@ async function main() {
       }
       break;
 
+    case 'capabilities':
+      try {
+        await require(path.resolve(__dirname, '../scripts/inspect-capabilities')).main(process.argv.slice(3));
+      } catch (error) {
+        console.error(`AEXOS capability inspection failed: ${error.message}`);
+        process.exitCode = 1;
+      }
+      break;
+
+    case 'security':
+      // Core Security squad deterministic assessment gate — AEX-2.7
+      try {
+        const { run } = require('../.aexos-core/cli/index.js');
+        await run(process.argv);
+      } catch (error) {
+        console.error(`❌ Security command error: ${error.message}`);
+        process.exit(4);
+      }
+      break;
+
+    case 'workflow':
+      // Workflow Engineering deterministic process compiler — AEX-2.8
+      try {
+        const { run } = require('../.aexos-core/cli/index.js');
+        await run(process.argv);
+      } catch (error) {
+        console.error(`❌ Workflow command error: ${error.message}`);
+        process.exit(4);
+      }
+      break;
+
+    case 'brownfield':
+      // Read-only bounded codebase evidence — AEX-4.23
+      try {
+        const { run } = require('../.aexos-core/cli/index.js');
+        await run(process.argv);
+      } catch (error) {
+        console.error(`[${error.code || 'BROWNFIELD_ERROR'}] Brownfield command failed.`);
+        process.exitCode = 4;
+      }
+      break;
+
+    case 'database':
+      // Closed database-audit request validation; live transport remains unavailable.
+      try {
+        const { run } = require('../.aexos-core/cli/index.js');
+        await run(process.argv);
+      } catch (_error) {
+        console.error('[DATABASE_COMMAND_FAILED] Database command failed.');
+        process.exitCode = 4;
+      }
+      break;
+
+    case 'research':
+      // Bounded local research artifact lifecycle — AEX-4.22
+      try {
+        const { run } = require('../.aexos-core/cli/index.js');
+        await run(process.argv);
+      } catch (error) {
+        console.error(`[${error.code || 'RESEARCH_ERROR'}] Research command failed.`);
+        process.exitCode = 4;
+      }
+      break;
+
+    case 'cerberus':
+      // Capability-gated Cerberus knowledge gateway — AEX-2.9
+      try {
+        const { run } = require('../.aexos-core/cli/index.js');
+        await run(process.argv);
+      } catch (error) {
+        console.error(`❌ Cerberus command error: ${error.message}`);
+        process.exit(4);
+      }
+      break;
+
     case 'enterprise':
       // AEXOS Enterprise Upgrade Planning - Story PEM.1
       await runEnterprise();
@@ -1070,7 +1220,6 @@ async function main() {
         ide: ideIndex >= 0 ? installArgs[ideIndex + 1] : null,
       };
       if (!installOptions.quiet) {
-        console.log('AEXOS Installation\n');
         // CORE-SU.F1 / #773 — Windows npx lock timeout advisory
         try {
           const {
@@ -1154,7 +1303,6 @@ async function main() {
 
     case undefined:
       // No arguments - run wizard directly (npx default behavior)
-      console.log('AEXOS Installation\n');
       await runWizard();
       break;
 
@@ -1166,7 +1314,11 @@ async function main() {
 }
 
 // Execute main function
-main().catch((error) => {
-  console.error('❌ Fatal error:', error.message);
-  process.exit(1);
-});
+if (require.main === module) {
+  main().catch((error) => {
+    console.error('Error:', error.message);
+    process.exit(error.exitCode || 1);
+  });
+}
+
+module.exports = { _testing: { parseInitExecutionFlags, formatInstallerHelp, installerRecovery } };

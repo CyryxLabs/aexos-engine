@@ -1,0 +1,614 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aexos.cyryxlabs.com/schemas/sop-v1.json",
+  "title": "AEXOS SOP v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "sopId",
+    "version",
+    "lifecycleState",
+    "title",
+    "purpose",
+    "ownerRole",
+    "authors",
+    "scope",
+    "actors",
+    "systems",
+    "inputs",
+    "outputs",
+    "preconditions",
+    "steps",
+    "branches",
+    "exceptions",
+    "approvals",
+    "evidenceObligations",
+    "conformance",
+    "lifecyclePolicy"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "aexos.sop/v1"
+    },
+    "sopId": {
+      "$ref": "#/definitions/id"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000000
+    },
+    "lifecycleState": {
+      "const": "Draft"
+    },
+    "title": {
+      "$ref": "#/definitions/text"
+    },
+    "purpose": {
+      "$ref": "#/definitions/text"
+    },
+    "ownerRole": {
+      "$ref": "#/definitions/id"
+    },
+    "authors": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/definitions/id"
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "included",
+        "excluded",
+        "projectId"
+      ],
+      "properties": {
+        "included": {
+          "$ref": "#/definitions/textArray"
+        },
+        "excluded": {
+          "$ref": "#/definitions/textArray"
+        },
+        "projectId": {
+          "$ref": "#/definitions/id"
+        }
+      }
+    },
+    "actors": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 128,
+      "items": {
+        "$ref": "#/definitions/identity"
+      }
+    },
+    "systems": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "$ref": "#/definitions/identity"
+      }
+    },
+    "inputs": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "$ref": "#/definitions/namedItem"
+      }
+    },
+    "outputs": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "$ref": "#/definitions/namedItem"
+      }
+    },
+    "preconditions": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "$ref": "#/definitions/precondition"
+      }
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 512,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name",
+          "instructions",
+          "owner",
+          "kind",
+          "dependsOn",
+          "systems",
+          "capabilities",
+          "inputs",
+          "outputs",
+          "verify",
+          "evidenceObligationIds",
+          "sideEffects",
+          "approvalRequired"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/definitions/id"
+          },
+          "name": {
+            "$ref": "#/definitions/text"
+          },
+          "instructions": {
+            "$ref": "#/definitions/text"
+          },
+          "owner": {
+            "$ref": "#/definitions/id"
+          },
+          "kind": {
+            "enum": [
+              "manual",
+              "deterministic",
+              "agentic",
+              "external"
+            ]
+          },
+          "dependsOn": {
+            "$ref": "#/definitions/idArray"
+          },
+          "systems": {
+            "$ref": "#/definitions/idArray"
+          },
+          "capabilities": {
+            "$ref": "#/definitions/textArray"
+          },
+          "inputs": {
+            "type": "array",
+            "maxItems": 64
+          },
+          "outputs": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 64
+          },
+          "verify": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 64
+          },
+          "evidenceObligationIds": {
+            "$ref": "#/definitions/idArray"
+          },
+          "sideEffects": {
+            "type": "boolean"
+          },
+          "approvalRequired": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "branches": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "fromStepId",
+          "cases",
+          "joinStepId"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/definitions/id"
+          },
+          "fromStepId": {
+            "$ref": "#/definitions/id"
+          },
+          "joinStepId": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/id"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "cases": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 32,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "condition",
+                "targetStepId",
+                "otherwise"
+              ],
+              "properties": {
+                "id": {
+                  "$ref": "#/definitions/id"
+                },
+                "condition": {
+                  "$ref": "#/definitions/text"
+                },
+                "targetStepId": {
+                  "$ref": "#/definitions/id"
+                },
+                "otherwise": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "exceptions": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "fromStepId",
+          "condition",
+          "targetStepId",
+          "approvalId"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/definitions/id"
+          },
+          "fromStepId": {
+            "$ref": "#/definitions/id"
+          },
+          "condition": {
+            "$ref": "#/definitions/text"
+          },
+          "targetStepId": {
+            "$ref": "#/definitions/id"
+          },
+          "approvalId": {
+            "$ref": "#/definitions/id"
+          }
+        }
+      }
+    },
+    "approvals": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "stage",
+          "roleId",
+          "independent",
+          "prohibitedRoleIds"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/definitions/id"
+          },
+          "stage": {
+            "enum": [
+              "review",
+              "approve",
+              "activate",
+              "exception",
+              "skip",
+              "deprecate",
+              "supersede"
+            ]
+          },
+          "roleId": {
+            "$ref": "#/definitions/id"
+          },
+          "independent": {
+            "type": "boolean"
+          },
+          "prohibitedRoleIds": {
+            "$ref": "#/definitions/idArray"
+          }
+        }
+      }
+    },
+    "evidenceObligations": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 512,
+      "items": {
+        "$ref": "#/definitions/obligation"
+      }
+    },
+    "conformance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maxReceiptAgeMs",
+        "allowSkips",
+        "allowedSkipApprovalIds",
+        "requireRealOrigin",
+        "requiredEnvironment"
+      ],
+      "properties": {
+        "maxReceiptAgeMs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 31536000000
+        },
+        "allowSkips": {
+          "type": "boolean"
+        },
+        "allowedSkipApprovalIds": {
+          "$ref": "#/definitions/idArray"
+        },
+        "requireRealOrigin": {
+          "type": "boolean"
+        },
+        "requiredEnvironment": {
+          "$ref": "#/definitions/id"
+        }
+      }
+    },
+    "change": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reason",
+        "compatibilityImpact",
+        "affectedConsumers",
+        "supersedesVersion",
+        "migrationRef",
+        "classification"
+      ],
+      "properties": {
+        "reason": {
+          "$ref": "#/definitions/text"
+        },
+        "compatibilityImpact": {
+          "$ref": "#/definitions/text"
+        },
+        "affectedConsumers": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 512,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          }
+        },
+        "supersedesVersion": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "migrationRef": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 512
+        },
+        "classification": {
+          "enum": [
+            "semantic",
+            "render-only"
+          ]
+        }
+      }
+    },
+    "lifecyclePolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maxReviewAgeMs"
+      ],
+      "properties": {
+        "maxReviewAgeMs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 31536000000
+        }
+      }
+    }
+  },
+  "definitions": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,63}$"
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 8192
+    },
+    "idArray": {
+      "type": "array",
+      "maxItems": 512,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/definitions/id"
+      }
+    },
+    "textArray": {
+      "type": "array",
+      "maxItems": 512,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2048
+      }
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "type"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "name": {
+          "$ref": "#/definitions/text"
+        },
+        "type": {
+          "$ref": "#/definitions/id"
+        }
+      }
+    },
+    "namedItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "description"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "description": {
+          "$ref": "#/definitions/text"
+        },
+        "required": {
+          "type": "boolean"
+        }
+      }
+    },
+    "obligation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "description",
+        "required",
+        "stepId",
+        "artifact",
+        "requiredChecks",
+        "requiredOrigin",
+        "maxAgeMs"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "description": {
+          "$ref": "#/definitions/text"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "stepId": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "artifact": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "kind",
+            "path"
+          ],
+          "properties": {
+            "id": {
+              "$ref": "#/definitions/id"
+            },
+            "kind": {
+              "enum": [
+                "file",
+                "report",
+                "json"
+              ]
+            },
+            "path": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1024
+            }
+          }
+        },
+        "requiredChecks": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "items": {
+            "type": "object"
+          }
+        },
+        "requiredOrigin": {
+          "enum": [
+            "runtime"
+          ]
+        },
+        "maxAgeMs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 31536000000
+        }
+      }
+    },
+    "precondition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "description",
+        "required",
+        "stepId"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "description": {
+          "$ref": "#/definitions/text"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "stepId": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

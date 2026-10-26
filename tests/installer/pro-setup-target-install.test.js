@@ -32,11 +32,16 @@ const path = require('path');
 const { execFileSync } = require('child_process');
 
 const proSetup = require('../../packages/installer/src/wizard/pro-setup');
+const {
+  createTrustStore,
+  signDescriptor,
+} = require('../helpers/paid-squad-artifact-fixture');
 
 // npm pack/install can be I/O-bound on Windows (antivirus, indexing, or a busy
 // workspace). Keep the assertion bounded without relying on Jest's short
 // default timeout.
 const NPM_INSTALL_TIMEOUT_MS = 180 * 1000;
+const FIXTURE_VERSION = '0.0.0-test-fixture';
 
 function makeTempDir(prefix) {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
@@ -72,7 +77,7 @@ function buildFixtureTarball() {
 
   const pkg = {
     name: '@aexos/pro',
-    version: '0.0.0-test-fixture',
+    version: FIXTURE_VERSION,
     description: 'Minimal @aexos/pro fixture for installer regression tests',
     private: false,
     files: ['squads/index.js', 'license/license-cache.js'],
@@ -89,12 +94,11 @@ function buildFixtureTarball() {
     'module.exports = { writeLicenseCache: () => ({ success: true }) };\n',
   );
 
-  const npmBin = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-  const packOutput = execFileSync(npmBin, ['pack', '--json'], {
+  const npm = proSetup._testing.resolveNpmInvocation();
+  const packOutput = execFileSync(npm.command, [...npm.prefixArgs, 'pack', '--json', '--ignore-scripts'], {
     cwd: buildDir,
     timeout: NPM_INSTALL_TIMEOUT_MS,
     encoding: 'utf8',
-    shell: process.platform === 'win32',
   });
 
   const packed = JSON.parse(packOutput)[0];
@@ -302,22 +306,18 @@ describe('acquireProArtifactSourceDir — graceful fallback when target install 
       .mockRejectedValue(hijackError);
 
     const tarballBuffer = require('fs').readFileSync(artifactPath);
-    const tarballSha256 = require('crypto')
-      .createHash('sha256')
-      .update(tarballBuffer)
-      .digest('hex');
-
     const originalGetUrl = proSetup._testing.InlineLicenseClient.prototype.getProArtifactUrl;
     proSetup._testing.InlineLicenseClient.prototype.getProArtifactUrl = jest
       .fn()
-      .mockResolvedValue({
-        package: '@aexos/pro',
-        version: proSetup._testing.DEFAULT_PRO_ARTIFACT_VERSION,
+      .mockResolvedValue(signDescriptor({
+        payload: tarballBuffer,
+        squadId: proSetup._testing.PRO_ARTIFACT_SQUAD_ID,
+        package: proSetup._testing.PRO_ARTIFACT_PACKAGE,
+        version: FIXTURE_VERSION,
         artifactUrl: 'https://aexos-fixture.test.invalid/pro.tgz',
-        sha256: tarballSha256,
-        sizeBytes: tarballBuffer.length,
-        expiresAt: new Date(Date.now() + 60000).toISOString(),
-      });
+        machineId: 'a'.repeat(64),
+        now: new Date(),
+      }));
 
     const originalFetch = global.fetch;
     global.fetch = jest.fn().mockResolvedValue({
@@ -333,7 +333,13 @@ describe('acquireProArtifactSourceDir — graceful fallback when target install 
       const result = await proSetup._testing.acquireProArtifactSourceDir(
         target,
         { accessToken: 'fake-access-token', cyryxCoreVersion: '5.2.5', machineId: 'a'.repeat(64) },
-        { proArtifactVersion: proSetup._testing.DEFAULT_PRO_ARTIFACT_VERSION },
+        {
+          proArtifactVersion: FIXTURE_VERSION,
+          artifactTrustStore: createTrustStore({
+            notBefore: new Date(Date.now() - 60000).toISOString(),
+            notAfter: new Date(Date.now() + 3600000).toISOString(),
+          }),
+        },
       );
 
       expect(result.success).toBe(true);

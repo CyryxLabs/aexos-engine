@@ -25,6 +25,12 @@ const { showCompletion } = require('../../packages/installer/src/wizard/feedback
 
 // Mock dependencies
 jest.mock('inquirer');
+jest.mock('../../packages/installer/src/wizard/visual-selectors', () => ({
+  createVisualPrompt: () => require('inquirer').prompt,
+}));
+jest.mock('../../.aexos-core/core/virtual-office/host-hooks', () => ({ installHooks: jest.fn(() => ({ installed: true })) }));
+jest.mock('../../.aexos-core/infrastructure/scripts/ide-sync/index', () => ({ commandSync: jest.fn(() => ({ success: true })), commandValidate: jest.fn(() => ({ summary: { pass: true } })) }));
+jest.mock('../../.aexos-core/infrastructure/scripts/codex-skills-sync/index', () => ({ syncSkills: jest.fn(() => ({ generated: 12 })) }));
 jest.mock('fs-extra');
 jest.mock('../../packages/installer/src/installer/dependency-installer');
 jest.mock('../../packages/installer/src/config/configure-environment');
@@ -45,6 +51,7 @@ jest.mock('../../bin/modules/mcp-installer', () => ({
 }));
 jest.mock('../../packages/installer/src/wizard/validation', () => ({
   validateInstallation: jest.fn().mockResolvedValue({
+    overallStatus: 'success',
     valid: true,
     errors: [],
     warnings: [],
@@ -60,6 +67,8 @@ jest.mock('../../packages/installer/src/wizard/feedback', () => ({
 
 describe('Wizard Integration - Story 1.7', () => {
   let consoleLogSpy, consoleErrorSpy;
+  const originalNoColor = process.env.NO_COLOR;
+  const originalTerm = process.env.TERM;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -72,17 +81,14 @@ describe('Wizard Integration - Story 1.7', () => {
     // closed readline.
     process.stdin.isTTY = true;
     process.stdout.isTTY = true;
+    delete process.env.NO_COLOR;
+    process.env.TERM = 'xterm';
 
     // Default mocks for successful flow
-    inquirer.prompt.mockImplementation(async (questions) => {
-      const names = questions.map((question) => question.name);
-      if (names.includes('language')) return { language: 'en' };
-      if (names.includes('userProfile')) return { userProfile: 'advanced' };
-      return {
-        projectType: 'greenfield',
-        selectedIDEs: ['vscode'],
-        selectedTechPreset: 'none',
-      };
+    inquirer.prompt.mockResolvedValue({
+      reviewAction: 'install',
+      projectType: 'greenfield',
+      selectedIDEs: ['vscode'],
     });
 
     generateIDEConfigs.mockResolvedValue({
@@ -144,29 +150,104 @@ describe('Wizard Integration - Story 1.7', () => {
     // that runs after this one would inherit a terminal that is not there.
     delete process.stdin.isTTY;
     delete process.stdout.isTTY;
+    if (originalNoColor === undefined) delete process.env.NO_COLOR;
+    else process.env.NO_COLOR = originalNoColor;
+    if (originalTerm === undefined) delete process.env.TERM;
+    else process.env.TERM = originalTerm;
   });
 
   describe('Full Wizard Flow (AC Integration)', () => {
-    it('stops before SYNAPSE or completion when core installation fails', async () => {
-      installCyryxCore.mockRejectedValueOnce(new Error('Required core failed'));
-      await expect(runWizard()).rejects.toThrow('Required core failed');
-      expect(installSynapseDomains).not.toHaveBeenCalled();
-      expect(showCompletion).not.toHaveBeenCalled();
+    it('reviews before writes, preserves empty hosts on edit, then installs reviewed values', async () => {
+      inquirer.prompt.mockReset().mockImplementation(async (questions) => {
+        const name = questions[0].name;
+        if (name === 'reviewAction') {
+          expect(installCyryxCore).not.toHaveBeenCalled();
+          expect(configureEnvironment).not.toHaveBeenCalled();
+          expect(installDependencies).not.toHaveBeenCalled();
+          expect(require('../../packages/installer/src/installer/install-footprint').findLegacyInstalls).not.toHaveBeenCalled();
+          return { reviewAction: reviewCount++ === 0 ? 'edit' : 'install' };
+        }
+        if (questions.length === 4) {
+          expect(questions.find((q) => q.name === 'userProfile').default).toBe('bob');
+          expect(questions.find((q) => q.name === 'selectedIDEs').default).toEqual([]);
+          expect(questions.find((q) => q.name === 'selectedIDEs').choices.every((c) => !c.checked)).toBe(true);
+          return { userProfile: 'advanced', projectType: 'brownfield', selectedIDEs: [], selectedTechPreset: 'none' };
+        }
+        return name === 'userProfile' ? { userProfile: 'bob' } : { projectType: 'greenfield', selectedIDEs: [], selectedTechPreset: 'none' };
+      });
+      let reviewCount = 0;
+      const result = await runWizard({ skipPro: true });
+      expect(reviewCount).toBe(2);
+      expect(result).toMatchObject({ userProfile: 'advanced', projectType: 'brownfield', selectedIDEs: [] });
+      expect(configureEnvironment).toHaveBeenCalledWith(expect.objectContaining({ userProfile: 'advanced', projectType: 'brownfield', selectedIDEs: [] }));
     });
 
-    it('stops before completion when operational SYNAPSE installation fails', async () => {
-      installSynapseDomains.mockRejectedValueOnce(new Error('Required SYNAPSE failed'));
-      await expect(runWizard()).rejects.toThrow('Required SYNAPSE failed');
-      expect(showCompletion).not.toHaveBeenCalled();
+    it('review cancellation leaves installation untouched and removes its signal listener', async () => {
+      const listeners = process.listenerCount('SIGINT');
+      inquirer.prompt.mockImplementation(async (questions) => questions[0].name === 'reviewAction'
+        ? { reviewAction: 'cancel' } : { userProfile: 'advanced', projectType: 'greenfield', selectedIDEs: [] });
+      await expect(runWizard({ createdDirectory: true })).rejects.toMatchObject({ code: 'AEXOS_INSTALL_CANCELLED', exitCode: 130 });
+      expect(installCyryxCore).not.toHaveBeenCalled();
+      expect(configureEnvironment).not.toHaveBeenCalled();
       expect(installDependencies).not.toHaveBeenCalled();
+      expect(require('../../packages/installer/src/wizard/feedback').showCompletion).not.toHaveBeenCalled();
+      expect(require('../../packages/installer/src/wizard/feedback').showCancellation).toHaveBeenCalledWith({ createdDirectory: true, installationStarted: false });
+      expect(process.listenerCount('SIGINT')).toBe(listeners);
     });
 
-    it('rejects a returned incomplete core result instead of treating it as installed', async () => {
-      installCyryxCore.mockResolvedValueOnce({ success: false, errors: ['Missing required core files'] });
-      await expect(runWizard()).rejects.toThrow('Required AEXOS core installation incomplete');
-      expect(installSynapseDomains).not.toHaveBeenCalled();
-      expect(showCompletion).not.toHaveBeenCalled();
+    it.each([{ ci: true }, { yes: true }, { quiet: true }, { interactive: false }])('never prompts on dependency failure in %j mode', async (options) => {
+      installDependencies.mockResolvedValue({ success: false, errorMessage: 'network unavailable' });
+      await expect(runWizard({ ...options, skipPro: true })).rejects.toThrow('Dependencies');
+      expect(inquirer.prompt).not.toHaveBeenCalled();
+      expect(configureEnvironment).toHaveBeenCalledWith(expect.objectContaining({ skipPrompts: true }));
+      expect(installDependencies).toHaveBeenCalledTimes(1);
     });
+
+    it('skips project dependencies only when --skip-install is supplied', async () => {
+      const result = await runWizard({ quiet: true, skipInstall: true, skipPro: true });
+      expect(installCyryxCore).toHaveBeenCalled();
+      expect(installDependencies).not.toHaveBeenCalled();
+      expect(result.depsResult).toMatchObject({ success: true, skipped: true, reason: 'skip-install' });
+    });
+
+    it('does not invoke selected-host writers, sync or cleanup for explicit empty hosts', async () => {
+      inquirer.prompt.mockResolvedValue({ reviewAction: 'install', projectType: 'greenfield', selectedIDEs: [] });
+      const ide = require('../../packages/installer/src/wizard/ide-config-generator');
+      const sync = require('../../.aexos-core/infrastructure/scripts/ide-sync/index');
+      const codex = require('../../.aexos-core/infrastructure/scripts/codex-skills-sync/index');
+      const result = await runWizard();
+      expect(result.ideSyncStatus).toBe('not-applicable');
+      expect(generateIDEConfigs).not.toHaveBeenCalled();
+      // Public commands are part of every installed framework and are not a
+      // selected-host projection; the remaining writers stay host-scoped.
+      expect(ide.copyExtraCommandFiles).toHaveBeenCalledTimes(1);
+      for (const writer of ['copySkillFiles', 'generateCodexSkills', 'cleanLegacyGenericAexosSkills']) {
+        expect(ide[writer]).not.toHaveBeenCalled();
+      }
+      expect(sync.commandSync).not.toHaveBeenCalled();
+      expect(sync.commandValidate).not.toHaveBeenCalled();
+      expect(codex.syncSkills).not.toHaveBeenCalled();
+    });
+
+    it('limits sync to selected host and fails completion on reported drift', async () => {
+      inquirer.prompt.mockResolvedValue({ reviewAction: 'install', projectType: 'greenfield', selectedIDEs: ['gemini'] });
+      const sync = require('../../.aexos-core/infrastructure/scripts/ide-sync/index');
+      sync.commandValidate.mockReturnValueOnce({ summary: { pass: false } });
+      await expect(runWizard()).rejects.toThrow('Host projection sync');
+      expect(sync.commandSync).toHaveBeenCalledTimes(1);
+      expect(sync.commandSync).toHaveBeenCalledWith({ quiet: true, ide: 'gemini' });
+    });
+
+    it('fails completion when selected Codex skills sync throws', async () => {
+      inquirer.prompt.mockResolvedValue({ reviewAction: 'install', projectType: 'greenfield', selectedIDEs: ['codex'] });
+      const ide = require('../../packages/installer/src/wizard/ide-config-generator');
+      ide.generateCodexSkills.mockReturnValueOnce({ count: 12, skipped: false });
+      ide.cleanLegacyGenericAexosSkills.mockResolvedValue({ removed: 0 });
+      const codex = require('../../.aexos-core/infrastructure/scripts/codex-skills-sync/index');
+      codex.syncSkills.mockImplementationOnce(() => { throw new Error('disk write rejected'); });
+      await expect(runWizard()).rejects.toThrow('Codex skills');
+    });
+
     it('should complete full wizard with dependency installation', async () => {
       const answers = await runWizard();
 
@@ -447,6 +528,7 @@ describe('Wizard Integration - Story 1.7', () => {
           selectedIDEs: [],
           selectedTechPreset: 'none',
         })
+        .mockResolvedValueOnce({ reviewAction: 'install' })
         .mockResolvedValueOnce({
           retryDeps: true,
         });
@@ -457,7 +539,7 @@ describe('Wizard Integration - Story 1.7', () => {
       expect(answers.depsInstalled).toBe(true);
     });
 
-    it('should allow skipping installation on failure', async () => {
+    it('should report incomplete installation when dependency retry is skipped', async () => {
       installDependencies.mockResolvedValue({
         success: false,
         errorMessage: 'Network connection failed',
@@ -473,14 +555,16 @@ describe('Wizard Integration - Story 1.7', () => {
           selectedIDEs: [],
           selectedTechPreset: 'none',
         })
+        .mockResolvedValueOnce({ reviewAction: 'install' })
         .mockResolvedValueOnce({
           retryDeps: false,
         });
 
-      const answers = await runWizard();
-
-      expect(answers.depsInstalled).toBe(false);
+      await expect(runWizard()).rejects.toThrow('Installation incomplete: Dependencies');
       expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('manually'));
+      expect(showCompletion).toHaveBeenCalledWith(expect.objectContaining({
+        installOutcome: expect.objectContaining({ success: false, failures: ['Dependencies'] }),
+      }));
     });
 
     it('should display clear error messages', async () => {
@@ -492,14 +576,17 @@ describe('Wizard Integration - Story 1.7', () => {
       });
 
       inquirer.prompt
+        .mockResolvedValueOnce({ language: 'en' })
         .mockResolvedValueOnce({
-          projectType: 'greenfield',
+          userProfile: 'advanced',
         })
+        .mockResolvedValueOnce({ projectType: 'greenfield', selectedIDEs: [] })
+        .mockResolvedValueOnce({ reviewAction: 'install' })
         .mockResolvedValueOnce({
           retryDeps: false,
         });
 
-      await runWizard();
+      await expect(runWizard()).rejects.toThrow('Installation incomplete');
 
       expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Permission denied'));
       expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('elevated permissions'));
@@ -542,21 +629,20 @@ describe('Wizard Integration - Story 1.7', () => {
           selectedIDEs: [],
           selectedTechPreset: 'none',
         })
+        .mockResolvedValueOnce({ reviewAction: 'install' })
         .mockResolvedValueOnce({
           continueWithoutEnv: true,
         });
 
-      const answers = await runWizard();
-
-      expect(answers.envConfigured).toBe(false);
+      await expect(runWizard()).rejects.toThrow('Installation incomplete: Project configuration');
       // Should still proceed to dependency installation
       expect(installDependencies).toHaveBeenCalled();
     });
 
-    it('should report AEXOS core installation failure without a success result', async () => {
+    it('should fail closed immediately when AEXOS core installation fails', async () => {
       installCyryxCore.mockRejectedValue(new Error('CYRYX core installation failed'));
+
       await expect(runWizard()).rejects.toThrow('CYRYX core installation failed');
-      expect(showCompletion).not.toHaveBeenCalled();
       expect(configureEnvironment).not.toHaveBeenCalled();
     });
   });

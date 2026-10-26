@@ -80,7 +80,11 @@
       "contract_headings": [
         "## Error Handling"
       ],
-      "reviewed_body_correction": null
+      "reviewed_body_correction": {
+        "story": "AEX-1.1",
+        "reason": "Strict read-only stdout/result-status task contract",
+        "substantive_projection_sha256": "2de2bffeebc92f76ef9daa9311f8e8323f57dbb56de3182c1104257e06a62a5b"
+      }
     },
     {
       "path": ".aexos-core/development/tasks/analyze-framework.md",
@@ -642,7 +646,11 @@
         "## Acceptance Criteria",
         "## Error Handling"
       ],
-      "reviewed_body_correction": null
+      "reviewed_body_correction": {
+        "story": "AEX-4.21",
+        "reason": "Story output and file/checklist verification contract",
+        "substantive_projection_sha256": "97a13b42243686b9f70a498a9d2b2866368cfa47f6c6bcc8dcd37e15e55c13bd"
+      }
     },
     {
       "path": ".aexos-core/development/tasks/create-service.md",
@@ -1189,7 +1197,11 @@
         "## Error Handling",
         "### Error Handling"
       ],
-      "reviewed_body_correction": null
+      "reviewed_body_correction": {
+        "story": "AEX-4.21",
+        "reason": "Required source/report artifacts and verifier contract",
+        "substantive_projection_sha256": "c1dbd95abd160f38501bcfaf4a7108ab5ebb644c73d6cbe2dd7ac1ac45aeb6cd"
+      }
     },
     {
       "path": ".aexos-core/development/tasks/dev-improve-code-quality.md",
@@ -2448,7 +2460,11 @@
         "## Output 1: Update QA Results and Apply the QA-Owned Lifecycle Transition",
         "## Output 2: Create Quality Gate File"
       ],
-      "reviewed_body_correction": null
+      "reviewed_body_correction": {
+        "story": "AEX-4.21",
+        "reason": "Required review-report artifact and selected-phase checklist",
+        "substantive_projection_sha256": "8743ba99187e9ee9e67ad3e13fb323c53c3306b5980fd55c11b1287efe6e38dd"
+      }
     },
     {
       "path": ".aexos-core/development/tasks/qa-risk-profile.md",
@@ -2485,7 +2501,11 @@
         "## Acceptance Criteria",
         "## Error Handling"
       ],
-      "reviewed_body_correction": null
+      "reviewed_body_correction": {
+        "story": "AEX-4.21",
+        "reason": "Actual test-report artifact and verifier contract",
+        "substantive_projection_sha256": "3b13ada3d0e2c3c98f6d5523c2f45d67c7f1293ef91d822fef1b1b2a3f393f84"
+      }
     },
     {
       "path": ".aexos-core/development/tasks/qa-security-checklist.md",
@@ -2548,7 +2568,11 @@
       "substantive_projection_sha256": "5590e5807d6622a55dcb58c41ccc1333f2184119690962abfafcd225c0066946",
       "mode_headings": [],
       "contract_headings": [],
-      "reviewed_body_correction": null
+      "reviewed_body_correction": {
+        "story": "AEX-4.16",
+        "reason": "Current protected manual sealed release routing replaces retired bypass/tag guidance",
+        "substantive_projection_sha256": "d14e83a717773b43fd0dab6393acf305fb3a36ae7911979bf4dd6e72a8133f8c"
+      }
     },
     {
       "path": ".aexos-core/development/tasks/remove-mcp.md",
@@ -2685,7 +2709,11 @@
         "## Error Handling",
         "## Output"
       ],
-      "reviewed_body_correction": null
+      "reviewed_body_correction": {
+        "story": "AEX-4.24",
+        "reason": "Read-only reliability adapter/lease evidence and no fallback",
+        "substantive_projection_sha256": "c18ee041f012a437cdb1c6c663b655ac4fb49e41e0ba769003a6d98572ab3b38"
+      }
     },
     {
       "path": ".aexos-core/development/tasks/security-scan.md",
@@ -3288,7 +3316,11 @@
         "## Acceptance Criteria",
         "## Error Handling"
       ],
-      "reviewed_body_correction": null
+      "reviewed_body_correction": {
+        "story": "AEX-4.21",
+        "reason": "Required validation-report artifact and selected-phase checklist",
+        "substantive_projection_sha256": "01f3ef435dd23f22b5763ce9a6f332efbd243eb4302c942d12dee1bb4e775bb6"
+      }
     },
     {
       "path": ".aexos-core/development/tasks/validate-tech-preset.md",

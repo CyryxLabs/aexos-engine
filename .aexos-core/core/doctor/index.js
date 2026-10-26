@@ -77,6 +77,7 @@ async function runDoctorChecks(options = {}) {
 
   const output = {
     version: DOCTOR_VERSION,
+    scope: 'Installation health only. Task contracts, provider connectivity, live host sessions and release readiness are not certified by Doctor.',
     timestamp: new Date().toISOString(),
     summary,
     checks: results,

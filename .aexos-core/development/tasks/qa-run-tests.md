@@ -1,4 +1,21 @@
 ---
+contractVersion: 1
+inputs:
+  - name: story
+    type: path
+    required: true
+  - name: output
+    type: path
+    required: true
+produces:
+  - name: output
+    kind: report
+    path: "{output}"
+verify:
+  - type: file-exists
+    target: "{output}"
+  - type: checklist
+    ref: selected-sdlc-phase
 name: run-tests
 agent: qa
 requires:

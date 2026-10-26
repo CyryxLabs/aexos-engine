@@ -10,6 +10,7 @@
 
 const path = require('path');
 const fs = require('fs');
+const { claudeApplicability } = require('../host-selection');
 
 const name = 'ide-sync';
 
@@ -58,6 +59,8 @@ function formatList(items) {
 }
 
 async function run(context) {
+  const applicability = claudeApplicability(context, name);
+  if (applicability) return applicability;
   const agentsSourceDir = path.join(context.projectRoot, '.aexos-core', 'development', 'agents');
   const agentsCommandDir = path.join(context.projectRoot, '.claude', 'commands', 'AEXOS', 'agents');
   const agentsSkillDir = path.join(context.projectRoot, '.claude', 'skills', 'AEXOS', 'agents');

@@ -1,6 +1,6 @@
 #!/bin/bash
 # Claude Code - Claude Max Mode
-# Uses your Claude Max subscription with bypass permissions
+# Uses your Claude Max subscription with native permission enforcement
 # This is the default Claude Code experience
 
 # Clear any alternative provider settings
@@ -15,4 +15,4 @@ echo -e "\033[92mClaude Max Mode - Starting...\033[0m"
 echo "Using your Claude Max subscription"
 echo ""
 
-claude --dangerously-skip-permissions "$@"
+claude "$@"

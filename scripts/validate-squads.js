@@ -26,6 +26,8 @@ const SQUADS_DIR = path.join(REPO_ROOT, 'squads');
 const NOT_SQUADS = new Set(['_example', '.designs']);
 
 const yaml = require('js-yaml');
+const { validateBrandPolicy } = require('./lib/validate-brand-policy');
+const { validateCommandDependencies } = require('./lib/validate-command-dependencies');
 
 const { SquadValidator } = require(
   path.join(REPO_ROOT, '.aexos-core', 'development', 'scripts', 'squad', 'squad-validator.js'),
@@ -173,6 +175,10 @@ async function main() {
     }
     for (const problem of checkSquadYaml(squadPath, name)) {
       errors.push({ code: 'SQUAD_YAML_UNPARSEABLE', message: problem });
+    }
+    if (name === 'brand') {
+      errors.push(...validateBrandPolicy(squadPath));
+      errors.push(...validateCommandDependencies(squadPath, name, REPO_ROOT));
     }
 
     totalErrors += errors.length;

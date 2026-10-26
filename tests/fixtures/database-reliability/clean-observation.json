@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "aexos.database-audit.fixture-observation/v1",
+  "sourceKind": "fixture",
+  "adapter": { "id": "fixture", "version": "1.0.0", "verified": false },
+  "databaseIdentity": { "fixtureId": "clean-control", "postgresMajor": 16 },
+  "observedAt": "2026-10-10T00:00:00.000Z",
+  "coverage": { "catalogVisibility": "complete", "roleGraph": "complete", "coveredSchemas": ["aexos_fixture"] },
+  "schemaObjects": [{
+    "schema": "aexos_fixture", "name": "accounts", "kind": "table",
+    "constraints": [{ "id": "accounts_pkey", "type": "primary-key" }],
+    "expectedConstraints": [{ "id": "accounts_pkey", "type": "primary-key" }],
+    "indexes": [{ "id": "accounts_tenant_idx", "columns": ["tenant_id"], "unique": false }],
+    "expectedIndexes": [{ "id": "expected_tenant_index", "columns": ["tenant_id"], "unique": false }]
+  }],
+  "migrations": {
+    "status": "observed",
+    "expected": [{ "id": "001", "order": 1, "hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" }],
+    "observed": [{ "id": "001", "order": 1, "hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" }]
+  },
+  "rls": [{
+    "schema": "aexos_fixture", "table": "accounts", "enabled": true, "forced": true,
+    "policies": [{ "id": "tenant_select", "command": "SELECT", "roles": ["fixture_reader"], "permissive": false, "classification": "structural" }],
+    "grants": ["fixture_reader"]
+  }],
+  "privileges": {
+    "status": "observed", "graphTruncated": false,
+    "roles": [{ "id": "fixture_reader", "superuser": false, "bypassRls": false, "canCreateDb": false, "canCreateRole": false }],
+    "grants": [{ "schema": "aexos_fixture", "object": "accounts", "grantee": "fixture_reader", "privilege": "SELECT" }]
+  },
+  "backup": { "status": "receipt-verified", "hasSchedule": true, "hasRetention": true, "hasEncryption": true, "latestReceiptVerified": true },
+  "plans": [{
+    "requestId": "accounts-by-tenant", "status": "estimated",
+    "plan": { "nodeType": "Index Scan", "totalCost": 8.2, "planRows": 1, "planWidth": 4, "children": [] }
+  }],
+  "limitations": ["FIXTURE_DECLARATION_ONLY"]
+}

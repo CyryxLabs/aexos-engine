@@ -3,17 +3,23 @@ task: brand-touchpoint-audit
 owner: '@brand-chief'
 owner_type: agent
 atomic_layer: task
-Input: Use the inputs and prerequisites documented in this task.
-Output: Produce every deliverable documented in this task.
+Input: Use the selected command section inputs, or the full-task inputs for a full-task request.
+Output: Produce every deliverable in the selected command section; full-task requests require all full-task deliverables.
 Checklist:
-  - '[ ] Execute every documented step.'
-  - '[ ] Validate every declared output.'
+  - '[ ] Execute every step of the explicitly selected scope.'
+  - '[ ] Validate every output of that scope without claiming completion of other sections.'
 ---
 
 # Brand Touchpoint Audit
 
 ```yaml
 task:
+  policy: config/brand-runtime.yaml
+  policy_instructions: >-
+    Before this task, load squads/brand/config/brand-runtime.yaml. Apply its task anatomy,
+    executor and tier guidance under user/host instructions and core authority. Preserve
+    this task's checkpoints, vetoes and success criteria; human approvals remain human.
+    This guidance does not grant dispatch, messaging or provider execution authority.
   task_name: "Audit Brand Touchpoints"
   status: pending
   responsible_executor: emily-heyward
@@ -110,3 +116,33 @@ task:
     on_complete: "Pass to brand-chief for synthesis with overall brand audit"
     deliverable: "Touchpoint scorecard + priority fixes"
 ```
+
+## touchpoint-audit
+
+This Emily-owned command uses the shared Brand policy and only the bounded
+procedure below. The original full task retains its four-dimension scorecard;
+this command explicitly uses the advertised three dimensions. Read the base file
+before selecting the section and do not mark the whole movement process complete.
+
+**Inputs:** belief/identity, actual digital/physical/human touchpoint artifacts,
+and intended experience. **Output:** scorecard, severity-ranked gaps and redesign plan.
+
+1. Inventory supplied touchpoints, artifact versions and evidence coverage.
+   Include observed digital, physical and human interactions; absent categories
+   remain unobserved rather than being filled with invented customer encounters.
+2. Score each observed item 1–10 on belief alignment, emotional impact and
+   consistency, with artifact-linked rationale. Label emotional impact as evaluator
+   judgment unless actual customer evidence was provided. Record unassessable
+   dimensions UNVERIFIED and do not compute a misleading complete score.
+3. Identify contradictions and prioritize critical unusable/misleading experiences,
+   high failures in a core belief or key journey, medium inconsistent expression,
+   and low cosmetic refinements. Explain impact and confidence for every priority.
+4. Propose concrete redesign for failing touchpoints, with accountable owner,
+   dependency, observable acceptance condition and evidence to collect after change.
+5. Return inventory, scorecard, priority fixes and a separate missing-evidence list.
+   Human approval precedes implementation; no external action is authorized here.
+
+**Acceptance:** supplied artifacts covered, three explicit dimensions, reasoned
+severities and actionable redesign/acceptance checks. **Reject complete audit:**
+missing key journey evidence. A partial audit is labeled as such. **Handoff:**
+brand-chief and affected owners; actual customer response/retest remains separate.

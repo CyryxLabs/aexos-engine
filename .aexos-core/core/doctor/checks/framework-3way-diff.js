@@ -55,11 +55,17 @@ async function run(context = {}) {
     ['enterprise-framework', 'aexos-enterprise', 'AEXOS-enterprise'],
     process.env.AEXOS_ENTERPRISE_ROOT,
   );
+  const unavailable = [];
+  if (process.env.AEXOS_HUB_ROOT && !hub) unavailable.push('AEXOS_HUB_ROOT');
+  if (process.env.AEXOS_ENTERPRISE_ROOT && !ent) unavailable.push('AEXOS_ENTERPRISE_ROOT');
+  if (unavailable.length) {
+    return { check: name, status: 'WARN', message: `Configured framework peers unavailable: ${unavailable.join(', ')}. Correct these paths to directories containing .aexos-core, or unset them if peer comparison is not intended.`, fixCommand: null };
+  }
 
   if (!hub && !ent) {
     return {
       check: name,
-      status: 'PASS',
+      status: 'INFO',
       message:
         'No sibling hub/enterprise trees — 3-way harvest check skipped (run npm run diff:framework-3way when peers available)',
     };

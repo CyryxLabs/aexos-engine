@@ -1,0 +1,12 @@
+virtual_office:
+  host: 127.0.0.1
+  port: 4001
+  open_browser: true
+  heartbeat_ttl_ms: 30000
+  recent_completion_ms: 12000
+  event_history_limit: 200
+  max_event_bytes: 65536
+  polling_interval_ms: 1000
+  brand:
+    logo_asset: public/assets/cyryx-labs-logo.png
+

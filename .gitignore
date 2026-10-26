@@ -131,6 +131,8 @@ squads/*
 !squads/legal-analyst/
 !squads/seo/
 !squads/squad-creator/
+!squads/security/
+!squads/workflow-engineering/
 keys/
 *.secret
 *.credentials
@@ -227,7 +229,8 @@ aexos-core/index.esm.js
 aexos-core/*.map
 
 # Applications (separate deployments, NOT part of npm package)
-apps/
+apps/*
+!apps/dashboard/
 
 # External projects (separate repositories)
 aexos-guide-app/
@@ -521,3 +524,17 @@ build/
 .claude/skills/aexos-*/
 .vercel
 .env*.local
+
+# The dashboard is a versioned app; only its local outputs stay private.
+apps/dashboard/node_modules/
+apps/dashboard/.vercel/
+apps/dashboard/.env*
+apps/dashboard/supabase/.temp/
+
+# Versioned dashboard schema; local Supabase cache remains ignored.
+!apps/dashboard/supabase/
+!apps/dashboard/supabase/**
+apps/dashboard/supabase/.temp/
+
+.vercel
+.env*

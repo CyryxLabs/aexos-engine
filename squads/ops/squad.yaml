@@ -184,7 +184,7 @@ cross_cutting:
   aexos_awareness:
     description: Todos os agentes entendem a arquitetura AEXOS-core
     context_files:
-      - .claude/CLAUDE.md
+      - .aexos-core/constitution.md
       - .aexos-core/core-config.yaml
       - .aexos-core/data/entity-registry.yaml
   core_agent_boundary:

@@ -11,6 +11,7 @@
 
 const fs = require('fs-extra');
 const path = require('path');
+const crypto = require('crypto');
 const yaml = require('js-yaml');
 const chalk = require('chalk');
 
@@ -18,6 +19,33 @@ const SubagentPromptBuilder = require('./subagent-prompt-builder');
 const ContextManager = require('./context-manager');
 const ParallelExecutor = require('./parallel-executor');
 const ChecklistRunner = require('./checklist-runner');
+const {
+  assertRuntime,
+  createLegacyRuntime,
+} = require(path.resolve(__dirname, '../execution/agent-runtime'));
+const {
+  loadTaskContract,
+  normalizeTaskContract,
+} = require(path.resolve(__dirname, '../execution/task-contract'));
+const {
+  WorkflowNormalizationError,
+  normalizeWorkflowDocument,
+} = require(path.resolve(__dirname, 'workflow-normalizer'));
+const { assertExecutionBinding } = require(path.resolve(
+  __dirname,
+  '../execution/execution-binding',
+));
+const { verifyTaskOutcome } = require(path.resolve(__dirname, '../execution/outcome-verifier'));
+
+function stable(value) {
+  if (Array.isArray(value)) return value.map(stable);
+  if (!value || typeof value !== 'object') return value;
+  return Object.fromEntries(Object.keys(value).sort().map((key) => [key, stable(value[key])]));
+}
+
+function sha256(value) {
+  return crypto.createHash('sha256').update(value).digest('hex');
+}
 
 // V3.1 Components for Pre-Flight Detection and Skill Dispatch
 const TechStackDetector = require('./tech-stack-detector');
@@ -36,10 +64,19 @@ class WorkflowOrchestrator {
    * @param {boolean} options.parallel - Enable parallel execution
    * @param {Function} options.onPhaseStart - Callback when phase starts
    * @param {Function} options.onPhaseComplete - Callback when phase completes
-   * @param {Function} options.dispatchSubagent - Function to dispatch subagent (Task tool)
+   * @param {{log: Function}} options.logger - Optional instance logger; defaults to console
+   * @param {Object} options.runtime - AgentRuntime execution boundary
+   * @param {Function} options.dispatchSubagent - Deprecated explicit legacy executor
    */
   constructor(workflowPath, options = {}) {
+    const logger = options.logger === undefined ? console : options.logger;
+    if (!logger || typeof logger !== 'object' || typeof logger.log !== 'function') {
+      const error = new TypeError('WorkflowOrchestrator logger must expose log(...args).');
+      error.code = 'WORKFLOW_LOGGER_INVALID';
+      throw error;
+    }
     this.workflowPath = workflowPath;
+    this.logger = logger;
     this.options = {
       yolo: options.yolo || false,
       executionProfile: options.executionProfile || null,
@@ -47,19 +84,38 @@ class WorkflowOrchestrator {
       parallel: options.parallel !== false, // Default true
       onPhaseStart: options.onPhaseStart || this._defaultPhaseStart.bind(this),
       onPhaseComplete: options.onPhaseComplete || this._defaultPhaseComplete.bind(this),
-      dispatchSubagent: options.dispatchSubagent || null,
-      checkTool: options.checkTool || null,
-      onPhaseError: options.onPhaseError || null,
-      projectRoot: options.projectRoot || process.cwd(),
+      projectRoot: path.resolve(options.projectRoot || process.cwd()),
+      frameworkRoot: path.resolve(options.frameworkRoot || path.resolve(__dirname, '../../..')),
+      stateRoot: options.stateRoot ? path.resolve(options.stateRoot) : null,
+      budgetCeilingUsd: options.budgetCeilingUsd,
+      workflowBudgetScope: options.workflowBudgetScope,
+      workflowBudgetCeilingUsd: options.workflowBudgetCeilingUsd,
       confidenceThreshold: this._resolveConfidenceThreshold(options.confidenceThreshold),
       enableConfidenceGate: options.enableConfidenceGate !== false,
     };
+    this.runtime = options.runtime || createLegacyRuntime(options.dispatchSubagent, {
+      projectRoot: this.options.projectRoot,
+      governanceTokenSecret: options.governanceTokenSecret,
+      governanceTokenTtlMs: options.governanceTokenTtlMs,
+      clock: options.clock,
+      evidenceSink: options.evidenceSink,
+      budgetSink: options.budgetSink,
+      budgetFlushIntervalMs: options.budgetFlushIntervalMs,
+    });
+    this.executionBindings = options.executionBindings === undefined
+      ? null
+      : options.executionBindings;
+    this.validatedExecutionBindings = new Map();
 
     this.workflow = null;
-    this.promptBuilder = new SubagentPromptBuilder(this.options.projectRoot);
+    this.promptBuilder = new SubagentPromptBuilder(this.options.projectRoot, {
+      frameworkRoot: this.options.frameworkRoot,
+    });
     this.contextManager = null;
     this.parallelExecutor = new ParallelExecutor();
-    this.checklistRunner = new ChecklistRunner(this.options.projectRoot);
+    this.checklistRunner = new ChecklistRunner(this.options.projectRoot, {
+      frameworkRoot: this.options.frameworkRoot,
+    });
 
     // V3.1: Pre-flight detection and skill dispatch components
     this.techStackDetector = new TechStackDetector(this.options.projectRoot);
@@ -77,6 +133,8 @@ class WorkflowOrchestrator {
       startTime: null,
       currentPhase: 0,
       completedPhases: [],
+      completedPhaseIds: [],
+      acceptedPhaseIds: [],
       failedPhases: [],
       skippedPhases: [],
       pendingPhases: [],
@@ -91,23 +149,17 @@ class WorkflowOrchestrator {
   async loadWorkflow() {
     try {
       const content = await fs.readFile(this.workflowPath, 'utf8');
-      this.workflow = yaml.load(content);
-      if (!this.workflow || typeof this.workflow !== 'object') throw new Error('Workflow must be an object');
-      // Shipped workflows keep sequence/orchestration inside their workflow envelope.
-      this.workflow.sequence = this.workflow.sequence || this.workflow.workflow?.sequence;
-      this.workflow.orchestration = this.workflow.orchestration || this.workflow.workflow?.orchestration;
-      if (Array.isArray(this.workflow.sequence)) this.workflow.sequence = this.workflow.sequence.map(
-        phase => phase.meta === 'end' ? { ...phase, workflow_end: true } : phase);
-      if (!Array.isArray(this.workflow.sequence) || !this.workflow.sequence.some(phase => !phase.workflow_end)) {
-        throw new Error('Workflow has no executable sequence');
-      }
+      this.workflow = normalizeWorkflowDocument(yaml.load(content));
 
       // Extract workflow metadata
       const workflowId = this.workflow.workflow?.id || path.basename(this.workflowPath, '.yaml');
-      this.contextManager = new ContextManager(workflowId, this.options.projectRoot);
+      this.contextManager = new ContextManager(workflowId, this.options.projectRoot, {
+        stateRoot: this.options.stateRoot,
+      });
 
       return this.workflow;
     } catch (error) {
+      if (error instanceof WorkflowNormalizationError) throw error;
       throw new Error(`Failed to load workflow: ${error.message}`);
     }
   }
@@ -138,7 +190,7 @@ class WorkflowOrchestrator {
       const fullPath = path.join(this.options.projectRoot, dir);
       await fs.ensureDir(fullPath);
       created.push(dir);
-      console.log(chalk.gray(`   📁 ${dir}`));
+      this.logger.log(chalk.gray(`   📁 ${dir}`));
     }
 
     return created;
@@ -262,10 +314,19 @@ class WorkflowOrchestrator {
       for (const action of phase.postActions) {
         try {
           const actionResult = await this._executePostAction(action);
-          validation.checks.push({ ...action, passed: actionResult.success });
-          if (!actionResult.success) {
+          const isValidResult = actionResult
+            && typeof actionResult === 'object'
+            && !Array.isArray(actionResult)
+            && typeof actionResult.success === 'boolean';
+          const passed = isValidResult && actionResult.success === true;
+          validation.checks.push({ ...action, passed });
+          if (!passed) {
             validation.passed = false;
-            validation.errors.push(`Post-action failed: ${action.type}`);
+            validation.errors.push(
+              isValidResult
+                ? `Post-action failed: ${action.type}`
+                : `Post-action returned invalid evidence: ${action.type}`,
+            );
           }
         } catch (error) {
           validation.passed = false;
@@ -274,22 +335,31 @@ class WorkflowOrchestrator {
       }
     }
 
-    // 3. Run checklist if defined
+    // 3. Run the phase-local checklist. Shared mutable selection corrupts
+    // concurrent phases and can certify one phase with another phase's gate.
     if (phase.checklist) {
       try {
         const checklistResult = await this.checklistRunner.run(
           phase.checklist,
           phase.creates,
         );
+        const isValidChecklistResult = checklistResult
+          && typeof checklistResult === 'object'
+          && !Array.isArray(checklistResult)
+          && typeof checklistResult.passed === 'boolean';
         validation.checks.push({
           type: 'checklist',
           checklist: phase.checklist,
-          passed: checklistResult.passed,
-          items: checklistResult.items,
+          passed: isValidChecklistResult && checklistResult.passed === true,
+          items: checklistResult?.items,
         });
-        if (!checklistResult.passed) {
+        if (!isValidChecklistResult || checklistResult.passed !== true) {
           validation.passed = false;
-          validation.errors.push(`Checklist failed: ${phase.checklist}`);
+          validation.errors.push(
+            isValidChecklistResult
+              ? `Checklist failed: ${phase.checklist}`
+              : `Checklist returned invalid evidence: ${phase.checklist}`,
+          );
         }
       } catch (error) {
         validation.passed = false;
@@ -365,52 +435,62 @@ class WorkflowOrchestrator {
     // Load workflow if not already loaded
     if (!this.workflow) {
       await this.loadWorkflow();
+    } else {
+      this.workflow = normalizeWorkflowDocument(this.workflow);
     }
 
-    const sequence = this.workflow.sequence || [];
+    const sequence = this.workflow.sequence;
     const orchestration = this.workflow.orchestration || {};
     const parallelPhases = orchestration.parallel_phases || [];
+    const boundMode = this._preflightExecutionBindings(sequence);
 
-    console.log(chalk.blue(`\n🚀 Starting workflow: ${this.workflow.workflow?.name || 'Unknown'}`));
-    console.log(
+    this.logger.log(chalk.blue(`\n🚀 Starting workflow: ${this.workflow.workflow?.name || 'Unknown'}`));
+    this.logger.log(
       chalk.gray(
         `   Phases: ${sequence.length} | Mode: ${this.options.yolo ? 'YOLO' : 'Interactive'}`,
       ),
     );
-    console.log(chalk.gray(`   Parallel phases: ${parallelPhases.join(', ') || 'None'}`));
+    this.logger.log(chalk.gray(`   Parallel phases: ${parallelPhases.join(', ') || 'None'}`));
+
+    // DETERMINISTIC: Setup directories via code before any AI operations
+    if (!boundMode) {
+      this.logger.log(chalk.blue('\n📁 Setting up directories...'));
+      await this.setupDirectories();
+      this.logger.log(chalk.green('   ✅ Directories ready\n'));
+    }
 
     // ═══════════════════════════════════════════════════════════════════════════
     // PHASE 0: PRE-FLIGHT DETECTION (V3.1)
     // DETERMINISTIC: Tech stack detection via file system checks
     // ═══════════════════════════════════════════════════════════════════════════
-    console.log(chalk.blue('🔍 Phase 0: Pre-Flight Detection...'));
+    this.logger.log(chalk.blue('🔍 Phase 0: Pre-Flight Detection...'));
     this.techStackProfile = await this.techStackDetector.detect();
     this.conditionEvaluator = new ConditionEvaluator(this.techStackProfile);
-    // Detect the real project before output scaffolding creates supabase/docs.
-    await this.setupDirectories();
+    // Bound executions keep their state and publications under the caller's
+    // governed control root; only interactive/unbound runs scaffold projects.
 
     // Log detection results
-    console.log(
+    this.logger.log(
       chalk.gray(
         `   📊 Database: ${this.techStackProfile.hasDatabase ? '✓' : '✗'} ${this.techStackProfile.database.type ? `(${this.techStackProfile.database.type})` : ''}`,
       ),
     );
-    console.log(
+    this.logger.log(
       chalk.gray(
         `   🎨 Frontend: ${this.techStackProfile.hasFrontend ? '✓' : '✗'} ${this.techStackProfile.frontend.framework ? `(${this.techStackProfile.frontend.framework})` : ''}`,
       ),
     );
-    console.log(
+    this.logger.log(
       chalk.gray(
         `   🔧 Backend: ${this.techStackProfile.hasBackend ? '✓' : '✗'} ${this.techStackProfile.backend.type ? `(${this.techStackProfile.backend.type})` : ''}`,
       ),
     );
-    console.log(chalk.gray(`   📝 TypeScript: ${this.techStackProfile.hasTypeScript ? '✓' : '✗'}`));
-    console.log(
+    this.logger.log(chalk.gray(`   📝 TypeScript: ${this.techStackProfile.hasTypeScript ? '✓' : '✗'}`));
+    this.logger.log(
       chalk.gray(`   📋 Applicable phases: ${this.techStackProfile.applicablePhases.join(', ')}`),
     );
-    console.log(chalk.gray(`   🎯 Confidence: ${this.techStackProfile.confidence}%`));
-    console.log(chalk.green('   ✅ Pre-flight detection complete\n'));
+    this.logger.log(chalk.gray(`   🎯 Confidence: ${this.techStackProfile.confidence}%`));
+    this.logger.log(chalk.green('   ✅ Pre-flight detection complete\n'));
 
     // Store tech stack profile in context for phases
     await this.contextManager.updateMetadata({
@@ -420,7 +500,7 @@ class WorkflowOrchestrator {
     // Group phases by parallel execution
     let remainingSequence = sequence;
     if (this.options.fromPhase != null) {
-      const outputs = this.contextManager.getPreviousPhaseOutputs();
+      const outputs = this.contextManager?.getPreviousPhaseOutputs?.() || {};
       remainingSequence = [];
       for (const phase of sequence.filter(item => !item.workflow_end)) {
         const prior = outputs[phase.phase];
@@ -443,18 +523,18 @@ class WorkflowOrchestrator {
 
     // Execute each group
     for (const group of phaseGroups) {
-      try {
-        if (group.parallel && this.options.parallel) {
-          await this._executeParallelPhases(group.phases);
-        } else {
-          for (const phase of group.phases) {
-            await this._executeSinglePhase(phase);
-            if (this.executionState.pendingPhases.length) break;
-          }
+      if (group.parallel && this.options.parallel) {
+        await this._executeParallelPhases(group.phases);
+      } else {
+        for (const phase of group.phases) {
+          await this._executeSinglePhase(phase);
+          if (this.executionState.pendingPhases.length) break;
         }
-      } catch { break; } // The phase records its actual error before yielding the summary.
+      }
       if (this.executionState.failedPhases.length || this.executionState.pendingPhases.length) break;
     }
+
+    await this._assertExecutedWork();
 
     // Generate execution summary + confidence gate
     const summary = this._generateExecutionSummary();
@@ -502,11 +582,99 @@ class WorkflowOrchestrator {
   }
 
   /**
+   * Validate every strict execution binding before setup or context writes.
+   * @private
+   */
+  _preflightExecutionBindings(sequence) {
+    const strictPhases = sequence.filter((phase) => phase.requireAcceptance === true);
+    this.validatedExecutionBindings = new Map();
+    if (this.executionBindings === null) {
+      if (strictPhases.length > 0) {
+        throw this._createPhaseError(
+          'WORKFLOW_EXECUTION_BINDINGS_REQUIRED',
+          'Strict workflow phases require validated execution bindings.',
+        );
+      }
+      return false;
+    }
+    if (
+      !this.executionBindings
+      || typeof this.executionBindings !== 'object'
+      || Array.isArray(this.executionBindings)
+    ) {
+      throw this._createPhaseError(
+        'WORKFLOW_EXECUTION_BINDINGS_REQUIRED',
+        'Strict workflow phases require validated execution bindings.',
+      );
+    }
+
+    const strictIds = new Set(strictPhases.map((phase) => phase.id));
+    const unknownBinding = Object.keys(this.executionBindings)
+      .find((phaseId) => !strictIds.has(phaseId));
+    if (unknownBinding) {
+      throw this._createPhaseError(
+        'WORKFLOW_EXECUTION_BINDING_UNKNOWN',
+        `Execution binding does not match a strict phase: ${unknownBinding}`,
+      );
+    }
+
+    for (const phase of strictPhases) {
+      const unsupportedSideEffect = ['creates', 'preActions', 'postActions']
+        .find((field) => phase[field] !== undefined);
+      if (unsupportedSideEffect) {
+        throw this._createPhaseError(
+          'WORKFLOW_BOUND_PHASE_SIDE_EFFECT_UNSUPPORTED',
+          `Bound phase ${phase.id} cannot declare legacy ${unsupportedSideEffect} effects.`,
+        );
+      }
+      const binding = this.executionBindings[phase.id];
+      if (!binding) {
+        throw this._createPhaseError(
+          'WORKFLOW_EXECUTION_BINDING_REQUIRED',
+          `Missing execution binding for phase ${phase.id}.`,
+        );
+      }
+    }
+    if (
+      typeof this.options.workflowBudgetScope !== 'string'
+      || this.options.workflowBudgetScope.length === 0
+      || !Number.isFinite(this.options.workflowBudgetCeilingUsd)
+      || this.options.workflowBudgetCeilingUsd <= 0
+    ) {
+      throw this._createPhaseError(
+        'WORKFLOW_BINDING_BUDGET_REQUIRED',
+        'Bound execution requires one trusted workflow budget scope and positive ceiling.',
+      );
+    }
+    for (const phase of strictPhases) {
+      const binding = this.executionBindings[phase.id];
+      if (
+        binding.budgetScope !== this.options.workflowBudgetScope
+        || binding.budgetCeilingUsd !== this.options.workflowBudgetCeilingUsd
+      ) {
+        throw this._createPhaseError(
+          'WORKFLOW_BINDING_BUDGET_MISMATCH',
+          `Execution binding budget differs from the workflow budget for phase ${phase.id}.`,
+        );
+      }
+    }
+    for (const phase of strictPhases) {
+      const binding = this.executionBindings[phase.id];
+      this.validatedExecutionBindings.set(phase.id, assertExecutionBinding(binding, {
+        phase,
+        projectRoot: this.options.projectRoot,
+        frameworkRoot: this.options.frameworkRoot,
+      }));
+    }
+    return true;
+  }
+
+  /**
    * Execute multiple phases in parallel
    * @private
    */
   async _executeParallelPhases(phases) {
-    console.log(chalk.yellow(`\n⚡ Executing ${phases.length} phases in parallel...`));
+    this.logger.log(chalk.yellow(`\n⚡ Executing ${phases.length} phases in parallel...`));
 
     const phasePromises = phases.map((phase) => this._executeSinglePhase(phase));
     const results = await Promise.allSettled(phasePromises);
@@ -514,11 +682,101 @@ class WorkflowOrchestrator {
     // Process results
     results.forEach((result, index) => {
       if (result.status === 'rejected') {
-        console.log(chalk.red(`   Phase ${phases[index].phase} failed: ${result.reason}`));
+        this.logger.log(chalk.red(`   Phase ${phases[index].phase} failed: ${result.reason}`));
       }
     });
 
+    const failure = results.find((result) => result.status === 'rejected');
+    if (failure) {
+      throw failure.reason;
+    }
+
     return results;
+  }
+
+  /**
+   * Resolve explicit or task-file acceptance contracts before provider dispatch.
+   * Contracted tasks are certified; legacy uncontracted guidance remains usable
+   * but cannot be represented as accepted execution.
+   * @private
+   */
+  _resolvePhaseAcceptance(phase) {
+    if (phase.contract !== undefined) {
+      return {
+        contract: normalizeTaskContract(phase.contract, this.options.projectRoot),
+        requireAcceptance: true,
+        certification: 'accepted',
+      };
+    }
+
+    if (!phase.task) {
+      if (phase.requireAcceptance === true) {
+        throw this._createPhaseError(
+          'WORKFLOW_TASK_CONTRACT_REQUIRED',
+          'Required acceptance needs a selected task contract.',
+        );
+      }
+      return { contract: null, requireAcceptance: false, certification: 'non-certified' };
+    }
+
+    const taskFile = phase.task.endsWith('.md') ? phase.task : `${phase.task}.md`;
+    const taskRoot = path.resolve(
+      this.options.frameworkRoot,
+      '.aexos-core',
+      'development',
+      'tasks',
+    );
+    const taskPath = path.resolve(taskRoot, taskFile);
+    const relative = path.relative(taskRoot, taskPath);
+    const isInsideTaskRoot = relative && !relative.startsWith('..') && !path.isAbsolute(relative);
+
+    if (!isInsideTaskRoot || !fs.existsSync(taskPath)) {
+      if (phase.requireAcceptance === true) {
+        throw this._createPhaseError(
+          'WORKFLOW_TASK_CONTRACT_REQUIRED',
+          `Required task contract was not found: ${phase.task}`,
+        );
+      }
+      return { contract: null, requireAcceptance: false, certification: 'non-certified' };
+    }
+
+    const selected = loadTaskContract(taskPath, {
+      enforcement: phase.requireAcceptance === true ? 'strict' : 'warn',
+      projectRoot: this.options.projectRoot,
+    });
+    if (selected.status === 'invalid') {
+      throw this._createPhaseError(
+        'WORKFLOW_TASK_CONTRACT_INVALID',
+        `Selected task contract is invalid: ${phase.task}`,
+      );
+    }
+    if (selected.status !== 'contracted') {
+      if (phase.requireAcceptance === true) {
+        throw this._createPhaseError(
+          'WORKFLOW_TASK_CONTRACT_REQUIRED',
+          `Required task contract is missing: ${phase.task}`,
+        );
+      }
+      return { contract: null, requireAcceptance: false, certification: 'non-certified' };
+    }
+
+    return {
+      contract: selected.contract,
+      requireAcceptance: true,
+      certification: 'accepted',
+    };
+  }
+
+  /**
+   * Create a stable coded workflow failure for callers and persisted state.
+   * @private
+   */
+  _createPhaseError(code, message, details = {}) {
+    const error = new Error(message);
+    error.name = 'WorkflowPhaseError';
+    error.code = code;
+    error.details = details;
+    return error;
   }
 
   /**
@@ -530,7 +788,7 @@ class WorkflowOrchestrator {
     const phaseName = phase.phase_name || `Phase ${phaseNum}`;
 
     if (this.conditionEvaluator) {
-      this.conditionEvaluator.setPhaseOutputs(this.contextManager.getPreviousPhaseOutputs());
+      this.conditionEvaluator.setPhaseOutputs(this.contextManager?.getPreviousPhaseOutputs?.() || {});
       this.conditionEvaluator.setQAApproval(this._qaReviewApproved());
     }
 
@@ -549,7 +807,7 @@ class WorkflowOrchestrator {
           ? this.conditionEvaluator.getSkipExplanation(phase)
           : 'Condition not met';
 
-        console.log(chalk.gray(`   ⏭️  Skipping ${phaseName}: ${explanation}`));
+        this.logger.log(chalk.gray(`   ⏭️  Skipping ${phaseName}: ${explanation}`));
         this.executionState.skippedPhases.push(phaseNum);
 
         // V3.1: Save skip result to context with reason
@@ -562,17 +820,56 @@ class WorkflowOrchestrator {
       }
     }
 
-    // Check dependencies
-    if (phase.requires) {
-      const missingDeps = await this._checkDependencies(phase.requires);
+    if (Object.prototype.hasOwnProperty.call(phase, 'requires')) {
+      const error = this._createPhaseError(
+        'WORKFLOW_REQUIRES_AMBIGUOUS',
+        `${phaseName} uses ambiguous legacy requires; use dependsOn or requiresFiles.`,
+      );
+      this.executionState.currentPhase = phaseNum;
+      if (!this.executionState.failedPhases.includes(phaseNum)) {
+        this.executionState.failedPhases.push(phaseNum);
+      }
+      await this.contextManager?.markFailed?.(error.message, phaseNum);
+      throw error;
+    }
+
+    if (phase.dependsOn?.length) {
+      const evidence = phase.requireAcceptance === true
+        ? this.executionState.acceptedPhaseIds
+        : this.executionState.completedPhaseIds;
+      const missingDeps = phase.dependsOn.filter((dependency) => !evidence.includes(dependency));
       if (missingDeps.length > 0) {
-        console.log(
-          chalk.yellow(`   ⚠️  ${phaseName}: Missing dependencies: ${missingDeps.join(', ')}`),
+        const code = phase.requireAcceptance === true
+          ? 'WORKFLOW_PHASE_ACCEPTED_DEPENDENCY_MISSING'
+          : 'WORKFLOW_PHASE_DEPENDENCY_MISSING';
+        const error = this._createPhaseError(
+          code,
+          `${phaseName} is missing required dependencies: ${missingDeps.join(', ')}`,
+          { missingDependencies: missingDeps },
         );
-        this.executionState.pendingPhases.push(phaseNum);
-        const pending = { status: 'waiting_for_input', phase: phaseNum, reason: 'missing_dependencies', missingDeps };
-        await this.savePendingPhase(phase, pending);
-        return pending;
+        this.executionState.currentPhase = phaseNum;
+        if (!this.executionState.failedPhases.includes(phaseNum)) {
+          this.executionState.failedPhases.push(phaseNum);
+        }
+        await this.contextManager?.markFailed?.(error.message, phaseNum);
+        throw error;
+      }
+    }
+
+    if (phase.requiresFiles?.length) {
+      const missingFiles = await this._checkFilePrerequisites(phase.requiresFiles);
+      if (missingFiles.length > 0) {
+        const error = this._createPhaseError(
+          'WORKFLOW_PHASE_FILE_PREREQUISITE_MISSING',
+          `${phaseName} is missing required files: ${missingFiles.join(', ')}`,
+          { missingFiles },
+        );
+        this.executionState.currentPhase = phaseNum;
+        if (!this.executionState.failedPhases.includes(phaseNum)) {
+          this.executionState.failedPhases.push(phaseNum);
+        }
+        await this.contextManager?.markFailed?.(error.message, phaseNum);
+        throw error;
       }
     }
 
@@ -582,28 +879,41 @@ class WorkflowOrchestrator {
 
     try {
       // DETERMINISTIC: Prepare phase (create dirs, check pre-conditions)
-      console.log(chalk.gray('   🔧 Preparing phase...'));
+      this.logger.log(chalk.gray('   🔧 Preparing phase...'));
       await this.preparePhase(phase);
 
-      // Build subagent prompt with REAL TASK (not generic prompt)
-      const context = await this.contextManager.getContextForPhase(phaseNum);
-      const prompt = await this.promptBuilder.buildPrompt(
-        phase.agent,
-        phase.task || phase.action, // Use task file if specified
-        {
-          ...context,
+      const acceptance = this._resolvePhaseAcceptance(phase);
+      const preflightBinding = this.validatedExecutionBindings.get(phase.id);
+      const binding = preflightBinding
+        ? assertExecutionBinding(preflightBinding, {
           phase,
-          yoloMode: this.options.yolo,
-          elicit: phase.elicit,
-          creates: phase.creates,
-          notes: phase.notes,
-          checklist: phase.checklist,
-          template: phase.template,
-          executionProfile: this.executionProfile.profile,
-          executionPolicy: this.executionProfile.policy,
-          strictDefinitions: true,
-        },
-      );
+          projectRoot: this.options.projectRoot,
+          frameworkRoot: this.options.frameworkRoot,
+        })
+        : null;
+
+      // Bound deterministic execution selects by phaseId and contract identity;
+      // legacy guidance continues to receive its full framework prompt.
+      const context = await this.contextManager.getContextForPhase(phaseNum);
+      const prompt = binding
+        ? `Execute selected SDLC task ${binding.task} for phase ${phase.id} with bound contract ${binding.resolvedContractHash}.`
+        : await this.promptBuilder.buildPrompt(
+          phase.agent,
+          phase.task || phase.action,
+          {
+            ...context,
+            phase,
+            strictDefinitions: true,
+            yoloMode: this.options.yolo,
+            elicit: phase.elicit,
+            creates: phase.creates,
+            notes: phase.notes,
+            checklist: phase.checklist,
+            template: phase.template,
+            executionProfile: this.executionProfile.profile,
+            executionPolicy: this.executionProfile.policy,
+          },
+        );
 
       // V3.1: Build dispatch payload using SkillDispatcher
       const dispatchPayload = this.skillDispatcher.buildDispatchPayload({
@@ -622,48 +932,82 @@ class WorkflowOrchestrator {
       });
 
       // Log dispatch info
-      console.log(
+      this.logger.log(
         chalk.gray(
           `   🚀 ${this.skillDispatcher.formatDispatchLog(dispatchPayload).split('\n')[0]}`,
         ),
       );
-      console.log(
+
+      this.logger.log(
         chalk.gray(
           `   🛡️  Execution profile: ${this.executionProfile.profile} (${this.executionProfile.context})`,
         ),
       );
 
-      // Dispatch to subagent
-      let result;
-      if (this.options.dispatchSubagent) {
-        result = await this.options.dispatchSubagent({
-          // V3.1: Include skill dispatch payload
-          ...dispatchPayload,
-          // Backward compatibility: include original params
-          agentId: phase.agent,
+      // AEX-1.2: execution is impossible without an explicit runtime. The
+      // deprecated callback is wrapped as a runtime during construction, so
+      // there is no manual/pending path that can be mistaken for execution.
+      const runtime = assertRuntime(this.runtime);
+      const legacyPayload = {
+        ...dispatchPayload,
+        agentId: phase.agent,
+        prompt,
+        phase,
+        context: dispatchPayload.context,
+        baseContext: context,
+      };
+      const runtimeRequest = binding
+        ? {
+          phaseId: binding.phaseId,
+          story: binding.story,
+          contract: binding.contract,
+          agentId: binding.agentId,
+          task: binding.task,
+          projectRoot: binding.projectRoot,
+          requiredCapabilities: binding.requiredCapabilities,
+          ...(binding.approvedFilesystemOperations === undefined
+            ? {}
+            : { approvedFilesystemOperations: binding.approvedFilesystemOperations }),
+          budgetScope: binding.budgetScope,
+          budgetCeilingUsd: binding.budgetCeilingUsd,
+          estimatedCostUsd: binding.estimatedCostUsd,
+          requireAcceptance: true,
+          requiresStory: true,
           prompt,
-          phase,
-          context: dispatchPayload.context,
-          baseContext: context,
-        });
-
-        // A process exit or plain prose is not an explicit completion result.
-        let declared = result;
-        if (typeof declared === 'string') {
-          try { declared = JSON.parse(/```json\s*([\s\S]*?)```/.exec(declared)?.[1] || declared); }
-          catch { declared = null; }
         }
-        result = declared && typeof declared === 'object' && typeof declared.status === 'string'
-          ? this.skillDispatcher.parseSkillOutput(declared, phase)
-          : { status: 'pending_dispatch', output: result, message: 'Explicit completion result required' };
-      } else {
-        // Fallback: return prompt for manual execution
-        result = {
-          status: 'pending_dispatch',
+        : {
+          agentId: phase.agent,
+          task: phase.task || phase.action || 'workflow-phase',
           prompt,
-          skill: dispatchPayload.skill,
-          message: 'Subagent dispatch function not provided',
+          story: phase.story || context.storyPath || context.story || null,
+          budgetCeilingUsd: this.options.budgetCeilingUsd,
+          projectRoot: this.options.projectRoot,
+          requiresStory: phase.requiresStory,
+          contract: acceptance.contract || undefined,
+          requireAcceptance: acceptance.requireAcceptance,
+          legacyPayload,
         };
+      let result = await runtime.execute(runtimeRequest);
+
+      if (runtime.deprecated) {
+        result = this.skillDispatcher.parseSkillOutput(result, phase);
+      }
+
+      if (!result || result.success !== true || result.status !== 'success') {
+        throw this._createPhaseError(
+          'WORKFLOW_PHASE_EXECUTION_FAILED',
+          `Phase ${phaseNum} did not return a strict successful result.`,
+          { result },
+        );
+      }
+      if (
+        acceptance.requireAcceptance
+        && result.acceptance?.verdict !== 'ACCEPTED'
+      ) {
+        throw this._createPhaseError(
+          'WORKFLOW_PHASE_ACCEPTANCE_FAILED',
+          `Phase ${phaseNum} did not produce required acceptance evidence.`,
+        );
       }
 
       if (['pending_dispatch', 'waiting_for_input', 'blocked'].includes(result.status)) {
@@ -676,20 +1020,36 @@ class WorkflowOrchestrator {
       }
 
       // DETERMINISTIC: Validate phase output (check files, run checklists)
-      console.log(chalk.gray('   🔍 Validating output...'));
+      this.logger.log(chalk.gray('   🔍 Validating output...'));
       const validation = await this.validatePhaseOutput(phase, result);
-      if (!validation.passed) {
-        throw new Error(`Output validation failed: ${validation.errors.join(', ')}`);
+      if (
+        !validation
+        || typeof validation !== 'object'
+        || Array.isArray(validation)
+        || validation.passed !== true
+      ) {
+        const validationErrors = Array.isArray(validation?.errors)
+          ? validation.errors
+          : ['Validation did not return exact passed: true evidence'];
+        throw this._createPhaseError(
+          'WORKFLOW_PHASE_VALIDATION_FAILED',
+          `Phase ${phaseNum} validation failed: ${validationErrors.join(', ')}`,
+          { validation },
+        );
       }
 
+      const certification = acceptance.certification;
+
       // Save phase output to context
-      const previous = this.contextManager.getPreviousPhaseOutputs()[phaseNum];
+      const previous = (this.contextManager?.getPreviousPhaseOutputs?.() || {})[phaseNum];
       const stepResult = {
         agent: phase.agent,
         action: phase.action,
         task: phase.task,
         result,
         validation,
+        certification,
+        ...(binding ? { executionIdentity: this._createExecutionIdentity(phase, binding) } : {}),
         timestamp: new Date().toISOString(),
       };
       await this.contextManager.savePhaseOutput(phaseNum, { ...stepResult,
@@ -701,19 +1061,24 @@ class WorkflowOrchestrator {
       // Notify phase complete
       await this.options.onPhaseComplete(phase, result);
       this.executionState.completedPhases.push(phaseNum);
+      this.executionState.completedPhaseIds.push(phase.id);
+      if (certification === 'accepted') {
+        this.executionState.acceptedPhaseIds.push(phase.id);
+      }
 
-      return { ...result, validation };
+      return { ...result, validation, certification };
     } catch (error) {
-      console.log(chalk.red(`   ❌ ${phaseName} failed: ${error.message}`));
-      this.executionState.failedPhases.push(phaseNum);
-      this.executionState.errors.push({ phase: phaseNum, error: error.message });
-      if (this.options.onPhaseError) await this.options.onPhaseError(phase, error);
+      this.logger.log(chalk.red(`   ❌ ${phaseName} failed: ${error.message}`));
+      if (!this.executionState.failedPhases.includes(phaseNum)) {
+        this.executionState.failedPhases.push(phaseNum);
+      }
+      await this.contextManager?.markFailed?.(error.message, phaseNum);
       throw error;
     }
   }
 
   async savePendingPhase(phase, result) {
-    const previous = this.contextManager.getPreviousPhaseOutputs()[phase.phase];
+    const previous = (this.contextManager?.getPreviousPhaseOutputs?.() || {})[phase.phase];
     const pending = { agent: phase.agent, action: phase.action, task: phase.task, result,
       validation: { passed: false, checks: [], errors: ['Execution pending'] }, timestamp: new Date().toISOString() };
     await this.contextManager.savePhaseOutput(phase.phase, { ...pending,
@@ -824,21 +1189,201 @@ class WorkflowOrchestrator {
    * Check dependencies (required files)
    * @private
    */
-  async _checkDependencies(requires) {
+  async _checkFilePrerequisites(requiresFiles) {
     const missing = [];
-    const deps = Array.isArray(requires) ? requires : [requires];
+    const deps = Array.isArray(requiresFiles) ? requiresFiles : [requiresFiles];
+    const projectRoot = path.resolve(this.options.projectRoot);
 
     for (const dep of deps) {
-      // Handle conditional dependencies like "supabase/docs/SCHEMA.md (if exists)"
-      if (dep.includes('(if exists)')) continue;
-
-      const depPath = path.join(this.options.projectRoot, dep);
-      if (!(await fs.pathExists(depPath))) {
+      const depPath = path.resolve(projectRoot, dep);
+      const relative = path.relative(projectRoot, depPath);
+      const isInside = relative.length > 0
+        && !relative.startsWith('..')
+        && !path.isAbsolute(relative);
+      if (!isInside || !(await fs.pathExists(depPath))) {
         missing.push(dep);
       }
     }
 
     return missing;
+  }
+
+  /**
+   * Hash only normalized executable workflow identity. Runtime values and
+   * persisted status strings are deliberately excluded.
+   * @private
+   */
+  _workflowIdentityHash() {
+    const identity = {
+      workflowId: this.workflow.workflow?.id
+        || path.basename(this.workflowPath, path.extname(this.workflowPath)),
+      sequence: this.workflow.sequence.map((phase) => ({
+        id: phase.id,
+        phase: phase.phase,
+        agent: phase.agent,
+        task: phase.task,
+        dependsOn: phase.dependsOn,
+        requiresFiles: phase.requiresFiles,
+        requireAcceptance: phase.requireAcceptance === true,
+      })),
+    };
+    return sha256(JSON.stringify(stable(identity)));
+  }
+
+  /**
+   * Produce a non-secret execution identity for durable resume validation.
+   * Capability leases and approved operation content are never persisted.
+   * @private
+   */
+  _createExecutionIdentity(phase, binding) {
+    const storyPath = path.resolve(this.options.projectRoot, binding.story);
+    const storyHash = sha256(fs.readFileSync(storyPath));
+    const bindingIdentity = {
+      phaseId: binding.phaseId,
+      task: binding.task,
+      agentId: binding.agentId,
+      projectRoot: binding.projectRoot,
+      story: binding.story,
+      storyHash,
+      taskContractHash: binding.taskContractHash,
+      resolvedContractHash: binding.resolvedContractHash,
+      budgetScope: binding.budgetScope,
+      budgetCeilingUsd: binding.budgetCeilingUsd,
+    };
+    return {
+      workflowId: this.workflow.workflow?.id
+        || path.basename(this.workflowPath, path.extname(this.workflowPath)),
+      workflowHash: this._workflowIdentityHash(),
+      phaseId: phase.id,
+      phaseNumber: phase.phase,
+      task: phase.task,
+      agentId: phase.agent,
+      story: binding.story,
+      storyHash,
+      taskContractHash: binding.taskContractHash,
+      resolvedContractHash: binding.resolvedContractHash,
+      budgetScope: binding.budgetScope,
+      budgetCeilingUsd: binding.budgetCeilingUsd,
+      bindingHash: sha256(JSON.stringify(stable(bindingIdentity))),
+    };
+  }
+
+  /**
+   * A successful return must represent at least one dispatched and accepted
+   * phase in this invocation.
+   * @private
+   */
+  async _assertExecutedWork(completedBefore = 0) {
+    if (this.executionState.completedPhases.length > completedBefore) return;
+    const error = this._createPhaseError(
+      'WORKFLOW_ZERO_DISPATCH',
+      'Workflow invocation completed without dispatching a successful phase.',
+    );
+    await this.contextManager?.markFailed?.(error.message, this.executionState.currentPhase);
+    throw error;
+  }
+
+  /**
+   * Restore predecessor evidence from persisted phase outputs for resume.
+   * @private
+   */
+  async _restoreDependencyEvidence(fromPhase) {
+    if (!this.contextManager || typeof this.contextManager.loadState !== 'function') {
+      throw this._createPhaseError(
+        'WORKFLOW_RESUME_EVIDENCE_REQUIRED',
+        'Resume requires a trusted persisted workflow state.',
+      );
+    }
+    const state = await this.contextManager.loadState();
+    if (state?.status === 'failed') {
+      throw this._createPhaseError(
+        'WORKFLOW_RESUME_FAILED_STATE',
+        'A failed workflow state is terminal and cannot be resumed as successful execution.',
+      );
+    }
+    const workflowId = this.workflow.workflow?.id
+      || path.basename(this.workflowPath, path.extname(this.workflowPath));
+    if (!state || state.workflowId !== workflowId || !state.phases || typeof state.phases !== 'object') {
+      throw this._createPhaseError(
+        'WORKFLOW_RESUME_EVIDENCE_INVALID',
+        'Persisted state does not match the normalized workflow identity.',
+      );
+    }
+    const persistedPhases = state.phases;
+    for (const phase of this.workflow.sequence) {
+      if (phase.phase >= fromPhase) continue;
+      const persisted = persistedPhases[phase.phase];
+      if (!persisted || typeof persisted !== 'object' || Array.isArray(persisted)) {
+        throw this._createPhaseError(
+          'WORKFLOW_RESUME_EVIDENCE_REQUIRED',
+          `Resume requires accepted predecessor evidence for phase ${phase.id}.`,
+        );
+      }
+      const validPersistedShape = persisted.agent === phase.agent
+        && persisted.task === phase.task
+        && persisted.certification === 'accepted'
+        && persisted.result?.success === true
+        && persisted.result?.status === 'success'
+        && persisted.result?.acceptance?.verdict === 'ACCEPTED'
+        && persisted.validation?.passed === true;
+      if (!validPersistedShape) {
+        throw this._createPhaseError(
+          'WORKFLOW_RESUME_EVIDENCE_INVALID',
+          `Persisted predecessor evidence is stale or malformed for phase ${phase.id}.`,
+        );
+      }
+      const binding = this.validatedExecutionBindings.get(phase.id);
+      if (!binding) {
+        throw this._createPhaseError(
+          'WORKFLOW_RESUME_BINDING_REQUIRED',
+          `Resume cannot establish a current validated binding for phase ${phase.id}.`,
+        );
+      }
+      const expectedIdentity = this._createExecutionIdentity(phase, binding);
+      const validIdentity = JSON.stringify(stable(persisted.executionIdentity))
+        === JSON.stringify(stable(expectedIdentity));
+      if (
+        !validIdentity
+        || persisted.result.acceptance.contractHash !== binding.resolvedContractHash
+      ) {
+        throw this._createPhaseError(
+          'WORKFLOW_RESUME_EVIDENCE_INVALID',
+          `Persisted predecessor identity is stale or malformed for phase ${phase.id}.`,
+        );
+      }
+      let acceptance;
+      try {
+        acceptance = await verifyTaskOutcome({
+          contract: binding.contract,
+          success: true,
+          produced: persisted.result.produced,
+        }, {
+          projectRoot: this.options.projectRoot,
+          verifiers: this.runtime?.outcomeVerifiers || {},
+        });
+      } catch (cause) {
+        throw this._createPhaseError(
+          'WORKFLOW_RESUME_REVERIFICATION_FAILED',
+          `Current artifacts failed trusted revalidation for phase ${phase.id}: ${cause.message}`,
+          { causeCode: cause.code },
+        );
+      }
+      if (
+        acceptance?.verdict !== 'ACCEPTED'
+        || acceptance.contractHash !== binding.resolvedContractHash
+      ) {
+        throw this._createPhaseError(
+          'WORKFLOW_RESUME_REVERIFICATION_FAILED',
+          `Current artifacts did not reproduce accepted evidence for phase ${phase.id}.`,
+        );
+      }
+      if (!this.executionState.completedPhaseIds.includes(phase.id)) {
+        this.executionState.completedPhaseIds.push(phase.id);
+      }
+      if (!this.executionState.acceptedPhaseIds.includes(phase.id)) {
+        this.executionState.acceptedPhaseIds.push(phase.id);
+      }
+    }
   }
 
   /**
@@ -853,7 +1398,9 @@ class WorkflowOrchestrator {
     const deliveryConfidence = this.contextManager?.getDeliveryConfidence?.() || null;
     const summary = {
       workflow: this.workflow.workflow?.id,
-      status: this.executionState.failedPhases.length === 0 ? 'completed' : 'completed_with_errors',
+      status: this.executionState.failedPhases.length > 0
+        ? 'completed_with_errors'
+        : this.executionState.completedPhases.length > 0 ? 'completed' : 'failed_no_execution',
       duration: `${minutes}m ${seconds}s`,
       phases: {
         total: this.workflow.sequence?.length || 0,
@@ -933,8 +1480,8 @@ class WorkflowOrchestrator {
    */
   _defaultPhaseStart(phase) {
     const icon = this._getAgentIcon(phase.agent);
-    console.log(chalk.cyan(`\n${icon} Phase ${phase.phase}: ${phase.phase_name}`));
-    console.log(chalk.gray(`   Agent: @${phase.agent} | Action: *${phase.action}`));
+    this.logger.log(chalk.cyan(`\n${icon} Phase ${phase.phase}: ${phase.phase_name}`));
+    this.logger.log(chalk.gray(`   Agent: @${phase.agent} | Action: *${phase.action}`));
   }
 
   /**
@@ -944,10 +1491,10 @@ class WorkflowOrchestrator {
   _defaultPhaseComplete(phase, result) {
     const status =
       result?.status === 'success' ? '✅' : result?.status === 'pending_dispatch' ? '📤' : '⚠️';
-    console.log(chalk.green(`   ${status} Phase ${phase.phase} complete`));
+    this.logger.log(chalk.green(`   ${status} Phase ${phase.phase} complete`));
     if (phase.creates) {
       const creates = Array.isArray(phase.creates) ? phase.creates : [phase.creates];
-      creates.forEach((c) => console.log(chalk.gray(`      → ${c}`)));
+      creates.forEach((c) => this.logger.log(chalk.gray(`      → ${c}`)));
     }
   }
 
@@ -985,11 +1532,35 @@ class WorkflowOrchestrator {
    * @param {number} fromPhase - Phase number to resume from
    */
   async resumeFrom(fromPhase) {
-    if (!Number.isInteger(fromPhase) || fromPhase < 1) throw new Error('Resume phase must be a positive integer');
-    this.options.fromPhase = fromPhase;
-    this.executionState = { startTime: null, currentPhase: 0, completedPhases: [],
-      failedPhases: [], skippedPhases: [], pendingPhases: [], errors: [] };
-    return this.execute();
+    if (!this.workflow) {
+      await this.loadWorkflow();
+    } else {
+      this.workflow = normalizeWorkflowDocument(this.workflow);
+    }
+
+    const sequence = this.workflow.sequence;
+    if (!Number.isInteger(fromPhase) || !sequence.some((phase) => phase.phase === fromPhase)) {
+      throw this._createPhaseError(
+        'WORKFLOW_RESUME_CURSOR_INVALID',
+        'Resume cursor must identify an actual normalized remaining phase.',
+        { fromPhase },
+      );
+    }
+    this._preflightExecutionBindings(sequence);
+    await this._restoreDependencyEvidence(fromPhase);
+    const remainingPhases = sequence.filter((p) => p.phase >= fromPhase && !p.workflow_end);
+    const completedBefore = this.executionState.completedPhases.length;
+    if (!this.executionState.startTime) this.executionState.startTime = Date.now();
+
+    this.logger.log(chalk.yellow(`\n🔄 Resuming from phase ${fromPhase}...`));
+
+    for (const phase of remainingPhases) {
+      await this._executeSinglePhase(phase);
+    }
+
+    await this._assertExecutedWork(completedBefore);
+
+    return this._generateExecutionSummary();
   }
 }
 

@@ -45,7 +45,7 @@ function logToolResult(tool, result) {
 
     const logPath = path.join(logDir, 'tool-results.jsonl');
     fs.appendFileSync(logPath, JSON.stringify(logEntry) + '\n');
-  } catch (error) {
+  } catch (_error) {
     // Non-critical
   }
 }
@@ -66,7 +66,7 @@ function trackFileModification(filePath) {
       files.push(filePath);
       fs.writeFileSync(trackPath, JSON.stringify(files, null, 2));
     }
-  } catch (error) {
+  } catch (_error) {
     // Non-critical
   }
 }

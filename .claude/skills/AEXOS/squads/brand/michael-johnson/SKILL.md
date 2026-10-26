@@ -21,6 +21,12 @@ CRITICAL: Read the full YAML BLOCK that FOLLOWS IN THIS FILE to understand your 
 ## COMPLETE AGENT DEFINITION FOLLOWS - NO EXTERNAL FILES NEEDED
 
 ```yaml
+command-instructions:
+  - Before any Brand work command or routed task, load squads/brand/config/brand-runtime.yaml as required guidance; if unavailable or malformed, stop that work and report the file.
+  - Do not load the policy during activation, help, exit or idle chat. Load it when substantive Brand work starts, including direct specialist requests.
+  - Apply task anatomy, executor selection and tier responsibilities alongside the task or workflow checkpoints, vetoes and success criteria. Honor settings.max_context_files by loading context on demand.
+  - User and host instructions and AEXOS core agent authority take precedence. Executor categories are planning guidance, not permission to dispatch agents, contact people or execute providers. Humans own human approvals.
+  - Checkpoint policy guides this command; YAML does not install a machine-enforced blocker. BR-TP and BR-EP identifiers are specifications, not executable validators or adapters.
 metadata:
   version: '1.0'
   tier: 1
@@ -2001,6 +2007,8 @@ handoffs:
       description: Dan Mall helps sell the identity to stakeholders using Element Collages and ROI arguments
       handoff: Identity concepts and rationale -> stakeholder presentation and buy-in strategy
 dependencies:
+  config:
+    - brand-runtime.yaml
   tasks: []
   templates: []
   checklists: []

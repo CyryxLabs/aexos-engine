@@ -75,6 +75,7 @@ function loadLicenseModules() {
       hasPendingDeactivation,
       setPendingDeactivation,
       clearPendingDeactivation,
+      getLicenseDecision,
     } = require(path.join(licensePath, 'license-cache'));
     const { generateMachineId } = require(path.join(licensePath, 'machine-id'));
     const { maskKey, validateKeyFormat } = require(path.join(licensePath, 'license-crypto'));
@@ -89,6 +90,7 @@ function loadLicenseModules() {
       hasPendingDeactivation,
       setPendingDeactivation,
       clearPendingDeactivation,
+      getLicenseDecision,
       generateMachineId,
       maskKey,
       validateKeyFormat,
@@ -154,6 +156,8 @@ async function activateAction(options) {
   const {
     licenseApi,
     writeLicenseCache,
+    readLicenseCache,
+    getLicenseDecision,
     generateMachineId,
     maskKey,
     validateKeyFormat,
@@ -185,6 +189,11 @@ async function activateAction(options) {
     const cyryxCoreVersion = getCyryxCoreVersion();
 
     const result = await licenseApi.activate(key, machineId, cyryxCoreVersion);
+    const existing = readLicenseCache();
+    const signedResponse = Object.prototype.hasOwnProperty.call(result, 'entitlement');
+    if (existing && Object.prototype.hasOwnProperty.call(existing, 'entitlement') && !signedResponse) {
+      throw new Error('Signed activation requires a fresh signed entitlement. Cached authority was not changed.');
+    }
 
     // Write encrypted cache
     const cacheData = {
@@ -195,24 +204,29 @@ async function activateAction(options) {
       seats: result.seats,
       cacheValidDays: result.cacheValidDays,
       gracePeriodDays: result.gracePeriodDays,
+      ...(signedResponse ? { entitlement: result.entitlement, lastTrustedAt: existing?.lastTrustedAt } : {}),
     };
+    const decision = getLicenseDecision(cacheData);
+    if (!decision.allowed) {
+      throw new Error(`Activation did not provide usable authority (${decision.state}). Cached authority was not changed.`);
+    }
 
     const writeResult = writeLicenseCache(cacheData);
     if (!writeResult.success) {
-      console.error(`Warning: Could not save license cache: ${writeResult.error}`);
+      throw new Error(`Could not save license cache: ${writeResult.error}`);
     }
 
     // Reload feature gate
     featureGate.reload();
 
     // Display success
+    const info = featureGate.getLicenseInfo();
     console.log('License activated successfully!\n');
-    console.log('  Status:       Active');
+    console.log(`  Status:       ${info.state}`);
     console.log(`  Key:          ${maskKey(result.key)}`);
-    console.log(`  Features:     ${result.features.join(', ')}`);
-    console.log(`  Seats:        ${result.seats.used}/${result.seats.max} used`);
-    console.log(`  Valid until:  ${formatDate(result.expiresAt)}`);
-    console.log(`  Cache:        ${result.cacheValidDays} days offline operation`);
+    console.log(`  Features:     ${info.features.join(', ')}`);
+    console.log(`  Seats:        ${info.seats.used}/${info.seats.max} used`);
+    console.log(`  Valid until:  ${formatDate(info.expiresAt)}`);
     console.log('');
 
     // Scaffold pro content into project (Story INS-3.1)
@@ -498,6 +512,8 @@ async function validateAction() {
     licenseApi,
     readLicenseCache,
     writeLicenseCache,
+    deleteLicenseCache,
+    getLicenseDecision,
     generateMachineId,
     maskKey,
     featureGate,
@@ -511,21 +527,51 @@ async function validateAction() {
   if (!cache) {
     console.log('No license is currently activated.');
     console.log('Activate: aexos pro activate --key PRO-XXXX-XXXX-XXXX-XXXX');
+    process.exitCode = 1;
     return;
   }
 
   console.log(`Key: ${maskKey(cache.key)}`);
+
+  const showRecovery = () => {
+    console.log('Inspect: aexos pro status');
+    console.log('Retry online: aexos pro validate');
+    console.log('Reactivate: aexos pro activate --key <KEY>');
+    console.log('Your project files and configuration are preserved.');
+  };
+  const deny = () => {
+    featureGate.deny();
+    const saved = writeLicenseCache({
+      ...cache, revoked: true, remoteDenied: 'REVOKED', deniedAt: new Date().toISOString(),
+    });
+    if (!saved.success) {
+      // Only the authority cache may be removed when persisting denial fails.
+      const removed = deleteLicenseCache();
+      console.error(removed.success
+        ? 'Could not save the denial record; the local license cache was removed.'
+        : 'Could not persist the denial or remove the license cache. Resolve local file permissions before retrying.');
+    }
+    process.exitCode = 1;
+    showRecovery();
+  };
 
   try {
     const machineId = generateMachineId();
 
     const result = await licenseApi.validate(cache.key, machineId);
 
-    if (!result.valid) {
+    if (result.valid === false) {
       console.log('\n\u274C License validation failed.');
       console.log('The license may have been revoked or expired.');
-      console.log('Please contact support or activate a new license.');
+      deny();
       return;
+    }
+
+    if (result.valid !== true) throw new Error('License server returned an invalid validation response.');
+    const signedCache = Object.prototype.hasOwnProperty.call(cache, 'entitlement');
+    const signedResponse = Object.prototype.hasOwnProperty.call(result, 'entitlement');
+    if (signedCache && !signedResponse) {
+      throw new Error('Signed revalidation requires a fresh signed entitlement. Cached authority was not changed.');
     }
 
     // Update cache with refreshed data
@@ -533,15 +579,24 @@ async function validateAction() {
       ...cache,
       features: result.features,
       seats: result.seats,
-      expiresAt: result.expiresAt,
-      cacheValidDays: result.cacheValidDays,
-      gracePeriodDays: result.gracePeriodDays,
+      expiresAt: result.expiresAt === undefined ? cache.expiresAt : result.expiresAt,
+      cacheValidDays: result.cacheValidDays === undefined ? cache.cacheValidDays : result.cacheValidDays,
+      gracePeriodDays: result.gracePeriodDays === undefined ? cache.gracePeriodDays : result.gracePeriodDays,
       lastValidated: new Date().toISOString(),
+      ...(signedResponse ? { entitlement: result.entitlement } : {}),
+      revoked: false,
+      remoteDenied: null,
+      deniedAt: null,
     };
+
+    const decision = getLicenseDecision(updatedCache);
+    if (!decision.allowed) {
+      throw new Error(`Revalidation did not provide usable authority (${decision.state}). Cached authority was not changed.`);
+    }
 
     const writeResult = writeLicenseCache(updatedCache);
     if (!writeResult.success) {
-      console.log(`Warning: Could not update cache: ${writeResult.error}`);
+      throw new Error(`Could not update license cache: ${writeResult.error}`);
     }
 
     // Reload feature gate
@@ -549,19 +604,27 @@ async function validateAction() {
 
     // Display result
     console.log('\n\u2705 License validated successfully!\n');
-    console.log(`  Features:     ${result.features.join(', ')}`);
-    console.log(`  Seats:        ${result.seats.used}/${result.seats.max} used`);
-    console.log(`  Valid until:  ${formatDate(result.expiresAt)}`);
-    console.log(`  Cache:        Refreshed for ${result.cacheValidDays} days`);
+    const info = featureGate.getLicenseInfo();
+    console.log(`  Status:       ${info.state}`);
+    console.log(`  Features:     ${info.features.join(', ')}`);
+    console.log(`  Seats:        ${info.seats.used}/${info.seats.max} used`);
+    console.log(`  Valid until:  ${formatDate(info.expiresAt)}`);
     console.log('');
   } catch (error) {
+    if (['INVALID_KEY', 'EXPIRED_KEY', 'REVOKED', 'LICENSE_REVOKED'].includes(error.code)) {
+      console.error(`\nLicense validation denied: ${error.message}`);
+      deny();
+      return;
+    }
     if (error instanceof LicenseActivationError) {
       console.error(`\nValidation failed: ${error.message}`);
       console.error(`Error code: ${error.code}`);
     } else {
       console.error(`\nValidation failed: ${error.message}`);
     }
-    process.exit(1);
+    console.log('The existing cache was not refreshed or extended.');
+    showRecovery();
+    process.exitCode = 1;
   }
 }
 

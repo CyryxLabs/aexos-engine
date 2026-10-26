@@ -56,15 +56,17 @@ describe('Claude execution robustness', () => {
       mockSpawn.emitData();
       const result = await promise;
 
-      expect(childProcess.spawn).toHaveBeenCalledWith(
-        'claude',
-        ['--print', '--dangerously-skip-permissions'],
-        expect.objectContaining({
-          cwd: '/tmp/project',
-          stdio: ['pipe', 'pipe', 'pipe'],
-          timeout: 10 * 60 * 1000,
-        }),
-      );
+      expect(childProcess.spawn).toHaveBeenCalledTimes(1);
+      const [command, args, options] = childProcess.spawn.mock.calls[0];
+      expect(command).toBe('claude');
+      expect(args).toEqual(['--print']);
+      const { env, ...nonEnvironmentOptions } = options;
+      expect(nonEnvironmentOptions).toMatchObject({
+        cwd: '/tmp/project',
+        stdio: ['pipe', 'pipe', 'pipe'],
+        timeout: 10 * 60 * 1000,
+      });
+      expect(Object.keys(process.env).every((key) => env[key] === process.env[key])).toBe(true);
       expect(mockSpawn.process.stdin.write).toHaveBeenCalledWith(prompt);
       expect(mockSpawn.process.stdin.end).toHaveBeenCalled();
       expect(result).toMatchObject({
@@ -110,6 +112,21 @@ describe('Claude execution robustness', () => {
   });
 
   describe('BuildOrchestrator.runClaudeCLI', () => {
+    test('bounds waiting for native permission prompts even if the child never closes', async () => {
+      jest.useFakeTimers();
+      try {
+        mockSpawn.process.kill = jest.fn();
+        const orchestrator = new BuildOrchestrator({ rootPath: '/tmp/project' });
+        const promise = orchestrator.runClaudeCLI('bounded task', '/tmp/work', { subtaskTimeout: 20 });
+        const rejection = expect(promise).rejects.toThrow('timed out');
+        jest.advanceTimersByTime(21);
+        await rejection;
+        expect(mockSpawn.process.kill).toHaveBeenCalledTimes(1);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
     test('writes prompt through stdin and keeps model override', async () => {
       const orchestrator = new BuildOrchestrator({ rootPath: '/tmp/project' });
       const prompt = 'Build this component';
@@ -121,15 +138,18 @@ describe('Claude execution robustness', () => {
       mockSpawn.emitData();
       const result = await promise;
 
-      expect(childProcess.spawn).toHaveBeenCalledWith(
-        'claude',
-        ['--print', '--dangerously-skip-permissions', '--model', 'claude-3-opus'],
-        expect.objectContaining({
-          cwd: '/tmp/work',
-          stdio: ['pipe', 'pipe', 'pipe'],
-          timeout: 5000,
-        }),
-      );
+      expect(childProcess.spawn).toHaveBeenCalledTimes(1);
+      const [command, args, options] = childProcess.spawn.mock.calls[0];
+      expect(command).toBe('claude');
+      expect(args).toEqual(['--print', '--model', 'claude-3-opus']);
+      const { env, ...nonEnvironmentOptions } = options;
+      expect(nonEnvironmentOptions).toMatchObject({
+        cwd: '/tmp/work',
+        stdio: ['pipe', 'pipe', 'pipe'],
+        timeout: 5000,
+        shell: false,
+      });
+      expect(Object.keys(process.env).every((key) => env[key] === process.env[key])).toBe(true);
       expect(mockSpawn.process.stdin.write).toHaveBeenCalledWith(prompt);
       expect(result).toMatchObject({
         stdout: 'simulated output',

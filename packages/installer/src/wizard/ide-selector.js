@@ -8,22 +8,24 @@
  */
 
 const inquirer = require('inquirer');
-const { getIDEChoices, getIDEKeys } = require('../config/ide-configs');
-const { colors } = require('../utils/aexos-colors');
-const { t } = require('./i18n');
+const { getIDEChoices, getIDEKeys, getIDEConfig } = require('../config/ide-configs');
+
+function getHostChoices() {
+  return getIDEChoices().map((choice) => ({
+    ...choice,
+    short: getIDEConfig(choice.value).name,
+    description: `Add local AEXOS configuration for ${getIDEConfig(choice.value).name}. Sign in separately in that host.`,
+  }));
+}
 
 /**
- * Validate IDE selection (at least one required)
+ * Validate IDE selection (empty explicitly means CLI only).
  * @param {string[]} selectedIDEs - Array of selected IDE keys
  * @returns {boolean|string} True if valid, error message if invalid
  */
 function validateIDESelection(selectedIDEs) {
   if (!Array.isArray(selectedIDEs)) {
     return 'Invalid selection format';
-  }
-
-  if (selectedIDEs.length === 0) {
-    return 'Please select at least one IDE';
   }
 
   // Validate all selected IDEs are valid
@@ -53,8 +55,8 @@ async function selectIDEs() {
     {
       type: 'checkbox',
       name: 'selectedIDEs',
-      message: colors.primary(t('ideQuestion')) + colors.dim(`\n  (${t('ideHint')})`),
-      choices: getIDEChoices(),
+      message: 'Which hosts should get local setup?',
+      choices: getHostChoices(),
       validate: validateIDESelection,
       pageSize: 10,
     },
@@ -71,8 +73,8 @@ function getIDESelectionQuestion() {
   return {
     type: 'checkbox',
     name: 'selectedIDEs',
-    message: colors.primary(t('ideQuestion')) + colors.dim(`\n  (${t('ideHint')})`),
-    choices: getIDEChoices(),
+    message: 'Which hosts should get local setup?',
+    choices: getHostChoices(),
     validate: validateIDESelection,
     pageSize: 10,
   };

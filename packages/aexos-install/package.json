@@ -18,10 +18,9 @@
     "test:coverage": "jest --coverage",
     "preversion": "npm test",
     "version": "npm run changelog && git add CHANGELOG.md",
-    "postversion": "git push && git push --tags",
     "changelog": "npx conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
-    "release": "npx semantic-release",
-    "release:dry": "npx semantic-release --dry-run"
+    "release": "node ../../scripts/run-semantic-release.js",
+    "release:dry": "node ../../scripts/run-semantic-release.js --dry-run --no-ci"
   },
   "keywords": [
     "aexos",

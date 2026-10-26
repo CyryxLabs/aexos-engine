@@ -65,15 +65,18 @@ describe('Grok generator and validator parity contract', () => {
     expect(fs.readFileSync(path.join(grokRoot, 'rules', 'aexos-core.md'), 'utf8')).toBe(first);
   });
 
-  test('detects deliberate managed corruption and sync repairs it', () => {
+  test('detects deliberate managed corruption and refuses to overwrite it', () => {
     syncGrok({ projectRoot: repoRoot, grokRoot, quiet: true });
     const target = path.join(grokRoot, 'agents', 'aexos-dev.md');
     fs.appendFileSync(target, '\nDELIBERATE-CORRUPTION\n');
+    const corrupted = fs.readFileSync(target);
     const broken = validateGrok({ projectRoot: repoRoot, grokRoot, strict: true });
     expect(broken.ok).toBe(false);
     expect(broken.errors).toContain('Managed content drift: agents/aexos-dev.md');
-    syncGrok({ projectRoot: repoRoot, grokRoot, quiet: true });
-    expect(validateGrok({ projectRoot: repoRoot, grokRoot, strict: true }).ok).toBe(true);
+    expect(() => syncGrok({ projectRoot: repoRoot, grokRoot, quiet: true }))
+      .toThrow('User-owned or modified Grok file preserved: agents/aexos-dev.md');
+    expect(fs.readFileSync(target)).toEqual(corrupted);
+    expect(validateGrok({ projectRoot: repoRoot, grokRoot, strict: true }).ok).toBe(false);
   });
 
   test('removes stale owned files and keeps unowned extensions', () => {
@@ -135,18 +138,16 @@ describe('Grok generator and validator parity contract', () => {
     expect(fs.existsSync(grokRoot)).toBe(false);
   });
 
-  test('reports parse failures instead of silently dropping agents', () => {
+  test('fails closed on parse failures without writing a projection', () => {
     const sourceDir = path.join(tempRoot, 'agents');
     fs.mkdirSync(sourceDir, { recursive: true });
-    fs.writeFileSync(path.join(sourceDir, 'broken.md'), '# no canonical YAML block\n');
-    const warning = jest.spyOn(console, 'warn').mockImplementation(() => {});
-    try {
-      const result = syncGrok({ projectRoot: repoRoot, sourceDir, grokRoot });
-      expect(result.agents).toBe(0);
-      expect(warning).toHaveBeenCalledWith(expect.stringContaining('No YAML block found — skipped'));
-    } finally {
-      warning.mockRestore();
-    }
+    const broken = path.join(sourceDir, 'broken.md');
+    fs.writeFileSync(broken, '# no canonical YAML block\n');
+    const sourceBytes = fs.readFileSync(broken);
+    expect(() => syncGrok({ projectRoot: repoRoot, sourceDir, grokRoot }))
+      .toThrow('No supported canonical agents found for Grok projection');
+    expect(fs.readFileSync(broken)).toEqual(sourceBytes);
+    expect(fs.existsSync(grokRoot)).toBe(false);
   });
 
   test.each([

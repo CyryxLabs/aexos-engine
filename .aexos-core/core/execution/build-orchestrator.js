@@ -511,7 +511,6 @@ The subtask is complete only when verification passes.
     return new Promise((resolve, reject) => {
       const args = [
         '--print', // Non-interactive mode
-        '--dangerously-skip-permissions', // Allow file writes
       ];
 
       if (config.claudeModel) {
@@ -520,10 +519,14 @@ The subtask is complete only when verification passes.
 
       this.log(`Running Claude CLI in ${workDir}`, 'debug');
 
+      const timeout = Number.isFinite(config.subtaskTimeout) && config.subtaskTimeout > 0
+        ? Math.min(config.subtaskTimeout, 10 * 60 * 1000) : 10 * 60 * 1000;
       const child = spawn('claude', args, {
         cwd: workDir,
         env: { ...process.env },
-        timeout: config.subtaskTimeout,
+        timeout,
+        shell: false,
+        windowsHide: true,
         stdio: ['pipe', 'pipe', 'pipe'],
       });
 
@@ -531,16 +534,23 @@ The subtask is complete only when verification passes.
       let stderr = '';
       let stdinError = null;
       let settled = false;
+      const watchdog = setTimeout(() => {
+        child.kill?.();
+        rejectOnce(new Error('Claude CLI timed out; native permission enforcement remains enabled'));
+      }, timeout);
+      watchdog.unref?.();
 
       const resolveOnce = (result) => {
         if (settled) return;
         settled = true;
+        clearTimeout(watchdog);
         resolve(result);
       };
 
       const rejectOnce = (error) => {
         if (settled) return;
         settled = true;
+        clearTimeout(watchdog);
         reject(error);
       };
 

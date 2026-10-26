@@ -100,7 +100,7 @@ describe('Claude native subagent governance', () => {
     for (const command of commands) {
       expect(command).not.toContain('CLAUDE_PROJECT_DIR');
       expect(command).not.toContain('${');
-      expect(command).toMatch(/^node \.claude\/hooks\/[-a-z]+\.cjs$/);
+      expect(command).toMatch(/^node (?:\.claude\/hooks\/[-a-z]+\.cjs|\.aexos-core\/core\/virtual-office\/cli\.js hook --project-root \. --producer-host claude-code)$/);
     }
   });
 

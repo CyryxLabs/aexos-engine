@@ -41,7 +41,13 @@ describe('machine-id-store', () => {
     expect(readPersistedMachineId()).toBe(VALID_ID);
 
     const stat = fs.statSync(_PATHS.MACHINE_ID_FILE);
-    expect(stat.mode & 0o777).toBe(0o600);
+    if (process.platform === 'win32') {
+      // Node reports synthetic POSIX mode bits on Windows. The implementation
+      // applies an owner-only NTFS ACL with icacls instead.
+      expect(stat.isFile()).toBe(true);
+    } else {
+      expect(stat.mode & 0o777).toBe(0o600);
+    }
   });
 
   it('ignores corrupted persisted files', () => {

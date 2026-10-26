@@ -1,3 +1,11 @@
+policy: config/brand-runtime.yaml
+policy_instructions: >-
+  At command time, load squads/brand/config/brand-runtime.yaml and apply its task,
+  executor, tier and checkpoint guidance under user/host instructions and core authority.
+  Preserve all phase routing, vetoes, checkpoints and success criteria below. Human
+  approvals remain human; this guidance does not grant dispatch, messaging or provider
+  execution authority or implement automatic runtime checkpoint enforcement.
+
 workflow:
   type: squad-workflow
   sequence:

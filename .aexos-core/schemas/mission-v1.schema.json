@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aexos.cyryxlabs.com/schemas/mission-v1.json",
+  "title": "AEXOS Durable Mission v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocol", "missionId", "projectId", "story", "steps"],
+  "properties": {
+    "protocol": { "const": "aexos.mission/v1" },
+    "missionId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,63}$" },
+    "projectId": { "type": "string", "pattern": "^[a-z][a-z0-9-]{1,63}$" },
+    "story": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["storyId", "path"],
+      "properties": {
+        "storyId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,63}$" },
+        "path": { "type": "string", "minLength": 1, "maxLength": 512 }
+      }
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["stepId", "request"],
+        "properties": {
+          "stepId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,63}$" },
+          "request": { "type": "object" }
+        }
+      }
+    }
+  }
+}

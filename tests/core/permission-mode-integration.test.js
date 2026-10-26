@@ -136,9 +136,9 @@ describe('Permission Mode Integration (Story ACT-4)', () => {
       expect(result.proceed).toBe(true);
     });
 
-    test('explore mode allows git log via Bash', async () => {
+    test('explore mode blocks unverified git log arguments via Bash', async () => {
       const result = await guard.guard('Bash', { command: 'git log --oneline -5' });
-      expect(result.proceed).toBe(true);
+      expect(result.proceed).toBe(false);
     });
 
     test('explore mode blocks rm -rf via Bash', async () => {
@@ -432,8 +432,8 @@ describe('Permission Mode Integration (Story ACT-4)', () => {
       expect(guard.classifyBashCommand('npm install express')).toBe('write');
     });
 
-    test('classifies git log as read', () => {
-      expect(guard.classifyBashCommand('git log --oneline')).toBe('read');
+    test('classifies git log arguments as execution pending a bounded argument contract', () => {
+      expect(guard.classifyBashCommand('git log --oneline')).toBe('execute');
     });
 
     test('classifies git diff as read', () => {

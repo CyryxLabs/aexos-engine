@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aexos.dev/schemas/brownfield-analysis-v1.schema.json",
+  "title": "AEXOS bounded brownfield analysis contract v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocol", "analysisId", "projectRoot", "allowedPaths", "exclusions", "requestedViews", "limits", "output", "verification"],
+  "properties": {
+    "protocol": { "const": "aexos.brownfield-analysis/v1" },
+    "analysisId": { "type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$" },
+    "projectRoot": { "type": "string", "minLength": 1 },
+    "allowedPaths": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "exclusions": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+    "requestedViews": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "enum": ["architecture", "domain", "api", "data", "dependencies", "tests", "risks"] }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maxFiles", "maxDirectories", "maxDepth", "maxFileBytes", "maxTotalBytes", "maxFindings", "maxElapsedMs"],
+      "properties": {
+        "maxFiles": { "$ref": "#/$defs/positiveInteger" },
+        "maxDirectories": { "$ref": "#/$defs/positiveInteger" },
+        "maxDepth": { "$ref": "#/$defs/positiveInteger" },
+        "maxFileBytes": { "$ref": "#/$defs/positiveInteger" },
+        "maxTotalBytes": { "$ref": "#/$defs/positiveInteger" },
+        "maxFindings": { "$ref": "#/$defs/positiveInteger" },
+        "maxElapsedMs": { "$ref": "#/$defs/positiveInteger" }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "path"],
+      "properties": { "mode": { "enum": ["return", "governed"] }, "path": { "type": "string", "minLength": 1 } }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "requireSourceHashes", "requireNoMutation"],
+      "properties": {
+        "mode": { "const": "static-only" },
+        "requireSourceHashes": { "const": true },
+        "requireNoMutation": { "const": true }
+      }
+    }
+  },
+  "$defs": { "positiveInteger": { "type": "integer", "minimum": 1 } }
+}

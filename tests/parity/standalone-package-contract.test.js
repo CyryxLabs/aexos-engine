@@ -90,6 +90,8 @@ describe('standalone package contracts', () => {
       );
       expect(loadCommercialConfig()).toEqual({
         installMode: 'enforce',
+        shadowEnabled: false,
+        betaCohortHashes: [],
         purchaseUrl: 'https://example.test/purchase',
         supportUrl: 'https://example.test/support',
       });
@@ -131,7 +133,7 @@ describe('standalone package contracts', () => {
     expect(INSTALLER_MANIFEST.dependencies).toMatchObject({
       ajv: '^8.17.1',
       'fast-glob': '^3.3.3',
-      tar: '^7.5.22',
+      tar: ROOT_MANIFEST.dependencies.tar,
     });
     expect(PRO_MANIFEST.dependencies).toMatchObject({
       '@aexos/core': `^${ROOT_MANIFEST.version}`,

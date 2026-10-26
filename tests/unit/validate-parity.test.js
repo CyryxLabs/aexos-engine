@@ -6,11 +6,28 @@ const path = require('path');
 const {
   runParityValidation,
   diffCompatibilityContracts,
+  formatHumanReport,
+  normalizeResult,
 } = require('../../.aexos-core/infrastructure/scripts/validate-parity');
 
+const validGrok = () => ({
+  schemaVersion: 1,
+  valid: true,
+  checked: 78,
+  findings: [],
+  evidenceLevel: 'generated-projection-comparison',
+  hostRuntime: 'NOT_ASSESSED',
+});
+
 describe('validate-parity', () => {
+  const roots = [];
+  afterEach(() => {
+    for (const root of roots.splice(0)) fs.rmSync(root, { recursive: true, force: true });
+  });
+
   function createMockProjectRoot() {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'aexos-parity-'));
+    roots.push(root);
     fs.mkdirSync(path.join(root, 'docs'), { recursive: true });
     fs.writeFileSync(
       path.join(root, 'docs', 'ide-integration.md'),
@@ -23,6 +40,7 @@ describe('validate-parity', () => {
         '| Cursor | Limited |',
         '| GitHub Copilot | Limited |',
         '| AntiGravity | Limited |',
+        '| Grok Build | Projection only |',
       ].join('\n'),
       'utf8',
     );
@@ -40,9 +58,127 @@ describe('validate-parity', () => {
         { ide: 'cursor', display_name: 'Cursor', expected_status: 'Limited', required_checks: ['cursor-sync'] },
         { ide: 'github-copilot', display_name: 'GitHub Copilot', expected_status: 'Limited', required_checks: ['github-copilot-sync'] },
         { ide: 'antigravity', display_name: 'AntiGravity', expected_status: 'Limited', required_checks: ['antigravity-sync'] },
+        { ide: 'grok', display_name: 'Grok Build', expected_status: 'Projection only', required_checks: ['grok-projection'] },
       ],
     };
   }
+
+  function runWithGrok(validateGrokProjection, contract = buildMockContract()) {
+    const projectRoot = createMockProjectRoot();
+    const ok = () => ({ ok: true, errors: [], warnings: [] });
+    return runParityValidation({ projectRoot }, {
+      runSyncValidate: ok,
+      validateClaudeIntegration: ok,
+      validateCodexIntegration: ok,
+      validateGeminiIntegration: ok,
+      validateCodexSkills: ok,
+      validatePaths: ok,
+      validateGrokProjection,
+      loadCompatibilityContract: () => contract,
+    });
+  }
+
+  it('reports Grok projection evidence and observed count without claiming host acceptance', () => {
+    const result = runWithGrok(() => ({ ...validGrok(), checked: 83 }));
+    expect(result.ok).toBe(true);
+    expect(result.checks.find((check) => check.id === 'grok-projection')).toMatchObject({
+      ok: true,
+      metrics: { checked: 83 },
+      evidenceLevel: 'generated-projection-comparison',
+      hostRuntime: 'NOT_ASSESSED',
+    });
+    expect(formatHumanReport(result)).toContain('generated-projection-comparison');
+    expect(formatHumanReport(result)).toContain('NOT_ASSESSED');
+    expect(JSON.parse(JSON.stringify(result)).checks.some((check) => check.hostRuntime === 'NOT_ASSESSED')).toBe(true);
+  });
+
+  it.each(['missing', 'different', 'ownership-drift', 'stale-managed'])(
+    'propagates Grok %s findings into aggregate and contract failure', (status) => {
+      const result = runWithGrok(() => ({
+        ...validGrok(), valid: false, findings: [{ path: 'agents/aexos-dev.md', status }],
+      }));
+      expect(result.ok).toBe(false);
+      const grok = result.checks.find((check) => check.id === 'grok-projection');
+      expect(grok.ok).toBe(false);
+      expect(grok.errors.join(' ')).toContain(status);
+      expect(grok.errors.join(' ')).toContain('agents/aexos-dev.md');
+      expect(result.contractViolations.join(' ')).toContain('grok-projection');
+    },
+  );
+
+  it.each([
+    null, undefined, {},
+    { ...validGrok(), valid: 'true' },
+    { ...validGrok(), checked: 0 },
+    { ...validGrok(), checked: -1 },
+    { ...validGrok(), checked: 1.5 },
+    { ...validGrok(), findings: null },
+    { ...validGrok(), findings: [{ path: 'x', status: 'missing' }] },
+    { ...validGrok(), evidenceLevel: 'native-runtime' },
+    { ...validGrok(), hostRuntime: 'PASSED' },
+    { ...validGrok(), skipped: true },
+    { ...validGrok(), skipped: 'true' },
+    { ...validGrok(), skipped: null },
+  ])('rejects malformed or skipped Grok evidence %#', (value) => {
+    const result = runWithGrok(() => value);
+    expect(result.ok).toBe(false);
+    expect(result.checks.find((check) => check.id === 'grok-projection').errors.length).toBeGreaterThan(0);
+  });
+
+  it('includes a thrown Grok validator error without dropping the other checks', () => {
+    const result = runWithGrok(() => { throw new Error('broken Grok manifest'); });
+    expect(result.ok).toBe(false);
+    expect(result.checks).toHaveLength(12);
+    expect(formatHumanReport(result)).toContain('broken Grok manifest');
+    expect(result.checks.find((check) => check.id === 'paths').ok).toBe(true);
+  });
+
+  it('requires Grok projection in the actual default contract', () => {
+    const yaml = require('js-yaml');
+    const contract = yaml.load(fs.readFileSync(path.resolve(__dirname,
+      '../../.aexos-core/infrastructure/contracts/compatibility/aexos-4.0.4.yaml'), 'utf8'));
+    expect(contract.ide_matrix.find((ide) => ide.ide === 'grok').required_checks).toContain('grok-projection');
+    expect(runWithGrok(validGrok, contract).ok).toBe(true);
+    expect(runWithGrok(() => null, contract).ok).toBe(false);
+  });
+
+  it('does not omit Grok required by a custom contract or silently accept unknown checks', () => {
+    const contract = {
+      release: 'custom',
+      ide_matrix: [{ ide: 'grok', display_name: 'Grok Build', expected_status: 'Projection only', required_checks: ['grok-projection'] }],
+    };
+    expect(runWithGrok(validGrok, contract).ok).toBe(true);
+    expect(runWithGrok(() => null, contract).ok).toBe(false);
+    contract.ide_matrix[0].required_checks.push('grok-native-hooks');
+    expect(runWithGrok(validGrok, contract).contractViolations.join(' ')).toContain('grok-native-hooks');
+  });
+
+  it.each([null, [], { ok: 'true' }, { ok: true, skipped: true }, { ok: true, errors: ['failed'] },
+    { ok: true, errors: 'actual failure' }, { ok: true, errors: null },
+    { ok: true, errors: [null] }, { ok: true, skipped: 'true' }])(
+    'rejects non-passing existing-host results %#', (value) => {
+      expect(normalizeResult(value).ok).toBe(false);
+    },
+  );
+
+  it.each([null, undefined, 'host failure'])('reports arbitrary thrown values without aborting other checks %#', (error) => {
+    const projectRoot = createMockProjectRoot();
+    const ok = () => ({ ok: true, errors: [], warnings: [] });
+    const result = runParityValidation({ projectRoot }, {
+      runSyncValidate: ok,
+      validateClaudeIntegration: () => { throw error; },
+      validateCodexIntegration: ok, validateGeminiIntegration: ok,
+      validateCodexSkills: ok, validatePaths: ok,
+      validateGrokProjection: () => { throw error; },
+      loadCompatibilityContract: buildMockContract,
+    });
+    expect(result.ok).toBe(false);
+    expect(result.checks).toHaveLength(12);
+    expect(result.checks.find((check) => check.id === 'claude-integration').ok).toBe(false);
+    expect(result.checks.find((check) => check.id === 'grok-projection').ok).toBe(false);
+    expect(result.checks.find((check) => check.id === 'paths').ok).toBe(true);
+    expect(formatHumanReport(result)).toContain(String(error));
+  });
 
   it('passes when all checks return ok', () => {
     const projectRoot = createMockProjectRoot();
@@ -56,12 +192,13 @@ describe('validate-parity', () => {
         validateGeminiIntegration: () => ok,
         validateCodexSkills: () => ok,
         validatePaths: () => ok,
+        validateGrokProjection: validGrok,
         loadCompatibilityContract: () => buildMockContract(),
       },
     );
 
     expect(result.ok).toBe(true);
-    expect(result.checks).toHaveLength(11);
+    expect(result.checks).toHaveLength(12);
     expect(result.checks.every((c) => c.ok)).toBe(true);
     expect(result.contractViolations).toHaveLength(0);
   });
@@ -83,6 +220,7 @@ describe('validate-parity', () => {
         validateGeminiIntegration: () => ({ ok: true, errors: [], warnings: [] }),
         validateCodexSkills: () => ({ ok: true, errors: [], warnings: [] }),
         validatePaths: () => ({ ok: true, errors: [], warnings: [] }),
+        validateGrokProjection: validGrok,
         loadCompatibilityContract: () => buildMockContract(),
       },
     );
@@ -93,6 +231,7 @@ describe('validate-parity', () => {
 
   it('fails when docs matrix claim diverges from contract', () => {
     const projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'aexos-parity-mismatch-'));
+    roots.push(projectRoot);
     fs.mkdirSync(path.join(projectRoot, 'docs'), { recursive: true });
     fs.writeFileSync(path.join(projectRoot, 'docs', 'ide-integration.md'), '| IDE/CLI | Overall Status |\n| --- | --- |\n| Codex CLI | Works |\n', 'utf8');
 
@@ -106,6 +245,7 @@ describe('validate-parity', () => {
         validateGeminiIntegration: () => ok,
         validateCodexSkills: () => ok,
         validatePaths: () => ok,
+        validateGrokProjection: validGrok,
         loadCompatibilityContract: () => buildMockContract(),
       },
     );
@@ -147,6 +287,7 @@ describe('validate-parity', () => {
         validateGeminiIntegration: () => ok,
         validateCodexSkills: () => ok,
         validatePaths: () => ok,
+        validateGrokProjection: validGrok,
         loadCompatibilityContract: (contractPath) => {
           if (contractPath.endsWith('aexos-4.0.3.yaml')) {
             return {

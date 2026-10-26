@@ -26,6 +26,7 @@ describe('IDE Configs', () => {
 
     it('should include all expected IDEs', () => {
       const expectedIDEs = [
+        'grok',
         'claude-code',
         'codex',
         'grok',
@@ -45,14 +46,14 @@ describe('IDE Configs', () => {
         expect(config).toHaveProperty('name');
         expect(config).toHaveProperty('description');
         expect(config).toHaveProperty('configFile');
-        expect(config).toHaveProperty('template');
+        if (!config.managedProjection) expect(config).toHaveProperty('template');
         expect(config).toHaveProperty('requiresDirectory');
         expect(config).toHaveProperty('format');
 
         expect(typeof config.name).toBe('string');
         expect(typeof config.description).toBe('string');
         expect(typeof config.configFile).toBe('string');
-        expect(typeof config.template).toBe('string');
+        if (!config.managedProjection) expect(typeof config.template).toBe('string');
         expect(typeof config.requiresDirectory).toBe('boolean');
         expect(['text', 'json', 'yaml']).toContain(config.format);
         if (key !== 'grok') expect(typeof config.agentFolder).toBe('string');
@@ -90,7 +91,8 @@ describe('IDE Configs', () => {
 
     it('should have template paths in ide-rules folder', () => {
       Object.values(IDE_CONFIGS).forEach((config) => {
-        expect(config.template).toMatch(/^ide-rules\//);
+        if (!config.managedProjection) expect(config.template).toMatch(/^ide-rules\//);
+        else expect(config.configFile).toBe(path.join('.grok', 'rules', 'aexos-core.md'));
       });
     });
 

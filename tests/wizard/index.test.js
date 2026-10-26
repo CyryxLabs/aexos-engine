@@ -10,6 +10,9 @@ const core = require('../../packages/installer/src/installer/aexos-core-installe
 const dependencies = require('../../packages/installer/src/installer/dependency-installer');
 
 jest.mock('inquirer');
+jest.mock('../../packages/installer/src/wizard/visual-selectors', () => ({
+  createVisualPrompt: () => require('inquirer').prompt,
+}));
 jest.mock('../../packages/installer/src/wizard/feedback');
 jest.mock('../../packages/installer/src/installer/aexos-core-installer');
 jest.mock('../../packages/installer/src/installer/dependency-installer');
@@ -20,6 +23,8 @@ jest.mock('../../packages/installer/src/installer/dependency-installer');
 describe('Wizard public preview and prompt contract', () => {
   let root;
   let previousCwd;
+  const originalNoColor = process.env.NO_COLOR;
+  const originalTerm = process.env.TERM;
   beforeEach(() => {
     jest.clearAllMocks();
     previousCwd = process.cwd();
@@ -28,9 +33,14 @@ describe('Wizard public preview and prompt contract', () => {
     jest.spyOn(console, 'log').mockImplementation(() => {});
     jest.spyOn(console, 'warn').mockImplementation(() => {});
     jest.spyOn(console, 'error').mockImplementation(() => {});
+    process.stdin.isTTY = true;
+    process.stdout.isTTY = true;
+    delete process.env.NO_COLOR;
+    process.env.TERM = 'xterm';
     inquirer.prompt.mockImplementation(async questions => {
       if (questions.some(question => question.name === 'language')) return { language: 'en' };
       if (questions.some(question => question.name === 'userProfile')) return { userProfile: 'advanced' };
+      if (questions.some(question => question.name === 'reviewAction')) return { reviewAction: 'install' };
       return { projectType: 'greenfield', selectedIDEs: ['claude-code'], selectedTechPreset: 'none' };
     });
   });
@@ -38,6 +48,12 @@ describe('Wizard public preview and prompt contract', () => {
     process.chdir(previousCwd);
     fs.rmSync(root, { recursive: true, force: true });
     jest.restoreAllMocks();
+    delete process.stdin.isTTY;
+    delete process.stdout.isTTY;
+    if (originalNoColor === undefined) delete process.env.NO_COLOR;
+    else process.env.NO_COLOR = originalNoColor;
+    if (originalTerm === undefined) delete process.env.TERM;
+    else process.env.TERM = originalTerm;
   });
   test('shows welcome and asks language before project and IDE choices', async () => {
     await runWizard({ interactive: true, dryRun: true });

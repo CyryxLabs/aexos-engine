@@ -425,7 +425,7 @@ dependencies:
     - waste-catalog.yaml # Read when a request to automate is really a question about whether the work should exist
     - severity-levels.yaml # Read when testing the severity matrix against the SLO and the error budget
   reference_files:
-    - .claude/CLAUDE.md # EXISTS - AEXOS project instructions and agent roster
+    - .aexos-core/constitution.md # Canonical AEXOS governance for every CLI host
     - .aexos-core/core-config.yaml # EXISTS - framework configuration
     - .aexos-core/data/entity-registry.yaml # EXISTS - entity and agent registry
     - .aexos-core/data/workflow-chains.yaml # EXISTS - handoff chain lookup used during activation

@@ -62,6 +62,33 @@ describe('DashboardEmitter Bob-specific methods', () => {
       expect(DashboardEventType.BOB_AGENT_COMPLETED).toBe('BobAgentCompleted');
       expect(DashboardEventType.BOB_SURFACE_DECISION).toBe('BobSurfaceDecision');
       expect(DashboardEventType.BOB_ERROR).toBe('BobError');
+      expect(DashboardEventType.AGENT_COLLABORATION_MESSAGE)
+        .toBe('AgentCollaborationMessage');
+    });
+  });
+
+  describe('emitCollaborationMessage', () => {
+    it('emits only an explicitly public message with meeting correlation', async () => {
+      const events = [];
+      emitter.setAgent('dev');
+      emitter.setStoryId('AEX-3.6');
+      emitter.setSessionId('session-1');
+      emitter.emit = async (type, data) => events.push({ type, data });
+
+      await emitter.emitCollaborationMessage('Argus, the implementation is ready.', {
+        runId: 'parallel-run-1',
+      });
+
+      expect(events).toEqual([{
+        type: DashboardEventType.AGENT_COLLABORATION_MESSAGE,
+        data: {
+          agentId: 'dev',
+          storyId: 'AEX-3.6',
+          run_id: 'parallel-run-1',
+          session_id: 'session-1',
+          public_message: 'Argus, the implementation is ready.',
+        },
+      }]);
     });
   });
 

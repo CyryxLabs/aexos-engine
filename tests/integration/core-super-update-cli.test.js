@@ -104,6 +104,25 @@ describe('Core Super Update CLI integration', () => {
     ]);
     expect(logSpy.mock.calls.flat().join('\n')).toContain('SDC dispatch preflight: PASS');
 
+    logSpy.mockClear();
+    const jsonProgram = new Command().exitOverride();
+    jsonProgram.addCommand(createSdcCommand());
+    await jsonProgram.parseAsync([
+      'node',
+      'cyryx',
+      'sdc',
+      'preflight',
+      storyPath,
+      '--budget-usd',
+      '2',
+      '--intent-file',
+      intentFile,
+      '--json',
+    ]);
+    const jsonEvidence = logSpy.mock.calls.flat().join('\n');
+    expect(jsonEvidence).toContain('"approved": true');
+    expect(jsonEvidence).not.toContain('"token"');
+
     await program.parseAsync([
       'node',
       'cyryx',

@@ -236,6 +236,7 @@ describe('Doctor Check: agent-memory', () => {
     for (const agent of EXPECTED_AGENTS) {
       const agentDir = path.join(tmpDir, '.aexos-core', 'development', 'agents', agent);
       fs.mkdirSync(agentDir, { recursive: true });
+      fs.writeFileSync(path.join(path.dirname(agentDir), `${agent}.md`), `# ${agent}`);
       fs.writeFileSync(path.join(agentDir, 'MEMORY.md'), `# ${agent}\n`);
     }
 
@@ -247,6 +248,9 @@ describe('Doctor Check: agent-memory', () => {
   });
 
   it('deve retornar WARN quando faltam alguns MEMORY.md', async () => {
+    const sourceDir = path.join(tmpDir, '.aexos-core', 'development', 'agents');
+    fs.mkdirSync(sourceDir, { recursive: true });
+    for (const agent of EXPECTED_AGENTS) fs.writeFileSync(path.join(sourceDir, `${agent}.md`), `# ${agent}`);
     // Cria apenas para os 3 primeiros agentes
     for (const agent of EXPECTED_AGENTS.slice(0, 3)) {
       const agentDir = path.join(tmpDir, '.aexos-core', 'development', 'agents', agent);

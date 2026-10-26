@@ -1,0 +1,61 @@
+workflow:
+  id: wf-engineer-process
+  name: Engineer Business Process
+  version: 1.0.0
+  type: workflow-engineering
+  description: >-
+    Convert evidence about a business process into a dependency-safe map,
+    canonical AEXOS task contracts, bounded automation decisions and an
+    independent QA verdict without executing the process.
+  entry_agent: workflow-chief
+  execution_allowed: false
+  sequence:
+    - id: discovery
+      name: Discover current process
+      agent: process-discovery-lead
+      owner: process-discovery-lead
+      task: discover-process.md
+      action: Capture observed current-state evidence and explicit gaps
+      creates: process-discovery-record
+      parallel: false
+    - id: topology
+      name: Model dependency topology
+      agent: workflow-modeling-lead
+      owner: workflow-modeling-lead
+      task: model-workflow.md
+      depends_on: [discovery]
+      action: Model steps, dependencies, decisions and exception paths
+      creates: workflow-map
+      parallel: false
+    - id: contracts
+      name: Compile canonical task contracts
+      agent: task-contract-lead
+      owner: task-contract-lead
+      task: compile-task-contracts.md
+      depends_on: [topology]
+      action: Compile each step as AEXOS Task Contract V1
+      creates: task-contracts-v1
+      parallel: false
+    - id: automation
+      name: Classify automation boundaries
+      agent: automation-architecture-lead
+      owner: automation-architecture-lead
+      task: classify-automation.md
+      depends_on: [contracts]
+      action: Classify every task as eligible, governed or manual
+      creates: automation-decisions
+      parallel: false
+    - id: qa
+      name: Validate workflow independently
+      agent: workflow-qa-lead
+      owner: workflow-qa-lead
+      task: validate-workflow.md
+      depends_on: [discovery, topology, contracts, automation]
+      action: Issue the evidence-bound workflow QA verdict
+      creates: workflow-qa-verdict
+      parallel: false
+  handoff_prompts:
+    discovery_to_topology: Use only accepted discovery evidence; preserve open questions.
+    topology_to_contracts: Compile every mapped step; do not invent missing I/O.
+    contracts_to_automation: Treat side effects, approvals and capabilities as governed.
+    automation_to_qa: Verify independently; return defects to the owning phase.

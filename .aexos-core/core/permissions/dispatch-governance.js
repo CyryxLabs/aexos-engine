@@ -9,12 +9,16 @@
 
 'use strict';
 
+const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const promptGuard = require('./prompt-guard');
 
+const DEFAULT_TOKEN_TTL_MS = 30_000;
+const MAX_TOKEN_TTL_MS = 5 * 60_000;
+
 /** @type {RegExp} Tasks that require an active implementation story binding. */
-const IMPLEMENTATION_TASK_PATTERN = /^(develop(?:-(?:yolo|interactive))?|implement|apply-qa-fixes|fix|refactor)$/i;
+const IMPLEMENTATION_TASK_PATTERN = /(?:^|[-_/])(develop|implement|apply-qa-fixes|fix|refactor)(?:$|[-_. /])/i;
 
 /** @type {ReadonlySet<string>} Story statuses accepted for implementation dispatch. */
 const VALID_IMPLEMENTATION_STATUSES = new Set(['Ready', 'InProgress', 'InReview']);
@@ -221,11 +225,612 @@ function assertDispatchGovernance(options = {}) {
       { threats: scan.threats },
     );
   }
-  const requiresStory = options.requiresStory ?? IMPLEMENTATION_TASK_PATTERN.test(options.task || '');
+  const requiresStory = options.requiresStory === true
+    || IMPLEMENTATION_TASK_PATTERN.test(options.task || '');
   const story = requiresStory
     ? validateStoryBinding(options.story, { projectRoot: options.projectRoot })
     : null;
   return { budgetCeilingUsd, story, scan };
+}
+
+function stableValue(value) {
+  if (Array.isArray(value)) return value.map((entry) => stableValue(entry));
+  if (!value || typeof value !== 'object') return value;
+  return Object.fromEntries(
+    Object.keys(value).sort().map((key) => [key, stableValue(value[key])]),
+  );
+}
+
+/**
+ * Hash the exact identity authorized for an automated dispatch.
+ *
+ * @param {object} request - Dispatch request or runtime governance request.
+ * @returns {string} SHA-256 hex digest with no raw intent material.
+ */
+function hashDispatchIntent(request = {}) {
+  const capabilityRequirements = Array.isArray(request.requiredCapabilities)
+    ? request.requiredCapabilities.map((requirement) => ({
+      capability: requirement?.capability || '',
+      action: requirement?.action || '',
+      resource: requirement?.resource || '',
+      scope: requirement?.scope || '',
+      tokenHash: requirement?.token ? hashValue(requirement.token) : null,
+    }))
+    : [];
+  const payload = stableValue({
+    agentId: request.agentId || request.agent || '',
+    task: request.task || '',
+    intent: request.intent ?? request.prompt ?? '',
+    story: request.story || null,
+    budgetCeilingUsd: request.budgetCeilingUsd ?? null,
+    budgetScope: request.budgetScope || null,
+    estimatedCostUsd: request.estimatedCostUsd ?? null,
+    projectRoot: path.resolve(request.projectRoot || process.cwd()),
+    requiresStory: request.requiresStory ?? null,
+    capabilityRequirements,
+  });
+  return crypto.createHash('sha256').update(JSON.stringify(payload)).digest('hex');
+}
+
+function hashValue(value) {
+  return crypto.createHash('sha256').update(String(value)).digest('hex');
+}
+
+function normalizeNonNegativeCost(value, code) {
+  if (value === undefined || value === null || value === '') return 0;
+  const cost = Number(value);
+  if (!Number.isFinite(cost) || cost < 0) {
+    throw new DispatchGovernanceError(code, 'Dispatch cost must be a non-negative number.');
+  }
+  return cost;
+}
+
+function timingSafeHexEqual(left, right) {
+  if (typeof left !== 'string' || typeof right !== 'string') return false;
+  if (!/^[a-f0-9]{64}$/i.test(left) || !/^[a-f0-9]{64}$/i.test(right)) return false;
+  return crypto.timingSafeEqual(Buffer.from(left, 'hex'), Buffer.from(right, 'hex'));
+}
+
+function normalizeSigningSecret(secret) {
+  const bytes = secret === undefined
+    ? crypto.randomBytes(32)
+    : Buffer.from(secret);
+  if (bytes.length < 32) {
+    throw new DispatchGovernanceError(
+      'DISPATCH_TOKEN_SECRET_INVALID',
+      'Dispatch token signing secret must contain at least 32 bytes.',
+    );
+  }
+  return bytes;
+}
+
+/**
+ * Remove the bearer token and path-bearing story data from a governance decision.
+ *
+ * @param {object} decision - Token-bearing evaluator decision.
+ * @returns {object} Safe evidence suitable for CLI output and receipts.
+ */
+function redactGovernanceDecision(decision = {}) {
+  const story = decision.story
+    ? { storyId: decision.story.storyId, status: decision.story.status }
+    : null;
+  const threats = (decision.scan?.threats || []).map((threat) => ({
+    id: threat.id,
+    name: threat.name,
+    severity: threat.severity,
+  }));
+  return {
+    approved: decision.approved === true,
+    intentHash: decision.intentHash,
+    agentId: decision.agentId || null,
+    task: decision.task || null,
+    story,
+    budgetCeilingUsd: decision.budgetCeilingUsd,
+    budget: decision.budget ? { ...decision.budget } : null,
+    scan: decision.scan ? { safe: decision.scan.safe === true, threats } : null,
+    issuedAt: decision.issuedAt,
+    expiresAt: decision.expiresAt,
+  };
+}
+
+class DispatchGovernance {
+  constructor(options = {}) {
+    const ttl = options.tokenTtlMs ?? DEFAULT_TOKEN_TTL_MS;
+    if (!Number.isInteger(ttl) || ttl < 1 || ttl > MAX_TOKEN_TTL_MS) {
+      throw new DispatchGovernanceError(
+        'DISPATCH_TOKEN_TTL_INVALID',
+        `Dispatch token TTL must be an integer between 1 and ${MAX_TOKEN_TTL_MS}ms.`,
+      );
+    }
+    if (options.policy !== undefined && typeof options.policy !== 'function') {
+      throw new DispatchGovernanceError(
+        'DISPATCH_POLICY_INVALID',
+        'Dispatch governance policy must be a function.',
+      );
+    }
+    if (options.decisionSink !== undefined && typeof options.decisionSink !== 'function') {
+      throw new DispatchGovernanceError(
+        'DISPATCH_DECISION_SINK_INVALID',
+        'Dispatch governance decisionSink must be a function.',
+      );
+    }
+    if (options.budgetSink !== undefined && typeof options.budgetSink !== 'function') {
+      throw new DispatchGovernanceError(
+        'DISPATCH_BUDGET_SINK_INVALID',
+        'Dispatch governance budgetSink must be a function.',
+      );
+    }
+    if (options.clock !== undefined && typeof options.clock !== 'function') {
+      throw new DispatchGovernanceError(
+        'DISPATCH_CLOCK_INVALID',
+        'Dispatch governance clock must be a function.',
+      );
+    }
+    if (options.randomId !== undefined && typeof options.randomId !== 'function') {
+      throw new DispatchGovernanceError(
+        'DISPATCH_TOKEN_NONCE_INVALID',
+        'Dispatch governance randomId must be a function.',
+      );
+    }
+    const flushIntervalMs = options.flushIntervalMs ?? 1_000;
+    if (!Number.isInteger(flushIntervalMs) || flushIntervalMs < 1) {
+      throw new DispatchGovernanceError(
+        'DISPATCH_BUDGET_FLUSH_INTERVAL_INVALID',
+        'Dispatch budget flush interval must be a positive integer.',
+      );
+    }
+
+    this.policy = options.policy || assertDispatchGovernance;
+    this.legacyPolicy = options.policy !== undefined;
+    this.clock = options.clock || (() => new Date());
+    this.randomId = options.randomId || (() => crypto.randomUUID());
+    this.signingSecret = normalizeSigningSecret(options.tokenSecret);
+    this.tokenTtlMs = ttl;
+    this.decisionSink = options.decisionSink || null;
+    this.budgetSink = options.budgetSink || null;
+    this.flushIntervalMs = flushIntervalMs;
+    this.budgets = new Map();
+    this.pending = new Map();
+    this.usedNonces = new Map();
+    this.flushTimer = null;
+    this.lastFlushError = null;
+    this.lastDecisionSinkError = null;
+  }
+
+  capabilities() {
+    return {
+      signedDispatchTokens: true,
+      singleUseTokens: true,
+      inProcessBudgetCache: true,
+      legacyPolicyAdapter: this.legacyPolicy,
+    };
+  }
+
+  _nowMs() {
+    const value = this.clock();
+    const milliseconds = value instanceof Date ? value.getTime() : Number(value);
+    if (!Number.isFinite(milliseconds)) {
+      throw new DispatchGovernanceError(
+        'DISPATCH_CLOCK_INVALID',
+        'Dispatch governance clock returned an invalid time.',
+      );
+    }
+    return milliseconds;
+  }
+
+  _record(record) {
+    if (!this.decisionSink) return;
+    try {
+      this.decisionSink(Object.freeze({ ...record }));
+      this.lastDecisionSinkError = null;
+    } catch (error) {
+      this.lastDecisionSinkError = error;
+      throw new DispatchGovernanceError(
+        'DISPATCH_DECISION_SINK_FAILED',
+        'Dispatch governance could not persist its sanitized decision record.',
+      );
+    }
+  }
+
+  _recordRejection(request, error, nowMs) {
+    try {
+      this._record({
+        type: 'governance_rejected',
+        intentHash: hashDispatchIntent(request),
+        agentId: request.agentId || request.agent || null,
+        task: request.task || null,
+        code: error.code || 'DISPATCH_GOVERNANCE_REJECTED',
+        decidedAt: new Date(nowMs).toISOString(),
+      });
+    } catch (sinkError) {
+      this.lastDecisionSinkError = sinkError;
+    }
+  }
+
+  _releasePending(nonce) {
+    if (!nonce) return;
+    const pending = this.pending.get(nonce);
+    if (!pending) return;
+    const entry = this.budgets.get(pending.scopeHash);
+    if (entry) {
+      entry.reservedUsd = Math.max(0, entry.reservedUsd - pending.reservationUsd);
+      entry.dirty = true;
+    }
+    this.pending.delete(nonce);
+    this.usedNonces.delete(nonce);
+  }
+
+  _scope(request, story) {
+    const projectRoot = path.resolve(request.projectRoot || process.cwd());
+    const raw = request.budgetScope
+      || `${projectRoot}::${story?.storyId || request.agentId || request.agent || 'unbound'}`;
+    return { raw, hash: hashValue(raw) };
+  }
+
+  _budgetEntry(scopeHash, ceiling) {
+    const existing = this.budgets.get(scopeHash);
+    if (existing) {
+      if (existing.ceilingUsd !== ceiling) {
+        throw new DispatchGovernanceError(
+          'DISPATCH_BUDGET_CEILING_CHANGED',
+          'Budget ceiling cannot change inside an active dispatch scope.',
+          { scopeHash, existingCeilingUsd: existing.ceilingUsd, requestedCeilingUsd: ceiling },
+        );
+      }
+      return existing;
+    }
+    const entry = { ceilingUsd: ceiling, spentUsd: 0, reservedUsd: 0, dirty: false };
+    this.budgets.set(scopeHash, entry);
+    return entry;
+  }
+
+  _pressure(entry) {
+    return entry.ceilingUsd > 0
+      ? (entry.spentUsd + entry.reservedUsd) / entry.ceilingUsd
+      : 1;
+  }
+
+  _cleanupExpired(nowMs) {
+    for (const [nonce, pending] of this.pending) {
+      if (pending.expiresAtMs > nowMs) continue;
+      const entry = this.budgets.get(pending.scopeHash);
+      if (entry) {
+        entry.reservedUsd = Math.max(0, entry.reservedUsd - pending.reservationUsd);
+        entry.dirty = true;
+      }
+      this.pending.delete(nonce);
+      this.usedNonces.delete(nonce);
+    }
+    for (const [nonce, expiresAtMs] of this.usedNonces) {
+      if (expiresAtMs <= nowMs) this.usedNonces.delete(nonce);
+    }
+  }
+
+  _sign(encodedPayload) {
+    return crypto.createHmac('sha256', this.signingSecret)
+      .update(encodedPayload)
+      .digest('base64url');
+  }
+
+  _createToken(claims) {
+    const encodedPayload = Buffer.from(JSON.stringify(claims)).toString('base64url');
+    return `${encodedPayload}.${this._sign(encodedPayload)}`;
+  }
+
+  _decodeAndAuthenticate(token) {
+    if (!token || typeof token !== 'string') {
+      throw new DispatchGovernanceError(
+        'DISPATCH_TOKEN_REQUIRED',
+        'Automated dispatch requires a governance token.',
+      );
+    }
+    const parts = token.split('.');
+    if (parts.length !== 2 || !parts[0] || !parts[1]) {
+      throw new DispatchGovernanceError(
+        'DISPATCH_TOKEN_INVALID',
+        'Dispatch governance token is malformed.',
+      );
+    }
+    const expected = Buffer.from(this._sign(parts[0]), 'base64url');
+    let actual;
+    try {
+      actual = Buffer.from(parts[1], 'base64url');
+    } catch {
+      actual = Buffer.alloc(0);
+    }
+    if (expected.length !== actual.length || !crypto.timingSafeEqual(expected, actual)) {
+      throw new DispatchGovernanceError(
+        'DISPATCH_TOKEN_INVALID',
+        'Dispatch governance token signature is invalid.',
+      );
+    }
+    try {
+      const claims = JSON.parse(Buffer.from(parts[0], 'base64url').toString('utf8'));
+      if (!claims || typeof claims !== 'object') throw new Error('invalid claims');
+      return claims;
+    } catch {
+      throw new DispatchGovernanceError(
+        'DISPATCH_TOKEN_INVALID',
+        'Dispatch governance token payload is invalid.',
+      );
+    }
+  }
+
+  /**
+   * Evaluate policy, reserve known budget and issue a short-lived token.
+   *
+   * @param {object} request - Exact automated dispatch identity.
+   * @returns {object} Token-bearing approval decision.
+   */
+  evaluate(request = {}) {
+    const nowMs = this._nowMs();
+    this._cleanupExpired(nowMs);
+    const intentHash = hashDispatchIntent(request);
+    let pendingNonce = null;
+
+    try {
+      const policyDecision = this.policy({
+        ...request,
+        intent: request.intent ?? request.prompt ?? '',
+      });
+      const ceiling = policyDecision.budgetCeilingUsd;
+      const story = policyDecision.story || null;
+      const scope = this._scope(request, story);
+      const entry = this._budgetEntry(scope.hash, ceiling);
+      const reservationUsd = normalizeNonNegativeCost(
+        request.estimatedCostUsd,
+        'DISPATCH_BUDGET_ESTIMATE_INVALID',
+      );
+      const committed = entry.spentUsd + entry.reservedUsd;
+      if (committed >= ceiling || committed + reservationUsd > ceiling) {
+        throw new DispatchGovernanceError(
+          'DISPATCH_BUDGET_EXHAUSTED',
+          'Automated dispatch blocked: budget ceiling reached; human escalation required.',
+          {
+            scopeHash: scope.hash,
+            ceilingUsd: ceiling,
+            spentUsd: entry.spentUsd,
+            reservedUsd: entry.reservedUsd,
+            requestedReservationUsd: reservationUsd,
+          },
+        );
+      }
+
+      entry.reservedUsd += reservationUsd;
+      entry.dirty = entry.dirty || reservationUsd > 0;
+      const issuedAtMs = nowMs;
+      const expiresAtMs = nowMs + this.tokenTtlMs;
+      const nonce = String(this.randomId() || '');
+      if (!nonce || this.pending.has(nonce) || this.usedNonces.has(nonce)) {
+        entry.reservedUsd = Math.max(0, entry.reservedUsd - reservationUsd);
+        throw new DispatchGovernanceError(
+          'DISPATCH_TOKEN_NONCE_INVALID',
+          'Dispatch governance could not allocate a unique token nonce.',
+        );
+      }
+      const claims = {
+        version: 1,
+        nonce,
+        intentHash,
+        agentId: request.agentId || request.agent || '',
+        task: request.task || '',
+        storyId: story?.storyId || null,
+        budgetCeilingUsd: ceiling,
+        budgetScopeHash: scope.hash,
+        reservationUsd,
+        issuedAtMs,
+        expiresAtMs,
+      };
+      const token = this._createToken(claims);
+      this.pending.set(nonce, {
+        scopeHash: scope.hash,
+        reservationUsd,
+        expiresAtMs,
+      });
+      pendingNonce = nonce;
+      const decision = {
+        ...policyDecision,
+        approved: true,
+        agentId: claims.agentId,
+        task: claims.task,
+        intentHash,
+        token,
+        issuedAt: new Date(issuedAtMs).toISOString(),
+        expiresAt: new Date(expiresAtMs).toISOString(),
+        budget: {
+          scopeHash: scope.hash,
+          ceilingUsd: ceiling,
+          spentUsd: entry.spentUsd,
+          reservedUsd: entry.reservedUsd,
+          pressure: this._pressure(entry),
+        },
+      };
+      this._record({ type: 'governance_approved', ...redactGovernanceDecision(decision) });
+      return decision;
+    } catch (error) {
+      this._releasePending(pendingNonce);
+      this._recordRejection(request, error, nowMs);
+      throw error;
+    }
+  }
+
+  /**
+   * Authenticate and consume a token for the exact current request.
+   *
+   * @param {string} token - Token returned by evaluate().
+   * @param {object} request - Current request immediately before execution.
+   * @returns {object} Authenticated claims used for settlement.
+   */
+  verify(token, request = {}) {
+    const nowMs = this._nowMs();
+    this._cleanupExpired(nowMs);
+    let claims;
+    try {
+      claims = this._decodeAndAuthenticate(token);
+    } catch (error) {
+      this._recordRejection(request, error, nowMs);
+      throw error;
+    }
+    if (claims.expiresAtMs <= nowMs) {
+      const error = new DispatchGovernanceError(
+        'DISPATCH_TOKEN_EXPIRED',
+        'Dispatch governance token has expired.',
+      );
+      this._recordRejection(request, error, nowMs);
+      throw error;
+    }
+    if (this.usedNonces.has(claims.nonce)) {
+      const error = new DispatchGovernanceError(
+        'DISPATCH_TOKEN_REPLAYED',
+        'Dispatch governance token has already been consumed.',
+      );
+      this._recordRejection(request, error, nowMs);
+      throw error;
+    }
+    if (!this.pending.has(claims.nonce)) {
+      const error = new DispatchGovernanceError(
+        'DISPATCH_TOKEN_INVALID',
+        'Dispatch governance token is not active in this process.',
+      );
+      this._recordRejection(request, error, nowMs);
+      throw error;
+    }
+    const currentHash = hashDispatchIntent(request);
+    if (!timingSafeHexEqual(claims.intentHash, currentHash)) {
+      const error = new DispatchGovernanceError(
+        'DISPATCH_TOKEN_INTENT_MISMATCH',
+        'Dispatch request changed after governance approval.',
+        { approvedIntentHash: claims.intentHash, currentIntentHash: currentHash },
+      );
+      this._recordRejection(request, error, nowMs);
+      throw error;
+    }
+    this.usedNonces.set(claims.nonce, claims.expiresAtMs);
+    return claims;
+  }
+
+  /** Revalidate an active, already consumed phase without reserving or settling again. */
+  revalidate(token, request = {}) {
+    const claims = this._decodeAndAuthenticate(token);
+    if (claims.expiresAtMs <= this._nowMs()) {
+      throw new DispatchGovernanceError('DISPATCH_TOKEN_EXPIRED', 'Dispatch governance token has expired.');
+    }
+    if (!this.usedNonces.has(claims.nonce) || !this.pending.has(claims.nonce)) {
+      throw new DispatchGovernanceError('DISPATCH_TOKEN_INVALID', 'Dispatch phase is not active.');
+    }
+    if (!timingSafeHexEqual(claims.intentHash, hashDispatchIntent(request))) {
+      throw new DispatchGovernanceError('DISPATCH_TOKEN_INTENT_MISMATCH', 'Dispatch intent changed.');
+    }
+    if (request.requiresStory === true) validateStoryBinding(request.story, { projectRoot: request.projectRoot });
+    return claims;
+  }
+
+  /**
+   * Settle one verified dispatch into the in-process budget cache.
+   *
+   * @param {object} claims - Claims returned by verify().
+   * @param {number|null|undefined} actualCostUsd - Provider-reported cost.
+   * @returns {object} Sanitized budget state after settlement.
+   */
+  settle(claims, actualCostUsd) {
+    if (!claims || !claims.nonce || !this.usedNonces.has(claims.nonce)) {
+      throw new DispatchGovernanceError(
+        'DISPATCH_TOKEN_INVALID',
+        'Only a verified dispatch token can settle budget state.',
+      );
+    }
+    const pending = this.pending.get(claims.nonce);
+    if (!pending) {
+      throw new DispatchGovernanceError(
+        'DISPATCH_TOKEN_REPLAYED',
+        'Dispatch budget has already been settled.',
+      );
+    }
+    const entry = this.budgets.get(pending.scopeHash);
+    const cost = actualCostUsd === undefined || actualCostUsd === null
+      ? pending.reservationUsd
+      : normalizeNonNegativeCost(actualCostUsd, 'DISPATCH_BUDGET_COST_INVALID');
+    entry.reservedUsd = Math.max(0, entry.reservedUsd - pending.reservationUsd);
+    entry.spentUsd += cost;
+    entry.dirty = true;
+    this.pending.delete(claims.nonce);
+    this._scheduleFlush();
+    return {
+      scopeHash: pending.scopeHash,
+      ceilingUsd: entry.ceilingUsd,
+      spentUsd: entry.spentUsd,
+      reservedUsd: entry.reservedUsd,
+      pressure: this._pressure(entry),
+    };
+  }
+
+  getBudgetState(scope) {
+    const scopeHash = /^[a-f0-9]{64}$/i.test(String(scope || ''))
+      ? String(scope)
+      : hashValue(scope);
+    const entry = this.budgets.get(scopeHash);
+    if (!entry) return null;
+    return {
+      scopeHash,
+      ceilingUsd: entry.ceilingUsd,
+      spentUsd: entry.spentUsd,
+      reservedUsd: entry.reservedUsd,
+      pressure: this._pressure(entry),
+    };
+  }
+
+  _scheduleFlush() {
+    if (!this.budgetSink || this.flushTimer) return;
+    this.flushTimer = setTimeout(() => {
+      this.flushTimer = null;
+      Promise.resolve(this.flush()).catch((error) => {
+        this.lastFlushError = error;
+      });
+    }, this.flushIntervalMs);
+    this.flushTimer.unref?.();
+  }
+
+  async flush() {
+    if (!this.budgetSink) return [];
+    const snapshot = [...this.budgets.entries()].map(([scopeHash, entry]) => ({
+      scopeHash,
+      ceilingUsd: entry.ceilingUsd,
+      spentUsd: entry.spentUsd,
+      reservedUsd: entry.reservedUsd,
+      pressure: this._pressure(entry),
+    }));
+    await this.budgetSink(snapshot);
+    for (const entry of this.budgets.values()) entry.dirty = false;
+    this.lastFlushError = null;
+    return snapshot;
+  }
+
+  close() {
+    if (this.flushTimer) clearTimeout(this.flushTimer);
+    this.flushTimer = null;
+  }
+}
+
+let defaultDispatchGovernance;
+
+/**
+ * Create an isolated governance evaluator and budget cache.
+ *
+ * @param {object} [options] - Evaluator configuration and test seams.
+ * @returns {DispatchGovernance} Governance evaluator.
+ */
+function createDispatchGovernance(options = {}) {
+  return new DispatchGovernance(options);
+}
+
+/**
+ * Return the process-wide evaluator used by thin CLI surfaces.
+ *
+ * @returns {DispatchGovernance} Shared process-local evaluator.
+ */
+function getDefaultDispatchGovernance() {
+  if (!defaultDispatchGovernance) defaultDispatchGovernance = createDispatchGovernance();
+  return defaultDispatchGovernance;
 }
 
 module.exports = {
@@ -236,4 +841,9 @@ module.exports = {
   scanAutomatedIntent,
   validateStoryBinding,
   assertDispatchGovernance,
+  DispatchGovernance,
+  createDispatchGovernance,
+  getDefaultDispatchGovernance,
+  hashDispatchIntent,
+  redactGovernanceDecision,
 };

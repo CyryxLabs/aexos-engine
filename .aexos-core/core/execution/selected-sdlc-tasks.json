@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "evidenceLevel": "selected-contracts-only",
+  "tasks": {
+    "create-next-story": { "owner": "sm", "outputs": ["output"] },
+    "validate-next-story": { "owner": "po", "outputs": ["output"] },
+    "plan-create-implementation": { "owner": "architect", "outputs": ["output"] },
+    "dev-develop-story": { "owner": "dev", "outputs": ["source", "output"] },
+    "qa-run-tests": { "owner": "qa", "outputs": ["output"] },
+    "qa-review-story": { "owner": "qa", "outputs": ["output"] }
+  }
+}

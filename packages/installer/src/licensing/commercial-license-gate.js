@@ -1,10 +1,14 @@
 'use strict';
 
 const path = require('path');
+const crypto = require('crypto');
 const { getCyryxCorePackageRoot } = require('../utils/package-paths');
+const { recordShadowDecision: defaultRecordShadowDecision } = require('./shadow-telemetry');
 
 const INSTALL_MODES = Object.freeze({
   LEGACY: 'legacy',
+  SHADOW: 'shadow',
+  BETA: 'beta',
   ENFORCE: 'enforce',
 });
 
@@ -30,7 +34,9 @@ function loadCommercialConfig(packageRoot = null) {
 
     return {
       installMode,
-      purchaseUrl: config.purchaseUrl || 'https://cyryxlabs.com/aexos',
+      shadowEnabled: config.shadowEnabled === true,
+      betaCohortHashes: Array.isArray(config.betaCohortHashes) ? config.betaCohortHashes : [],
+      purchaseUrl: config.purchaseUrl || 'https://aexos.cyryxlabs.com/aexos',
       supportUrl: config.supportUrl || 'https://cyryxlabs.com/contact',
     };
   } catch (error) {
@@ -61,8 +67,18 @@ function redactCredentialValues(message, credentials) {
 
 async function enforceCommercialInstallGate(options = {}) {
   const config = options.config || loadCommercialConfig(options.packageRoot);
+  const credentials = resolveCredentialOptions(options, options.env || process.env);
+  const emailHash = credentials.email
+    ? crypto.createHash('sha256').update(credentials.email.trim().toLowerCase()).digest('hex')
+    : null;
+  const betaHashes = new Set([
+    ...(config.betaCohortHashes || []),
+    ...String((options.env || process.env).AEXOS_BETA_COHORT_HASHES || '').split(',').map((v) => v.trim()).filter(Boolean),
+  ]);
+  const inBeta = config.installMode === INSTALL_MODES.BETA && emailHash && betaHashes.has(emailHash);
+  const shouldEvaluate = config.shadowEnabled || config.installMode === INSTALL_MODES.SHADOW || inBeta;
 
-  if (config.installMode !== INSTALL_MODES.ENFORCE) {
+  if (config.installMode === INSTALL_MODES.LEGACY && !shouldEvaluate) {
     return {
       required: false,
       admitted: true,
@@ -71,8 +87,34 @@ async function enforceCommercialInstallGate(options = {}) {
   }
 
   const runLicenseWizard = options.runLicenseWizard || require('../wizard/pro-setup').runProWizard;
-  const credentials = resolveCredentialOptions(options, options.env || process.env);
   const targetDir = path.resolve(options.targetDir || process.cwd());
+
+  if ((config.installMode === INSTALL_MODES.SHADOW || config.shadowEnabled || config.installMode === INSTALL_MODES.BETA) && !inBeta) {
+    let decision = 'credential_missing';
+    if (credentials.key || (credentials.email && credentials.password)) {
+      try {
+        const shadow = await runLicenseWizard({
+          targetDir, key: credentials.key, email: credentials.email, password: credentials.password,
+          quiet: true, force: false, validationOnly: true,
+        });
+        decision = shadow?.success === true && shadow?.licenseValidated === true ? 'would_admit' : 'would_deny';
+      } catch { decision = 'evaluation_error'; }
+    }
+    const recorder = options.recordShadowDecision || defaultRecordShadowDecision;
+    await recorder(
+      { mode: config.installMode, decision, entrypoint: options.entrypoint || 'installer', cohort: Boolean(inBeta) },
+      targetDir,
+    );
+    return { required: false, admitted: true, mode: config.installMode, shadowDecision: decision };
+  }
+
+  if (config.installMode === INSTALL_MODES.BETA && !inBeta) {
+    return { required: false, admitted: true, mode: config.installMode, cohort: false };
+  }
+
+  if (config.installMode !== INSTALL_MODES.ENFORCE && !inBeta) {
+    return { required: false, admitted: true, mode: config.installMode };
+  }
 
   let result;
   try {

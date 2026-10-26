@@ -365,7 +365,7 @@ dependencies:
   tools:
     - git # Read-only. Inspect artifact history to date contradictions. Push is @devops exclusive.
   reference_files:
-    - .claude/CLAUDE.md # EXISTS - AEXOS project instructions and agent roster
+    - .aexos-core/constitution.md # Canonical AEXOS governance for every CLI host
     - .aexos-core/core-config.yaml # EXISTS - framework configuration
     - .aexos-core/data/entity-registry.yaml # EXISTS - entity and agent registry
     - .aexos-core/data/workflow-chains.yaml # EXISTS - handoff chain lookup used during activation

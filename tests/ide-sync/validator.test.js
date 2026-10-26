@@ -154,6 +154,36 @@ describe('validator', () => {
       expect(result.orphaned[0].filename).toBe(path.join('aexos-qa', 'SKILL.md'));
     });
 
+    it('should compare nested expected paths across platform separators without hiding same-basename orphans', () => {
+      fs.ensureDirSync(path.join(targetDir, 'AEXOS', 'agents', 'aexos-dev'));
+      fs.ensureDirSync(path.join(targetDir, 'custom', 'aexos-dev'));
+      fs.writeFileSync(
+        path.join(targetDir, 'AEXOS', 'agents', 'aexos-dev', 'SKILL.md'),
+        'expected content',
+      );
+      fs.writeFileSync(
+        path.join(targetDir, 'custom', 'aexos-dev', 'SKILL.md'),
+        'unrelated orphan',
+      );
+
+      const expected = [
+        {
+          filename: 'AEXOS/agents/aexos-dev/SKILL.md',
+          content: 'expected content',
+        },
+      ];
+      const result = validateIdeSync(expected, targetDir, {}, 'claude-skill');
+
+      expect(result.missing).toHaveLength(0);
+      expect(result.drift).toHaveLength(0);
+      expect(result.orphaned).toEqual([
+        {
+          filename: path.join('custom', 'aexos-dev', 'SKILL.md'),
+          path: path.join(targetDir, 'custom', 'aexos-dev', 'SKILL.md'),
+        },
+      ]);
+    });
+
     it('should not count redirect files as orphaned', () => {
       fs.writeFileSync(path.join(targetDir, 'agent.md'), 'content');
       fs.writeFileSync(path.join(targetDir, 'aexos-developer.md'), 'redirect');

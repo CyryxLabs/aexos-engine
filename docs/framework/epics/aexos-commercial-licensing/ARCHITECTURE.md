@@ -40,6 +40,70 @@ Authenticated Artifact Service ----> AEXOS License Client
 - AEXOS Master consumes an entitlement decision but cannot override it.
 - Cerberus receives only an already-authorized capability request.
 
+## Public bootstrap and private engine boundary
+
+- `@aexos/core@5.3.0` is a historical artifact governed by the terms shipped
+  with that release. It is never treated as the paid engine and is not
+  retroactively disabled.
+- A future public npm package contains only bootstrap, authentication,
+  entitlement verification, recovery-safe diagnostics, export and uninstall
+  surfaces. It contains no executable AEXOS engine, squads or paid capability
+  artifacts.
+- The paid engine is built separately and stored behind the Authenticated
+  Artifact Service. A public repository or npm tarball is not an artifact
+  authority.
+- The public bootstrap verifies the descriptor, release channel, SHA-256 and
+  signature before extracting any engine file. A URL alone is not authority.
+- Package naming, publication, repository visibility and artifact-provider
+  configuration remain DevOps/release transactions and are not changed by a
+  local implementation story.
+
+## Payment admission rule
+
+- Checkout completion, subscription creation, browser redirects and a local
+  `active` status do not independently prove that money settled.
+- The first paid entitlement requires a verified `invoice.paid` event tied to
+  an allowlisted AEXOS Product/Price, a positive paid amount, the expected
+  currency and the authenticated AEXOS customer/subscription namespace.
+- The backend retrieves current Stripe authority before admitting payment and
+  stores the invoice identifier and paid timestamp in the durable event ledger.
+- Subscription events may persist lifecycle state before the paid invoice
+  arrives, but `active` cannot become `entitled` without qualifying paid-invoice
+  evidence. `trialing` is blocked unless a later founder-approved promotional
+  policy explicitly authorizes it.
+- Refund, dispute, chargeback, unpaid and terminal subscription states can
+  revoke or hold an entitlement even when historical paid-invoice evidence
+  exists. Recovery requires current Stripe authority plus no active hold.
+
+## CLI authentication contract
+
+- The paid purchase journey is account-first: the customer creates and verifies
+  the account before Checkout. The CLI does not disclose whether an arbitrary
+  email is a buyer.
+- Interactive and CI password authentication goes directly to Supabase Auth
+  using its public URL and anon key discovered from a public auth-config
+  endpoint. Passwords never transit the License Authority application route.
+- The CLI sends only the short-lived Supabase access token to activation and
+  artifact endpoints. The License Authority revalidates that token and verified
+  email for every authority-bearing request.
+- Browser/device authorization is the preferred future interactive UX, but it
+  is not a prerequisite for the first paid candidate and must not be simulated
+  by a redirect-only claim.
+
+## Authenticated artifact descriptor
+
+The Artifact Service response is short-lived and binds at minimum:
+
+- authenticated user and entitlement;
+- privacy-bounded machine identifier;
+- package, version, platform and release channel;
+- artifact URL, byte size and SHA-256;
+- expiry and descriptor signature/key identifier.
+
+If a private artifact origin, signing key or exact matching artifact record is
+not configured, descriptor issuance fails closed. The License Authority never
+falls back to the public historical package.
+
 ## Canonical entitlement envelope
 
 The final schema must be versioned and strict. At minimum it binds:

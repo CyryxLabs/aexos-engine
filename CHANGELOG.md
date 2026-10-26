@@ -5,6 +5,17 @@ All notable changes to AEXOS are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and AEXOS uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.0.0] - 2026-10-26
+
+### Changed
+
+- Prepared the approved stable 6.0.0 candidate with governed execution, brownfield workflows, public package boundaries and authenticated read-only Office integration.
+- Reconciled the preserved local implementation with the official repository history.
+
+### Release status
+
+- Production acceptance and publication remain pending. This entry does not claim an npm publication, production deployment or universal native-host support.
+
 ## [1.0.0] - 2026-09-21
 
 First public release of the AEXOS repository under its new release history.

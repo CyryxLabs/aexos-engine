@@ -7,12 +7,13 @@
  */
 
 const EventEmitter = require('events');
-const _path = require('path');
+const { assertRuntime, createLegacyRuntime } = require('./agent-runtime');
+const { normalizeTaskContract } = require('./task-contract');
 
 // Import dependencies with fallbacks
 let WaveAnalyzer;
 try {
-  WaveAnalyzer = require('../../workflow-intelligence/engine/wave-analyzer');
+  ({ WaveAnalyzer } = require('../../workflow-intelligence/engine/wave-analyzer'));
 } catch {
   WaveAnalyzer = null;
 }
@@ -24,20 +25,70 @@ try {
   RateLimitManager = null;
 }
 
+class WaveExecutionError extends Error {
+  constructor(code, message, details = {}) {
+    super(message);
+    this.name = 'WaveExecutionError';
+    this.code = code;
+    this.details = details;
+  }
+}
+
+function validateMaxParallel(value) {
+  if (!Number.isInteger(value) || value < 1) {
+    throw new WaveExecutionError(
+      'WAVE_CONCURRENCY_INVALID',
+      'WaveExecutor maxParallel must be a positive integer.',
+      { maxParallel: value },
+    );
+  }
+  return value;
+}
+
+function createLegacyTaskRuntime(taskExecutor, rateLimitManager, config = {}) {
+  if (typeof taskExecutor !== 'function') return null;
+
+  const runtime = createLegacyRuntime((request) => {
+    const execute = () => taskExecutor(request.taskDefinition, request.executionContext);
+    if (rateLimitManager && typeof rateLimitManager.executeWithRetry === 'function') {
+      return rateLimitManager.executeWithRetry(execute, { taskId: request.task });
+    }
+    return execute();
+  }, {
+    projectRoot: config.projectRoot,
+    governance: config.governance,
+    governanceController: config.governanceController,
+    governanceTokenSecret: config.governanceTokenSecret,
+    governanceTokenTtlMs: config.governanceTokenTtlMs,
+    clock: config.clock,
+    evidenceSink: config.evidenceSink,
+    budgetSink: config.budgetSink,
+    budgetFlushIntervalMs: config.budgetFlushIntervalMs,
+  });
+  const capabilities = runtime.capabilities.bind(runtime);
+  runtime.capabilities = () => ({ ...capabilities(), legacyTaskExecutor: true });
+  return runtime;
+}
+
 class WaveExecutor extends EventEmitter {
   constructor(config = {}) {
     super();
 
     // Configuration
-    this.maxParallel = config.maxParallel || 4;
+    this.maxParallel = validateMaxParallel(config.maxParallel ?? 4);
     this.taskTimeout = config.taskTimeout || 10 * 60 * 1000; // 10 minutes
     this.continueOnNonCriticalFailure = config.continueOnNonCriticalFailure !== false;
 
     // Dependencies
-    this.waveAnalyzer = config.waveAnalyzer || (WaveAnalyzer ? new WaveAnalyzer() : null);
+    this.waveAnalyzer = Object.prototype.hasOwnProperty.call(config, 'waveAnalyzer')
+      ? config.waveAnalyzer
+      : (WaveAnalyzer ? new WaveAnalyzer() : null);
     this.taskExecutor = config.taskExecutor || null;
-    this.rateLimitManager =
-      config.rateLimitManager || (RateLimitManager ? new RateLimitManager() : null);
+    this.rateLimitManager = Object.prototype.hasOwnProperty.call(config, 'rateLimitManager')
+      ? config.rateLimitManager
+      : (RateLimitManager ? new RateLimitManager() : null);
+    this.runtime = config.runtime
+      || createLegacyTaskRuntime(config.taskExecutor, this.rateLimitManager, config);
 
     // State
     this.activeExecutions = new Map();
@@ -54,21 +105,7 @@ class WaveExecutor extends EventEmitter {
   async executeWaves(workflowId, context = {}) {
     const startTime = Date.now();
 
-    // Get wave analysis
-    let analysis;
-    if (this.waveAnalyzer) {
-      analysis = this.waveAnalyzer.analyze(workflowId);
-    } else {
-      // Fallback: single wave with all tasks
-      analysis = {
-        waves: [
-          {
-            index: 1,
-            tasks: context.tasks || [],
-          },
-        ],
-      };
-    }
+    const analysis = this._analyzeWorkflow(workflowId, context);
 
     if (!analysis.waves || analysis.waves.length === 0) {
       return {
@@ -80,7 +117,13 @@ class WaveExecutor extends EventEmitter {
       };
     }
 
-    this.emit('execution_started', { workflowId, totalWaves: analysis.waves.length });
+    assertRuntime(this.runtime);
+
+    this.emit('execution_started', {
+      workflowId,
+      totalWaves: analysis.waves.length,
+      deprecatedRuntime: this.runtime.deprecated === true,
+    });
 
     const results = [];
     let aborted = false;
@@ -95,14 +138,18 @@ class WaveExecutor extends EventEmitter {
         totalTasks: wave.tasks.length,
       });
 
+      const waveStartedAt = Date.now();
       const waveResult = await this.executeWave(wave, context);
+      const wallDuration = Date.now() - waveStartedAt;
 
       results.push({
         wave: wave.index,
         results: waveResult,
         allSucceeded: waveResult.every((r) => r.success),
         duration: waveResult.reduce((sum, r) => sum + (r.duration || 0), 0),
+        wallDuration,
       });
+      this.completedWaves.push(wave.index);
 
       this.emit('wave_completed', {
         waveIndex: wave.index,
@@ -119,9 +166,12 @@ class WaveExecutor extends EventEmitter {
           failedTasks: waveResult.filter((r) => !r.success && r.critical),
         });
 
-        if (!this.continueOnNonCriticalFailure) {
-          aborted = true;
-        }
+        aborted = true;
+      } else if (
+        waveResult.some((result) => !result.success)
+        && !this.continueOnNonCriticalFailure
+      ) {
+        aborted = true;
       }
     }
 
@@ -141,6 +191,110 @@ class WaveExecutor extends EventEmitter {
     return executionResult;
   }
 
+  _analyzeWorkflow(workflowId, context) {
+    const tasks = Array.isArray(context.tasks) ? context.tasks : [];
+    let analysis;
+
+    if (this.waveAnalyzer && typeof this.waveAnalyzer.analyzeWaves === 'function') {
+      analysis = this.waveAnalyzer.analyzeWaves(workflowId, { customTasks: tasks });
+    } else if (this.waveAnalyzer && typeof this.waveAnalyzer.analyze === 'function') {
+      analysis = this.waveAnalyzer.analyze(workflowId, { customTasks: tasks });
+    } else {
+      analysis = {
+        workflowId,
+        waves: tasks.length > 0 ? [{ index: 1, tasks }] : [],
+      };
+    }
+
+    const taskMap = new Map();
+    for (const task of tasks) {
+      if (!task || typeof task !== 'object') continue;
+      if (task.id) taskMap.set(task.id, task);
+      if (task.name) taskMap.set(task.name, task);
+    }
+
+    const waves = (analysis?.waves || []).map((wave, position) => ({
+      ...wave,
+      index: wave.index ?? wave.waveNumber ?? position + 1,
+      tasks: (wave.tasks || []).map((task) => {
+        if (task && typeof task === 'object') return task;
+        const resolved = taskMap.get(task);
+        if (!resolved) {
+          throw new WaveExecutionError(
+            'WAVE_TASK_NOT_FOUND',
+            `Wave analysis referenced an unknown task: ${task}`,
+            { workflowId, taskId: task },
+          );
+        }
+        return resolved;
+      }),
+    }));
+
+    return { ...analysis, workflowId, waves };
+  }
+
+  _planWave(tasks, context) {
+    const projectRoot = context.projectRoot || process.cwd();
+    const parallelTasks = [];
+    const serialTasks = [];
+    const outputOwners = new Map();
+
+    for (const [position, task] of tasks.entries()) {
+      if (!task || typeof task !== 'object' || !task.id) {
+        throw new WaveExecutionError(
+          'WAVE_TASK_INVALID',
+          'Every wave task must be an object with a non-empty id.',
+          { position },
+        );
+      }
+
+      if (!task.contract) {
+        serialTasks.push({ ...task, _wavePosition: position });
+        continue;
+      }
+
+      const contract = normalizeTaskContract(
+        task.contract,
+        task.projectRoot || projectRoot,
+      );
+      const plannedTask = { ...task, contract, _wavePosition: position };
+
+      for (const output of contract.produces) {
+        if (!output.path) continue;
+        const owner = outputOwners.get(output.path);
+        if (owner && owner !== task.id) {
+          throw new WaveExecutionError(
+            'WAVE_OUTPUT_CONFLICT',
+            `Tasks ${owner} and ${task.id} both declare output ${output.path}.`,
+            { path: output.path, taskIds: [owner, task.id] },
+          );
+        }
+        outputOwners.set(output.path, task.id);
+      }
+
+      parallelTasks.push(plannedTask);
+    }
+
+    return { parallelTasks, serialTasks };
+  }
+
+  async _executeBounded(tasks, worker) {
+    const results = new Array(tasks.length);
+    let nextIndex = 0;
+    const workerCount = Math.min(this.maxParallel, tasks.length);
+
+    const runWorker = async () => {
+      while (nextIndex < tasks.length) {
+        const currentIndex = nextIndex;
+        nextIndex += 1;
+        results[currentIndex] = await worker(tasks[currentIndex]);
+      }
+    };
+
+    await Promise.all(Array.from({ length: workerCount }, () => runWorker()));
+    return results;
+  }
+
   /**
    * Execute a single wave with parallel task execution
    * @param {Object} wave - Wave definition
@@ -154,48 +308,36 @@ class WaveExecutor extends EventEmitter {
       return [];
     }
 
-    // Split tasks into chunks based on maxParallel
-    const chunks = this.chunkArray(tasks, this.maxParallel);
-    const allResults = [];
+    const plan = this._planWave(tasks, context);
+    assertRuntime(this.runtime);
+    const observed = [];
 
-    for (const chunk of chunks) {
-      // Execute chunk in parallel
-      const promises = chunk.map((task) => this.executeTaskWithTimeout(task, context));
+    const executeTask = async (task) => {
+      const value = await this.executeTaskWithTimeout(task, context);
+      const result = {
+        taskId: task.id,
+        success: value.success,
+        result: value,
+        critical: task.critical || false,
+        duration: value.duration || 0,
+        _wavePosition: task._wavePosition,
+      };
+      this.emit('task_completed', {
+        taskId: task.id,
+        success: value.success,
+        waveIndex: wave.index,
+      });
+      return result;
+    };
 
-      const chunkResults = await Promise.allSettled(promises);
-
-      // Process results
-      for (let i = 0; i < chunkResults.length; i++) {
-        const result = chunkResults[i];
-        const task = chunk[i];
-
-        if (result.status === 'fulfilled') {
-          allResults.push({
-            taskId: task.id,
-            success: result.value.success,
-            result: result.value,
-            critical: task.critical || false,
-            duration: result.value.duration || 0,
-          });
-        } else {
-          allResults.push({
-            taskId: task.id,
-            success: false,
-            error: result.reason?.message || 'Unknown error',
-            critical: task.critical || false,
-            duration: 0,
-          });
-        }
-
-        this.emit('task_completed', {
-          taskId: task.id,
-          success: result.status === 'fulfilled' && result.value?.success,
-          waveIndex: wave.index,
-        });
-      }
+    observed.push(...await this._executeBounded(plan.parallelTasks, executeTask));
+    for (const task of plan.serialTasks) {
+      observed.push(await executeTask(task));
     }
 
-    return allResults;
+    return observed
+      .sort((left, right) => left._wavePosition - right._wavePosition)
+      .map(({ _wavePosition, ...result }) => result);
   }
 
   /**
@@ -225,21 +367,8 @@ class WaveExecutor extends EventEmitter {
         }, this.taskTimeout);
       });
 
-      // Execute task with rate limiting if available
-      let executionPromise;
-      if (this.taskExecutor) {
-        if (this.rateLimitManager) {
-          executionPromise = this.rateLimitManager.executeWithRetry(
-            () => this.taskExecutor(task, context),
-            { taskId: task.id },
-          );
-        } else {
-          executionPromise = this.taskExecutor(task, context);
-        }
-      } else {
-        // Default executor (no-op)
-        executionPromise = this.defaultExecutor(task, context);
-      }
+      const runtime = assertRuntime(this.runtime);
+      const executionPromise = runtime.execute(this._buildRuntimeRequest(task, context));
 
       // Race between execution and timeout
       const result = await Promise.race([executionPromise, timeoutPromise]);
@@ -282,16 +411,26 @@ class WaveExecutor extends EventEmitter {
     }
   }
 
-  /**
-   * Default task executor (placeholder)
-   * @param {Object} task - Task to execute
-   * @param {Object} context - Execution context
-   * @returns {Promise<Object>} - Execution result
-   */
-  async defaultExecutor(task, _context) {
-    // This should be overridden or configured
-    console.log(`[WaveExecutor] Executing task: ${task.id}`);
-    return { success: true, output: 'Default executor - no action taken' };
+  _buildRuntimeRequest(task, context) {
+    const projectRoot = task.projectRoot || context.projectRoot || process.cwd();
+    return {
+      agentId: task.agentId
+        || context.agentId
+        || (this.runtime?.deprecated ? 'legacy-task-executor' : undefined),
+      task: task.id,
+      prompt: task.prompt || task.description || context.prompt,
+      story: task.story || context.story,
+      budgetCeilingUsd: task.budgetCeilingUsd ?? context.budgetCeilingUsd,
+      budgetScope: task.budgetScope || context.budgetScope,
+      estimatedCostUsd: task.estimatedCostUsd ?? context.estimatedCostUsd,
+      requiresStory: task.requiresStory ?? context.requiresStory,
+      contract: task.contract,
+      projectRoot,
+      timeout: task.timeout || context.timeout || this.taskTimeout,
+      jsonOutput: task.jsonOutput ?? context.jsonOutput,
+      taskDefinition: task,
+      executionContext: context,
+    };
   }
 
   /**
@@ -319,10 +458,13 @@ class WaveExecutor extends EventEmitter {
     const failed = allTasks.filter((t) => !t.success).length;
     const totalDuration = allTasks.reduce((sum, t) => sum + (t.duration || 0), 0);
 
-    // Calculate wall time (actual elapsed time)
-    const wallTime = waveResults.reduce((sum, w) => {
-      const maxDuration = Math.max(...w.results.map((r) => r.duration || 0));
-      return sum + maxDuration;
+    // Sum the wall-clock duration observed around each wave. Falling back to
+    // the longest task preserves compatibility for externally supplied result
+    // sets that predate wallDuration.
+    const wallTime = waveResults.reduce((sum, wave) => {
+      if (Number.isFinite(wave.wallDuration)) return sum + wave.wallDuration;
+      if (wave.results.length === 0) return sum;
+      return sum + Math.max(...wave.results.map((result) => result.duration || 0));
     }, 0);
 
     return {
@@ -398,3 +540,4 @@ class WaveExecutor extends EventEmitter {
 
 module.exports = WaveExecutor;
 module.exports.WaveExecutor = WaveExecutor;
+module.exports.WaveExecutionError = WaveExecutionError;

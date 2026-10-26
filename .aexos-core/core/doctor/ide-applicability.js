@@ -6,8 +6,9 @@ const yaml = require('js-yaml');
 
 /**
  * Determine whether Claude Code-specific checks apply to this project.
- * Fail closed: only a valid canonical configuration that explicitly disables
- * Claude Code and selects at least one other IDE can suppress the checks.
+ * Fail closed for unreadable or malformed selection metadata. A valid empty
+ * selection represents CLI-only use, and a valid non-Claude selection does not
+ * require legacy ide.configs entries to prove that Claude Code is unselected.
  */
 function getClaudeCodeApplicability(projectRoot) {
   const configPath = path.join(projectRoot, '.aexos-core', 'core-config.yaml');
@@ -18,15 +19,15 @@ function getClaudeCodeApplicability(projectRoot) {
     }
     const config = yaml.load(fs.readFileSync(configPath, 'utf8'));
     const selected = config?.ide?.selected;
-    const configs = config?.ide?.configs;
-    if (!Array.isArray(selected) || selected.length === 0 ||
-        !selected.every((value) => typeof value === 'string' && value.trim()) ||
-        !configs || typeof configs !== 'object' || Array.isArray(configs) ||
-        typeof configs['claude-code'] !== 'boolean') {
+    if (!Array.isArray(selected) ||
+        !selected.every((value) => typeof value === 'string' && value.trim())) {
       return { applicable: true, reason: 'IDE metadata is missing or invalid' };
     }
     const selectedIDEs = [...new Set(selected.map((value) => value.trim().toLowerCase()))];
-    if (selectedIDEs.includes('claude-code') || configs['claude-code'] !== false) {
+    if (config.ide.configs?.['claude-code'] === true && !selectedIDEs.includes('claude-code')) {
+      return { applicable: true, selectedIDEs, reason: 'IDE metadata is contradictory: Claude Code is enabled but not selected' };
+    }
+    if (selectedIDEs.includes('claude-code')) {
       return { applicable: true, selectedIDEs };
     }
     return { applicable: false, selectedIDEs };
@@ -39,10 +40,11 @@ function getClaudeCodeApplicability(projectRoot) {
 }
 
 function notApplicableResult(check, selectedIDEs) {
+  const selection = selectedIDEs.length ? selectedIDEs.join(', ') : 'CLI only';
   return {
     check,
     status: 'INFO',
-    message: `Not applicable: Claude Code is explicitly disabled (selected IDEs: ${selectedIDEs.join(', ')})`,
+    message: `Not applicable: Claude Code is not selected (selected IDEs: ${selection})`,
     fixCommand: null,
   };
 }

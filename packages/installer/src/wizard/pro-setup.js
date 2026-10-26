@@ -26,8 +26,14 @@ const { createSpinner, showSuccess, showError, showWarning, showInfo } = require
 const { colors, status } = require('../utils/aexos-colors');
 const { getCyryxCoreVersion, resolveCyryxCorePath } = require('../utils/package-paths');
 const { t, tf } = require('./i18n');
+const { isImplementedPackage } = require('../utils/pro-package-metadata');
+const {
+  DEFAULT_TRUST_STORE,
+  downloadAndVerifySignedArtifact,
+} = require('../licensing/paid-squad-artifact');
 
 const execFileAsync = promisify(execFile);
+const { extractProArtifactToTemp } = require('./pro-artifact-extractor');
 
 function stripWrappingQuotes(value) {
   return String(value || '').trim().replace(/^"(.*)"$/, '$1');
@@ -38,7 +44,8 @@ function resolveNpmExecPath(npmExecPath, fileExists = fs.existsSync) {
     return null;
   }
 
-  const pathApi = npmExecPath.includes('\\') ? path.win32 : path.posix;
+  const pathApi = npmExecPath.includes('\\') || /^[a-z]:/i.test(npmExecPath) ? path.win32 : path.posix;
+  if (!pathApi.isAbsolute(npmExecPath)) return null;
   const basename = pathApi.basename(npmExecPath).toLowerCase();
   if (basename === 'npm-cli.js' && fileExists(npmExecPath)) {
     return npmExecPath;
@@ -58,9 +65,16 @@ function resolveNpmInvocation(options = {}) {
   const platform = options.platform || process.platform;
   const env = options.env || process.env;
   const execPath = options.execPath || process.execPath;
-  const fileExists = options.fileExists || fs.existsSync;
+  const fileExists = options.fileExists || ((candidate) => {
+    try { return fs.statSync(candidate).isFile(); } catch { return false; }
+  });
   const npmExecPath = stripWrappingQuotes(env.npm_execpath);
-  const npmCliPath = resolveNpmExecPath(npmExecPath, fileExists);
+  const pathApi = platform === 'win32' ? path.win32 : path.posix;
+  const npmCliPath = resolveNpmExecPath(npmExecPath, fileExists) ||
+    (platform === 'win32' && [
+      pathApi.join(pathApi.dirname(execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js'),
+      pathApi.join(pathApi.dirname(execPath), '..', 'lib', 'node_modules', 'npm', 'bin', 'npm-cli.js'),
+    ].find((candidate) => fileExists(candidate)));
 
   if (npmCliPath) {
     return {
@@ -70,17 +84,13 @@ function resolveNpmInvocation(options = {}) {
     };
   }
 
-  // Direct global invocation has no npm_execpath. Prefer Node's bundled npm
-  // with a plain argument array, as the upstream global-install path requires.
-  const pathApi = execPath.includes('\\') ? path.win32 : path.posix;
-  const bundledNpmCli = pathApi.join(pathApi.dirname(execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js');
-  if (fileExists(bundledNpmCli)) {
-    return { command: execPath, prefixArgs: [bundledNpmCli], execOptions: {} };
+  if (platform === 'win32') {
+    throw new Error('Cannot find npm-cli.js beside Node. Repair the Node.js/npm installation or run this command through npx @aexos/core.');
   }
   return {
-    command: platform === 'win32' ? 'npm.cmd' : 'npm',
+    command: 'npm',
     prefixArgs: [],
-    execOptions: platform === 'win32' ? { shell: true } : {},
+    execOptions: {},
   };
 }
 
@@ -96,6 +106,31 @@ async function runNpm(args, options = {}) {
       windowsHide: true,
     },
   );
+}
+
+function safeInstallerDiagnostic(error, additionalSecrets = []) {
+  let message = String(error?.stderr || error?.stdout || error?.message || error || 'Unknown installer error');
+  // Strip terminal controls before redaction so escapes cannot split tokens.
+  // eslint-disable-next-line no-control-regex -- Intentionally remove unsafe terminal bytes.
+  message = require('node:util').stripVTControlCharacters(message).replace(/[\x00-\x08\x0b-\x1f\x7f-\x9f]/g, '');
+  const secrets = [
+    ...additionalSecrets,
+    ...Object.entries(process.env).filter(([name]) => /TOKEN|PASSWORD|SECRET|CREDENTIAL|AUTH|(?:^|_)KEY(?:$|_)/i.test(name)).map(([, value]) => value),
+  ];
+  message = message.replace(/Bearer\s+[^\s,;]+/gi, 'Bearer [REDACTED]')
+    .replace(/[a-z][a-z\d+.-]*:\/\/[^\s<>"']+/gi, (raw) => {
+      try {
+        const url = new URL(raw);
+        if (url.username || url.password) { url.username = 'REDACTED'; url.password = ''; }
+        for (const key of [...url.searchParams.keys()]) url.searchParams.set(key, '[REDACTED]');
+        url.hash = '';
+        return url.toString();
+      } catch { return '[REDACTED URL]'; }
+    });
+  for (const secret of secrets.filter((value) => typeof value === 'string' && value.length > 0).sort((left, right) => right.length - left.length)) {
+    message = message.split(secret).join('[REDACTED]');
+  }
+  return message.trim().slice(0, 2000);
 }
 
 /**
@@ -115,6 +150,7 @@ try {
  */
 const DEFAULT_LICENSE_SERVER_URL = 'https://aexos-license-server.vercel.app';
 const PRO_ARTIFACT_PACKAGE = '@aexos/pro';
+const PRO_ARTIFACT_SQUAD_ID = 'pro-library';
 const DEFAULT_PRO_ARTIFACT_VERSION = '0.4.2';
 const MAX_PRO_ARTIFACT_SIZE_BYTES = 100 * 1024 * 1024;
 const PRO_ARTIFACT_DOWNLOAD_TIMEOUT_MS = 60000;
@@ -144,7 +180,7 @@ function resolveLicenseServerUrl(rawUrl = DEFAULT_LICENSE_SERVER_URL) {
 }
 
 const LICENSE_SERVER_URL = resolveLicenseServerUrl(process.env.AEXOS_LICENSE_API_URL);
-const PASSWORD_RESET_URL = new URL('/reset-password', LICENSE_SERVER_URL).toString();
+const PASSWORD_RESET_URL = 'https://aexos.cyryxlabs.com/aexos';
 const MACHINE_ID_HASH_PREFIX = 'aexos-pro-native-machine-id:v1:';
 
 /**
@@ -156,6 +192,7 @@ const MACHINE_ID_HASH_PREFIX = 'aexos-pro-native-machine-id:v1:';
 class InlineLicenseClient {
   constructor(baseUrl = LICENSE_SERVER_URL) {
     this.baseUrl = baseUrl;
+    this.authConfig = null;
   }
 
   /**
@@ -208,7 +245,9 @@ class InlineLicenseClient {
                   (parsed && parsed.message) ||
                   `HTTP ${res.statusCode}`,
               );
-              err.code = (errorBody && errorBody.code) || (parsed && parsed.code);
+              err.code =
+                (errorBody && (errorBody.code || errorBody.error_code)) ||
+                (parsed && (parsed.code || parsed.error_code));
               err.httpStatus = res.statusCode;
               if (parsed && parsed.error) {
                 err.envelope = parsed; // full envelope for parseEnvelopeToCYRYXError
@@ -253,15 +292,42 @@ class InlineLicenseClient {
     }
   }
 
+  async getAuthConfig() {
+    if (this.authConfig) return this.authConfig;
+    const config = await this._request('GET', '/api/v1/auth/config');
+    if (
+      config.provider !== 'supabase' ||
+      typeof config.authUrl !== 'string' ||
+      typeof config.anonKey !== 'string' ||
+      !config.anonKey.trim()
+    ) {
+      throw new Error('License server returned invalid public auth configuration');
+    }
+    const authUrl = resolveLicenseServerUrl(config.authUrl);
+    this.authConfig = { authUrl, anonKey: config.anonKey.trim() };
+    return this.authConfig;
+  }
+
+  async _authRequest(method, urlPath, body, accessToken) {
+    const config = await this.getAuthConfig();
+    const headers = {
+      apikey: config.anonKey,
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+    };
+    const relativePath = String(urlPath).replace(/^\/+/, '');
+    return this._request(
+      method,
+      new URL(relativePath, `${config.authUrl}/`).toString(),
+      body,
+      headers,
+    );
+  }
+
   /**
    * Check if email is a buyer and has an account.
    * @param {string} email
    * @returns {Promise<{isBuyer: boolean, hasAccount: boolean}>}
    */
-  async checkEmail(email) {
-    return this._request('POST', '/api/v1/auth/check-email', { email });
-  }
-
   /**
    * Login with email and password.
    * @param {string} email
@@ -269,15 +335,30 @@ class InlineLicenseClient {
    * @returns {Promise<{accessToken: string, sessionToken: string, emailVerified: boolean}>}
    */
   async login(email, password) {
-    return this._request('POST', '/api/v1/auth/login', { email, password }).then((result) => {
-      const accessToken = result.accessToken || result.sessionToken;
+    try {
+      const result = await this._authRequest('POST', '/token?grant_type=password', {
+        email: email.trim().toLowerCase(),
+        password,
+      });
+      const accessToken = result.access_token;
+      if (typeof accessToken !== 'string' || !accessToken) {
+        throw new Error('Identity provider did not return an access token');
+      }
       return {
-        ...result,
         accessToken,
-        // Backward-compatible alias for existing wizard flows.
         sessionToken: accessToken,
+        emailVerified: Boolean(result.user?.email_confirmed_at || result.user?.confirmed_at),
       };
-    });
+    } catch (error) {
+      if (
+        error.code === 'invalid_credentials' ||
+        error.code === 'invalid_grant' ||
+        /invalid login credentials/i.test(error.message || '')
+      ) {
+        error.code = 'INVALID_CREDENTIALS';
+      }
+      throw error;
+    }
   }
 
   /**
@@ -287,7 +368,10 @@ class InlineLicenseClient {
    * @returns {Promise<Object>}
    */
   async signup(email, password) {
-    return this._request('POST', '/api/v1/auth/signup', { email, password });
+    return this._authRequest('POST', '/signup', {
+      email: email.trim().toLowerCase(),
+      password,
+    });
   }
 
   /**
@@ -322,7 +406,7 @@ class InlineLicenseClient {
    * Request a short-lived signed URL for the Pro artifact.
    * @param {string} token - Supabase access token
    * @param {Object} request - Artifact request payload
-   * @returns {Promise<Object>} Artifact descriptor with artifactUrl, sha256, sizeBytes
+   * @returns {Promise<Object>} Signed, short-lived artifact descriptor
    */
   async getProArtifactUrl(token, request) {
     return this._request('POST', '/api/v1/pro/artifact-url', withMachineIdSource(request), {
@@ -357,28 +441,11 @@ class InlineLicenseClient {
    * @returns {Promise<{verified: boolean}>}
    */
   async checkEmailVerified(accessToken) {
-    try {
-      const result = await this._request('POST', '/api/v1/auth/verify-status', {
-        accessToken,
-      });
-      return {
-        ...result,
-        verified: result.verified ?? result.emailVerified,
-      };
-    } catch (error) {
-      // Older server versions used GET /email-verified with bearer auth.
-      if (!error.message || !error.message.includes('HTTP 404')) {
-        throw error;
-      }
-
-      const result = await this._request('GET', '/api/v1/auth/email-verified', null, {
-        Authorization: `Bearer ${accessToken}`,
-      });
-      return {
-        ...result,
-        verified: result.verified ?? result.emailVerified,
-      };
-    }
+    const result = await this._authRequest('GET', '/user', null, accessToken);
+    return {
+      email: result.email,
+      verified: Boolean(result.email_confirmed_at || result.confirmed_at),
+    };
   }
 
   /**
@@ -387,7 +454,10 @@ class InlineLicenseClient {
    * @returns {Promise<Object>}
    */
   async resendVerification(email) {
-    return this._request('POST', '/api/v1/auth/resend-verification', { email });
+    return this._authRequest('POST', '/resend', {
+      type: 'signup',
+      email: email.trim().toLowerCase(),
+    });
   }
 }
 
@@ -647,7 +717,15 @@ function generateMachineId() {
 
 function generateNativeMachineId() {
   const crypto = require('crypto');
+  const childProcess = require('child_process');
+  const originalExecSync = childProcess.execSync;
   try {
+    if (process.platform === 'win32') {
+      childProcess.execSync = (command, options = {}) => originalExecSync(command,
+        /REG\.exe\s+QUERY\s+HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Cryptography\s+\/v\s+MachineGuid/i.test(command)
+          ? { ...options, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true }
+          : options);
+    }
     const { machineIdSync } = require('node-machine-id');
     const nativeMachineId = machineIdSync(true);
 
@@ -661,6 +739,8 @@ function generateNativeMachineId() {
       .digest('hex');
   } catch {
     return null;
+  } finally {
+    childProcess.execSync = originalExecSync;
   }
 }
 
@@ -813,6 +893,7 @@ function persistLicenseCache(targetDir, licenseResult, proSourceDir) {
       seats: activationResult.seats || { used: 1, max: 1 },
       cacheValidDays: activationResult.cacheValidDays,
       gracePeriodDays: activationResult.gracePeriodDays,
+      entitlement: activationResult.entitlement,
     },
     targetDir,
   );
@@ -828,8 +909,11 @@ function getProArtifactVersion(options = {}) {
   }
 
   try {
-    const localProPkg = require(resolveCyryxCorePath('pro', 'package.json'));
-    if (localProPkg && localProPkg.version) {
+    const localProDir = resolveCyryxCorePath('pro');
+    const localProPkg = isUsableProSourceDir(localProDir)
+      ? JSON.parse(fs.readFileSync(path.join(localProDir, 'package.json'), 'utf8'))
+      : null;
+    if (localProPkg && typeof localProPkg.version === 'string' && localProPkg.version) {
       return localProPkg.version;
     }
   } catch {
@@ -907,58 +991,6 @@ async function downloadArtifactFile(artifactUrl, destinationPath, expectedSizeBy
   };
 }
 
-async function extractProArtifactToTemp(artifactPath, tempRoot) {
-  const installRoot = path.join(path.resolve(tempRoot), 'package-root');
-  const proSourceDir = path.join(installRoot, 'node_modules', '@aexos', 'pro');
-
-  try {
-    // Static staging must not resolve dependencies or execute npm. Validate the
-    // whole archive before writing; target installation still uses real npm.
-    let entries = 0;
-    let invalid = null;
-    await tar.t({ file: artifactPath, strict: true, onentry: entry => {
-      entries++;
-      const name = entry.path.replace(/\/$/, '');
-      if (!['File', 'Directory'].includes(entry.type) || !/^package(?:\/|$)/.test(name) ||
-          name.includes('\\') || name.split('/').some(part => part === '..' || part === '.') || name.includes(':')) {
-        invalid = new Error(`Unsafe Pro artifact entry: ${entry.path}`);
-      }
-    } });
-    if (invalid) throw invalid;
-    if (!entries) throw new Error('Empty Pro artifact');
-    // A new archive must never inherit old files or traverse a destination
-    // junction. Create each parent only after validating the preceding one.
-    const staging = path.resolve(tempRoot);
-    const volume = path.parse(staging).root;
-    let current = volume;
-    for (const part of staging.slice(volume.length).split(path.sep).filter(Boolean)) {
-      current = path.join(current, part);
-      try { await fs.mkdir(current); } catch (error) { if (error.code !== 'EEXIST') throw error; }
-      const stat = await fs.lstat(current);
-      if (stat.isSymbolicLink() || !stat.isDirectory()) throw new Error('Unsafe Pro staging parent');
-    }
-    // Exclusive mkdir rejects even an empty prior extraction, including links.
-    try { await fs.mkdir(installRoot); } catch (error) {
-      if (error.code === 'EEXIST') throw new Error('Pro extraction requires a fresh staging directory');
-      throw error;
-    }
-    for (const relative of ['node_modules', 'node_modules/@aexos', 'node_modules/@aexos/pro']) {
-      await fs.mkdir(path.join(installRoot, relative));
-    }
-    await tar.x({ file: artifactPath, cwd: proSourceDir, strip: 1, strict: true, preservePaths: false });
-  } catch (error) {
-    throw new Error(`Failed to extract Pro artifact package: ${error.message}`, { cause: error });
-  }
-
-  if (!(await fs.pathExists(path.join(proSourceDir, 'package.json')))) {
-    throw new Error('Extracted Pro artifact did not contain @aexos/pro package metadata.');
-  }
-  const metadata = await fs.readJson(path.join(proSourceDir, 'package.json'));
-  if (metadata.name !== PRO_ARTIFACT_PACKAGE) throw new Error('Extracted Pro artifact has an unexpected package identity.');
-
-  return proSourceDir;
-}
-
 async function installProArtifactIntoTarget(artifactPath, targetDir) {
   await fs.ensureDir(targetDir);
 
@@ -1002,8 +1034,7 @@ async function installProArtifactIntoTarget(artifactPath, targetDir) {
     if (anchorCreated) {
       await fs.remove(anchorPackageJsonPath).catch(() => {});
     }
-    const details = error.stderr || error.stdout || error.message;
-    throw new Error(`Failed to install Pro artifact into project: ${String(details).trim()}`);
+    throw new Error(`Failed to install Pro artifact into project: ${safeInstallerDiagnostic(error)}`);
   } finally {
     if (anchorCreated) {
       await fs.remove(anchorPackageJsonPath).catch(() => {});
@@ -1080,37 +1111,54 @@ async function acquireProArtifactSourceDir(targetDir, licenseResult, options = {
     const version = getProArtifactVersion(options);
     const client = new InlineLicenseClient();
     const artifact = await client.getProArtifactUrl(accessToken, {
+      product: 'aexos',
+      squadId: PRO_ARTIFACT_SQUAD_ID,
       package: PRO_ARTIFACT_PACKAGE,
       version,
       format: 'tgz',
       machineId,
+      platform: process.platform,
+      releaseChannel: 'stable',
       cyryxCoreVersion,
     });
-
-    if (!artifact || artifact.package !== PRO_ARTIFACT_PACKAGE || artifact.version !== version) {
-      throw new Error('License server returned an unexpected Pro artifact descriptor.');
-    }
-
-    if (!/^[a-f0-9]{64}$/i.test(artifact.sha256 || '')) {
-      throw new Error('License server returned an invalid Pro artifact sha256.');
-    }
-
-    const artifactPath = path.join(tempRoot, `aexos-squads-pro-${version}.tgz`);
-    const downloaded = await downloadArtifactFile(
-      artifact.artifactUrl,
-      artifactPath,
-      artifact.sizeBytes,
+    const entitlement =
+      licenseResult.entitlement || licenseResult.activationResult?.entitlement || null;
+    const expectedBindings = {
+      product: 'aexos',
+      squadId: PRO_ARTIFACT_SQUAD_ID,
+      package: PRO_ARTIFACT_PACKAGE,
+      version,
+      platform: process.platform,
+      releaseChannel: 'stable',
+      ...(licenseResult.subjectIdHash
+        ? { subjectIdHash: licenseResult.subjectIdHash }
+        : {}),
+      ...(entitlement?.entitlementId
+        ? { entitlementId: entitlement.entitlementId }
+        : {}),
+      ...(entitlement?.plan ? { plan: entitlement.plan } : {}),
+      ...(Number.isInteger(entitlement?.revocationEpoch)
+        ? { revocationEpoch: entitlement.revocationEpoch }
+        : {}),
+      machineId,
+    };
+    const verifiedDownload = await downloadAndVerifySignedArtifact(
+      artifact,
+      expectedBindings,
+      {
+        trustStore: options.artifactTrustStore || DEFAULT_TRUST_STORE,
+        maxBytes: MAX_PRO_ARTIFACT_SIZE_BYTES,
+        timeoutMs: PRO_ARTIFACT_DOWNLOAD_TIMEOUT_MS,
+      },
     );
-
-    if (downloaded.sha256 !== artifact.sha256) {
-      throw new Error('Pro artifact sha256 mismatch after download.');
-    }
+    const artifactPath = path.join(tempRoot, `aexos-squads-pro-${version}.tgz`);
+    await fs.writeFile(artifactPath, verifiedDownload.payload);
 
     const targetInstaller =
       module.exports._testing && module.exports._testing.installProArtifactIntoTarget
         ? module.exports._testing.installProArtifactIntoTarget
         : installProArtifactIntoTarget;
-    const extractedProSourceDir = await extractProArtifactToTemp(artifactPath, tempRoot);
+    const extractedProSourceDir = await extractProArtifactToTemp(artifactPath, tempRoot, version);
 
     // The Pro content is already extracted and integrity-verified at this point.
     // Installing into targetDir is a convenience so post-install Pro commands can
@@ -1123,7 +1171,7 @@ async function acquireProArtifactSourceDir(targetDir, licenseResult, options = {
     try {
       installedProSourceDir = await targetInstaller(artifactPath, targetDir);
     } catch (installError) {
-      targetInstallWarning = installError.message;
+      targetInstallWarning = safeInstallerDiagnostic(installError, [accessToken]);
     }
 
     return {
@@ -1138,13 +1186,15 @@ async function acquireProArtifactSourceDir(targetDir, licenseResult, options = {
         sha256: artifact.sha256,
         sizeBytes: artifact.sizeBytes,
         expiresAt: artifact.expiresAt,
+        descriptorId: artifact.descriptorId,
+        keyId: artifact.keyId,
       },
     };
   } catch (error) {
     await fs.remove(tempRoot).catch(() => {});
     return {
       success: false,
-      error: error.message,
+      error: safeInstallerDiagnostic(error, [accessToken]),
     };
   }
 }
@@ -1207,12 +1257,28 @@ async function ensureKeyValidationParity(client, activationResult, machineId, cy
 }
 
 /**
+ * Check metadata and the required scaffolder inputs without loading package code.
+ * @param {string} sourceDir - Candidate Pro package directory
+ * @returns {boolean} Whether the candidate can provide implemented Pro content
+ */
+function isUsableProSourceDir(sourceDir) {
+  const fs = require('fs');
+  try {
+    return isImplementedPackage(path.join(sourceDir, 'package.json')) &&
+      fs.statSync(path.join(sourceDir, 'squads')).isDirectory() &&
+      fs.statSync(path.join(sourceDir, 'pro-config.yaml')).isFile();
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Resolve the Pro content source directory.
  *
  * Priority:
- * 1. Bundled pro/ content in the aexos-core checkout or package
- * 2. Auto-initialize the git submodule when running from a source checkout
- * 3. Installed @aexos/pro package in the target project
+ * 1. Implemented @aexos/pro package in the target project
+ * 2. Implemented bundled pro/ content in the aexos-core checkout or package
+ * 3. Auto-initialize and validate the git submodule as the last fallback
  *
  * @param {string} targetDir - Project root directory
  * @returns {{proSourceDir: string|null, bootstrapError?: string}} Resolution result
@@ -1225,10 +1291,13 @@ function resolveProSourceDir(targetDir) {
   const repoRoot = path.resolve(__dirname, '..', '..', '..', '..');
   const bundledProDir = path.join(repoRoot, 'pro');
   const npmProDir = path.join(targetDir, 'node_modules', '@aexos', 'pro');
-  const bundledSquadsDir = path.join(bundledProDir, 'squads');
   const gitmodulesPath = path.join(repoRoot, '.gitmodules');
 
-  if (fs.existsSync(bundledSquadsDir)) {
+  if (isUsableProSourceDir(npmProDir)) {
+    return { proSourceDir: npmProDir };
+  }
+
+  if (isUsableProSourceDir(bundledProDir)) {
     return { proSourceDir: bundledProDir };
   }
 
@@ -1239,7 +1308,7 @@ function resolveProSourceDir(targetDir) {
         stdio: 'ignore',
       });
 
-      if (fs.existsSync(bundledSquadsDir)) {
+      if (isUsableProSourceDir(bundledProDir)) {
         return { proSourceDir: bundledProDir };
       }
     } catch (error) {
@@ -1248,10 +1317,6 @@ function resolveProSourceDir(targetDir) {
         bootstrapError: error.message || 'git submodule update failed',
       };
     }
-  }
-
-  if (fs.existsSync(npmProDir)) {
-    return { proSourceDir: npmProDir };
   }
 
   return { proSourceDir: null };
@@ -1352,11 +1417,11 @@ async function stepLicenseGateCI(options) {
 /**
  * Interactive email/password license gate flow.
  *
- * New flow (PRO-11 v2):
- * 1. Email → checkEmail API → { isBuyer, hasAccount }
- * 2. NOT buyer → "No Pro access found" → STOP
- * 3. IS buyer + HAS account → Password → Login (with retry) → Activate
- * 4. IS buyer + NO account → Password + Confirm → Signup → Verify email → Login → Activate
+ * Account-first flow:
+ * 1. Prompt for the email used during purchase.
+ * 2. Authenticate directly with Supabase Auth (the password never transits
+ *    the license authority).
+ * 3. Let activate-pro make the non-enumerating paid-entitlement decision.
  *
  * @returns {Promise<Object>} Result with { success, key, activationResult }
  */
@@ -1383,7 +1448,6 @@ async function stepLicenseGateWithEmail() {
 
   const trimmedEmail = email.trim();
 
-  // Step 2: Check buyer status + account existence
   const client = getLicenseClient();
 
   // Check connectivity
@@ -1395,45 +1459,14 @@ async function stepLicenseGateWithEmail() {
     };
   }
 
-  const checkSpinner = createSpinner(t('proVerifyingAccess'));
-  checkSpinner.start();
-
-  let checkResult;
-  try {
-    checkResult = await client.checkEmail(trimmedEmail);
-  } catch (_checkError) {
-    checkSpinner.info(t('proBuyerCheckUnavailable'));
-    return fallbackAuthWithoutBuyerCheck(client, trimmedEmail);
-  }
-
-  // Step 2a: NOT a buyer → stop
-  if (!checkResult.isBuyer) {
-    checkSpinner.fail(t('proNoAccess'));
-    console.log('');
-    showInfo(t('proContactSupport'));
-    showInfo('  Issues: https://github.com/CyryxLabs/AEXOS/issues');
-    showInfo('  ' + t('proPurchase'));
-    return { success: false, error: t('proEmailNotBuyer') };
-  }
-
-  // Step 2b: IS a buyer
-  if (checkResult.hasAccount) {
-    checkSpinner.succeed(t('proAccessConfirmedAccount'));
-    // Flow 3: Existing account → Login with password (retry loop)
-    return loginWithRetry(client, trimmedEmail);
-  }
-
-  checkSpinner.succeed(t('proAccessConfirmedCreate'));
-  // Flow 4: New account → Create account flow
-  return createAccountFlow(client, trimmedEmail);
+  return loginWithRetry(client, trimmedEmail);
 }
 
 /**
  * Fallback interactive auth flow when buyer/account pre-check is unavailable.
  *
- * Prompts for a password, attempts login first, then falls back to signup if no account exists.
- * If the account already exists but the first password is wrong, hands control to the normal
- * login retry flow so the user still gets multiple attempts.
+ * Compatibility alias for the direct account-first login flow. It never
+ * creates an account and never asks the license server whether an email exists.
  *
  * @param {object} client - LicenseApiClient instance
  * @param {string} email - User email
@@ -1460,49 +1493,23 @@ async function fallbackAuthWithoutBuyerCheck(client, email) {
   const spinner = createSpinner(t('proAuthenticating'));
   spinner.start();
 
-  let sessionToken;
-  let emailVerified;
-
   try {
     const loginResult = await client.login(email, password);
-    sessionToken = loginResult.sessionToken;
-    emailVerified = loginResult.emailVerified;
     spinner.succeed(t('proAuthSuccess'));
+    if (!loginResult.emailVerified) {
+      const verifyResult = await waitForEmailVerification(
+        client,
+        loginResult.sessionToken,
+        email,
+      );
+      if (!verifyResult.success) return verifyResult;
+    }
+    return activateProByAuth(client, loginResult.sessionToken);
   } catch (loginError) {
-    if (loginError.code !== 'INVALID_CREDENTIALS') {
-      spinner.fail(tf('proAuthFailed', { message: loginError.message }));
-      return { success: false, error: loginError.message };
-    }
-
-    spinner.info(t('proLoginFailedSignup'));
-    try {
-      await client.signup(email, password);
-      showSuccess(t('proAccountCreatedVerify'));
-
-      const loginAfterSignup = await client.login(email, password);
-      sessionToken = loginAfterSignup.sessionToken;
-      emailVerified = loginAfterSignup.emailVerified;
-    } catch (signupError) {
-      if (signupError.code === 'EMAIL_ALREADY_REGISTERED') {
-        showInfo(t('proAccountExists'));
-        return loginWithRetry(client, email);
-      }
-      return { success: false, error: signupError.message };
-    }
+    spinner.fail(tf('proAuthFailed', { message: loginError.message }));
+    showInfo(`Account and purchase help: ${PASSWORD_RESET_URL}`);
+    return { success: false, error: loginError.message };
   }
-
-  if (!sessionToken) {
-    return { success: false, error: t('proAuthFailedShort') };
-  }
-
-  if (!emailVerified) {
-    const verifyResult = await waitForEmailVerification(client, sessionToken, email);
-    if (!verifyResult.success) {
-      return verifyResult;
-    }
-  }
-
-  return activateProByAuth(client, sessionToken);
 }
 
 /**
@@ -1750,22 +1757,8 @@ async function authenticateWithEmail(email, password) {
     };
   }
 
-  // CI mode: check buyer first, then try login or auto-signup
-  const checkSpinner = createSpinner(t('proVerifyingAccessShort'));
-  checkSpinner.start();
-
-  try {
-    const checkResult = await client.checkEmail(email);
-    if (!checkResult.isBuyer) {
-      checkSpinner.fail(t('proNoAccess'));
-      return { success: false, error: t('proEmailNotBuyer') };
-    }
-    checkSpinner.succeed(t('proAccessConfirmed'));
-  } catch {
-    checkSpinner.info(t('proBuyerCheckUnavailable'));
-  }
-
-  // Try login
+  // Authenticate only. activate-pro is the paid-entitlement authority and
+  // intentionally returns the same NOT_A_BUYER response for all unpaid cases.
   const spinner = createSpinner(t('proAuthenticating'));
   spinner.start();
 
@@ -1778,25 +1771,8 @@ async function authenticateWithEmail(email, password) {
     emailVerified = loginResult.emailVerified;
     spinner.succeed(t('proAuthSuccess'));
   } catch (loginError) {
-    if (loginError.code === 'INVALID_CREDENTIALS') {
-      spinner.info(t('proLoginFailedSignup'));
-      try {
-        await client.signup(email, password);
-        showSuccess(t('proAccountCreatedVerify'));
-        emailVerified = false;
-        const loginAfterSignup = await client.login(email, password);
-        sessionToken = loginAfterSignup.sessionToken;
-      } catch (signupError) {
-        if (signupError.code === 'EMAIL_ALREADY_REGISTERED') {
-          showError(t('proAccountExistsWrongPw'));
-          return { success: false, error: t('proAccountExistsWrongPw') };
-        }
-        return { success: false, error: signupError.message };
-      }
-    } else {
-      spinner.fail(tf('proAuthFailed', { message: loginError.message }));
-      return { success: false, error: loginError.message };
-    }
+    spinner.fail(tf('proAuthFailed', { message: loginError.message }));
+    return { success: false, error: loginError.message };
   }
 
   if (!sessionToken) {
@@ -2371,6 +2347,7 @@ async function stepVerify(scaffoldResult, options = {}) {
  * @param {string} [options.targetDir] - Project root (default: process.cwd())
  * @param {boolean} [options.force] - Force overwrite existing content
  * @param {boolean} [options.refreshArtifact] - Force signed artifact acquisition even if Pro is installed
+ * @param {Object} [options.artifactTrustStore] - Test-only trust-store override
  * @param {boolean} [options.quiet] - Suppress non-essential output
  * @returns {Promise<Object>} Wizard result
  */
@@ -2410,12 +2387,19 @@ async function runProWizard(options = {}) {
 
   result.licenseValidated = true;
 
+  if (options.validationOnly === true) {
+    result.success = true;
+    result.validationOnly = true;
+    return result;
+  }
+
   // Step 2: Install/Scaffold
   const scaffoldResult = await stepInstallScaffold(targetDir, {
     force: options.force,
     licenseResult,
     proArtifactVersion: options.proArtifactVersion,
     refreshArtifact: options.refreshArtifact,
+    artifactTrustStore: options.artifactTrustStore,
   });
 
   if (!scaffoldResult.success) {
@@ -2472,6 +2456,8 @@ module.exports = {
     persistLicenseCache,
     resolveLicenseServerUrl,
     resolveNpmInvocation,
+    runNpm,
+    safeInstallerDiagnostic,
     ensureKeyValidationParity,
     acquireProArtifactSourceDir,
     downloadArtifactFile,
@@ -2482,6 +2468,7 @@ module.exports = {
     getLicenseResultAccessToken,
     LICENSE_SERVER_URL,
     PRO_ARTIFACT_PACKAGE,
+    PRO_ARTIFACT_SQUAD_ID,
     DEFAULT_PRO_ARTIFACT_VERSION,
     PASSWORD_RESET_URL,
     MAX_RETRIES,

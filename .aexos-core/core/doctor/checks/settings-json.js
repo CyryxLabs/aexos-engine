@@ -11,6 +11,7 @@
 const path = require('path');
 const fs = require('fs');
 const yaml = require('js-yaml');
+const { getClaudeCodeApplicability, notApplicableResult } = require('../ide-applicability');
 
 const name = 'settings-json';
 
@@ -75,6 +76,8 @@ function checkBoundaryAlignment(context, denyRules) {
 }
 
 async function run(context) {
+  const applicability = getClaudeCodeApplicability(context.projectRoot);
+  if (!applicability.applicable) return notApplicableResult(name, applicability.selectedIDEs);
   const settingsPath = path.join(context.projectRoot, '.claude', 'settings.json');
 
   if (!fs.existsSync(settingsPath)) {
@@ -89,6 +92,13 @@ async function run(context) {
   let settings;
   try {
     settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    if (!settings || typeof settings !== 'object' || Array.isArray(settings)) {
+      throw new Error('Expected settings object');
+    }
+    if (settings.permissions !== undefined &&
+        (!settings.permissions || typeof settings.permissions !== 'object' || Array.isArray(settings.permissions))) {
+      throw new Error('Expected permissions object');
+    }
   } catch {
     return {
       check: name,
@@ -98,16 +108,25 @@ async function run(context) {
     };
   }
 
-  const denyRules = settings.permissions?.deny || [];
-  const allowRules = settings.permissions?.allow || [];
+  const denyRules = settings.permissions?.deny === undefined ? [] : settings.permissions.deny;
+  const allowRules = settings.permissions?.allow === undefined ? [] : settings.permissions.allow;
+  if (!Array.isArray(denyRules) || !Array.isArray(allowRules) ||
+      [...denyRules, ...allowRules].some((rule) => typeof rule !== 'string')) {
+    return {
+      check: name,
+      status: 'FAIL',
+      message: 'settings.json permission rules must be arrays of strings',
+      fixCommand: null,
+    };
+  }
   const denyCount = denyRules.length;
   const allowCount = allowRules.length;
 
   if (readFrameworkProtection(context) === false) {
     return {
       check: name,
-      status: 'WARN',
-      message: 'Framework protection is explicitly disabled in .aexos-core/core-config.yaml; settings regeneration will not create boundary deny rules',
+      status: 'INFO',
+      message: 'Framework protection is explicitly disabled in core-config.yaml; deny-rule enforcement is not certified',
       fixCommand: null,
       autoFixable: false,
     };

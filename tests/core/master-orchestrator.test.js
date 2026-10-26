@@ -87,7 +87,12 @@ describe('MasterOrchestrator', () => {
       maxRetries: 2,
       autoRecovery: false,
     });
-    installSuccessfulExecutors(orchestrator);
+    // State-machine tests use an explicit successful execution adapter. Default
+    // unimplemented executors are covered by execution-truthfulness tests.
+    for (const epic of [3, 4, 6]) {
+      orchestrator.executors[epic] = { execute: async () => ({ success: true, status: 'completed' }) };
+    }
+    orchestrator._evaluateGate = async () => null;
   });
 
   afterEach(async () => {
@@ -262,6 +267,7 @@ describe('MasterOrchestrator', () => {
       orchestrator.executors[3] = {
         execute: jest.fn(async () => ({ success: true, specPath: '/real/spec.md' })),
       };
+      orchestrator._evaluateGate = MasterOrchestrator.prototype._evaluateGate.bind(orchestrator);
       orchestrator.gateEvaluator.evaluate = jest.fn(async () => ({
         gate: 'epic3_to_epic4',
         verdict: 'blocked',
@@ -375,7 +381,16 @@ describe('MasterOrchestrator', () => {
       });
 
       it('should expose persistence degradation when state save fails', async () => {
-        const writeJsonSpy = jest.spyOn(fs, 'writeJson').mockRejectedValueOnce(new Error('disk full'));
+        await orchestrator.dashboardIntegration.drain();
+        const runtimeFs = require(require.resolve('fs-extra', {
+          paths: [path.resolve(__dirname, '../../.aexos-core/core/orchestration')],
+        }));
+        const originalWriteJson = runtimeFs.writeJson.bind(runtimeFs);
+        let failStateWrite = true;
+        const writeJsonSpy = jest.spyOn(runtimeFs, 'writeJson').mockImplementation((file, ...args) => {
+          if (file === orchestrator.statePath && failStateWrite) return Promise.reject(new Error('disk full'));
+          return originalWriteJson(file, ...args);
+        });
 
         try {
           const result = await orchestrator.saveState();
@@ -392,7 +407,7 @@ describe('MasterOrchestrator', () => {
             error: 'disk full',
           });
 
-          writeJsonSpy.mockResolvedValueOnce();
+          failStateWrite = false;
           const recoveryResult = await orchestrator.saveState();
 
           expect(recoveryResult).toBe(true);
@@ -406,7 +421,7 @@ describe('MasterOrchestrator', () => {
             available: true,
             error: null,
           });
-          expect(writeJsonSpy.mock.calls[1][1].persistence).toEqual({
+          expect(writeJsonSpy.mock.calls.filter(([file]) => file === orchestrator.statePath).at(-1)[1].persistence).toEqual({
             available: true,
             lastError: null,
           });

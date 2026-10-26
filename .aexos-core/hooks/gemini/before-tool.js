@@ -5,7 +5,7 @@
  *
  * Executes before tool execution for security validation.
  * Can block dangerous operations.
- * Exit code 2 = block, Exit code 0 = allow.
+ * Official stdin tool_name/tool_input contract; exit 0 JSON decision allows or denies.
  */
 
 const fs = require('fs');
@@ -33,12 +33,13 @@ const DANGEROUS_COMMANDS = [
 ];
 
 async function beforeTool() {
-  const input = process.argv[2] ? JSON.parse(process.argv[2]) : {};
-  const toolName = input.tool || '';
-  const toolArgs = input.args || {};
+  const input = JSON.parse(process.argv[2] || fs.readFileSync(0, 'utf8'));
+  if (!input || typeof input !== 'object' || !input.tool_name || !input.tool_input || typeof input.tool_input !== 'object') throw new Error('Invalid hook input');
+  const toolName = input.tool_name || '';
+  const toolArgs = input.tool_input || {};
 
   const result = {
-    status: 'allow',
+    decision: 'allow',
     warnings: [],
   };
 
@@ -49,10 +50,10 @@ async function beforeTool() {
     // Check for secrets
     for (const pattern of BLOCKED_PATTERNS) {
       if (pattern.test(content)) {
-        result.status = 'block';
-        result.message = 'Blocked: Potential secret or credential detected in content';
+        result.decision = 'deny';
+        result.reason = 'Blocked: Potential secret or credential detected in content';
         console.log(JSON.stringify(result));
-        process.exit(2); // Exit 2 = block
+        process.exit(0);
       }
     }
 
@@ -64,15 +65,15 @@ async function beforeTool() {
   }
 
   // Check shell commands
-  if (toolName === 'shell' || toolName === 'bash' || toolName === 'execute') {
+  if (toolName === 'run_shell_command' || toolName === 'shell' || toolName === 'bash' || toolName === 'execute') {
     const command = toolArgs.command || '';
 
     for (const dangerous of DANGEROUS_COMMANDS) {
       if (command.toLowerCase().includes(dangerous.toLowerCase())) {
-        result.status = 'block';
-        result.message = `Blocked: Dangerous command detected: ${dangerous}`;
+        result.decision = 'deny';
+        result.reason = `Blocked: Dangerous command detected: ${dangerous}`;
         console.log(JSON.stringify(result));
-        process.exit(2);
+        process.exit(0);
       }
     }
   }
@@ -95,20 +96,20 @@ function logToolExecution(tool, args) {
 
     const logEntry = {
       timestamp: new Date().toISOString(),
-      tool,
-      argsKeys: Object.keys(args),
+      tool: ['read_file', 'write_file', 'replace', 'run_shell_command', 'shell', 'bash', 'execute'].includes(tool) ? tool : 'other',
+      argumentCount: Object.keys(args).length,
       provider: 'gemini',
     };
 
     const logPath = path.join(logDir, 'tool-audit.jsonl');
     fs.appendFileSync(logPath, JSON.stringify(logEntry) + '\n');
-  } catch (error) {
+  } catch (_error) {
     // Non-critical
   }
 }
 
 // Execute
-beforeTool().catch((error) => {
-  console.log(JSON.stringify({ status: 'allow', error: error.message }));
+beforeTool().catch((_error) => {
+  console.log(JSON.stringify({ decision: 'deny', reason: 'AEXOS tool enforcement failed; review the hook before retrying.' }));
   process.exit(0);
 });

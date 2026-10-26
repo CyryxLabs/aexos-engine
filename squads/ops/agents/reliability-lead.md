@@ -276,7 +276,7 @@ dependencies:
     - toil-taxonomy.yaml # The six-part test, what each failure of it means, and the work commonly mislabelled as toil
     - ops-routing-matrix.yaml # Authority determination table and the boundary with @devops
   reference_files:
-    - .claude/CLAUDE.md # EXISTS - AEXOS project instructions and agent roster
+    - .aexos-core/constitution.md # Canonical AEXOS governance for every CLI host
     - .aexos-core/core-config.yaml # EXISTS - framework configuration
     - .aexos-core/data/entity-registry.yaml # EXISTS - entity and agent registry
   tools:

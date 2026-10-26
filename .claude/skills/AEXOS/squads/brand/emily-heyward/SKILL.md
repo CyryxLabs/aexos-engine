@@ -21,6 +21,16 @@ CRITICAL: Read the full YAML BLOCK that FOLLOWS IN THIS FILE to understand your 
 ## COMPLETE AGENT DEFINITION FOLLOWS - NO EXTERNAL FILES NEEDED
 
 ```yaml
+command-instructions:
+  - A dependency fragment selects a bounded procedure. Read the base file and common policy, then execute only the named section; never pass a fragment to filesystem Read or mark the entire multi-phase task complete.
+  - Before any Brand work command or routed task, load squads/brand/config/brand-runtime.yaml as required guidance; if unavailable or malformed, stop that work and report the file.
+  - Do not load the policy during activation, help, exit or idle chat. Load it when substantive Brand work starts, including direct specialist requests.
+  - Apply task anatomy, executor selection and tier responsibilities alongside the task or workflow checkpoints, vetoes and success criteria. Honor settings.max_context_files by loading context on demand.
+  - User and host instructions and AEXOS core agent authority take precedence. Executor categories are planning guidance, not permission to dispatch agents, contact people or execute providers. Humans own human approvals.
+  - Checkpoint policy guides this command; YAML does not install a machine-enforced blocker. BR-TP and BR-EP identifiers are specifications, not executable validators or adapters.
+dependencies:
+  config:
+    - brand-runtime.yaml
 metadata:
   version: '1.0'
   tier: 2
@@ -36,7 +46,7 @@ IDE-FILE-RESOLUTION:
   - FOR LATER USE ONLY - NOT FOR ACTIVATION, when executing commands that reference dependencies
   - Dependencies map to squads/brand/{type}/{name}
   - type=folder (tasks|templates|checklists|data|workflows|etc...), name=file-name
-  - Example: brand-soul.md → squads/brand/tasks/brand-soul.md
+  - Example: brand-soul.md → squads/brand/tasks/movement-architecture.md
   - 'IMPORTANT: Only load these files when user requests specific command execution'
 REQUEST-RESOLUTION:
   - Match user requests to commands flexibly
@@ -166,14 +176,14 @@ agent:
     COMMAND-TO-TASK MAPPING (CRITICAL - TOKEN OPTIMIZATION):
     NEVER use Search/Grep to find task files. Use DIRECT Read() with these EXACT paths:
 
-    *obsessed          → Read("squads/brand/tasks/obsessed-framework.md")
-    *emotional-hook    → Read("squads/brand/tasks/emotional-hook.md")
-    *brand-narrative   → Read("squads/brand/tasks/brand-narrative.md")
+    *obsessed          → Read("squads/brand/tasks/movement-architecture.md"); execute only section "obsessed"
+    *emotional-hook    → Read("squads/brand/tasks/movement-architecture.md"); execute only section "emotional-hook"
+    *brand-narrative   → Read("squads/brand/tasks/movement-architecture.md"); execute only section "brand-narrative"
     *movement          → Read("squads/brand/tasks/movement-architecture.md")
-    *brand-soul        → Read("squads/brand/tasks/brand-soul-canvas.md")
-    *touchpoint-audit  → Read("squads/brand/tasks/touchpoint-audit.md")
-    *brand-tension     → Read("squads/brand/tasks/brand-tension.md")
-    *launch-story      → Read("squads/brand/tasks/launch-story.md")
+    *brand-soul        → Read("squads/brand/tasks/movement-architecture.md"); execute only section "brand-soul"
+    *touchpoint-audit  → Read("squads/brand/tasks/brand-touchpoint-audit.md"); execute only section "touchpoint-audit"
+    *brand-tension     → Read("squads/brand/tasks/movement-architecture.md"); execute only section "brand-tension"
+    *launch-story      → Read("squads/brand/tasks/movement-architecture.md"); execute only section "launch-story"
 
     NO Search, NO Grep, NO discovery. DIRECT Read ONLY.
     This saves ~1-2k tokens per command execution.
@@ -1161,7 +1171,7 @@ frameworks:
 commands:
   - name: '*obsessed'
     description: Run the full Obsessed Framework — 5 pillars of brands people love
-    dependency: squads/brand/tasks/obsessed-framework.md
+    dependency: squads/brand/tasks/movement-architecture.md#obsessed
     execution: |
       Walk through all 5 pillars sequentially:
       1. Strategic Foundation — Excavate and distill the brand belief
@@ -1172,7 +1182,7 @@ commands:
       Output: Complete brand obsession blueprint
   - name: '*emotional-hook'
     description: Identify the emotional gap and hook for a brand/category
-    dependency: squads/brand/tasks/emotional-hook.md
+    dependency: squads/brand/tasks/movement-architecture.md#emotional-hook
     execution: |
       1. Run Category Emotional Audit (4 dimensions)
       2. Articulate the hook as a human insight
@@ -1181,7 +1191,7 @@ commands:
       Output: Emotional Hook Statement + Rally Cry
   - name: '*brand-narrative'
     description: Build the brand story arc (tension → belief → resolution)
-    dependency: squads/brand/tasks/brand-narrative.md
+    dependency: squads/brand/tasks/movement-architecture.md#brand-narrative
     execution: |
       1. Construct three-act brand story (Tension → Belief → Resolution)
       2. Define narrative voice (4 spectrums)
@@ -1199,7 +1209,7 @@ commands:
       Output: Movement Architecture Blueprint
   - name: '*brand-soul'
     description: Complete Brand Soul Canvas — the brand's DNA on one page
-    dependency: squads/brand/tasks/brand-soul-canvas.md
+    dependency: squads/brand/tasks/movement-architecture.md#brand-soul
     execution: |
       1. Excavate Founding Myth
       2. Articulate The Why (Purpose)
@@ -1211,7 +1221,7 @@ commands:
       Output: Brand Soul Canvas (visual template)
   - name: '*touchpoint-audit'
     description: Audit all brand touchpoints with belief alignment scoring
-    dependency: squads/brand/tasks/touchpoint-audit.md
+    dependency: squads/brand/tasks/brand-touchpoint-audit.md#touchpoint-audit
     execution: |
       1. Inventory all touchpoints (digital, physical, human)
       2. Score each on three dimensions (belief alignment, emotional impact, consistency)
@@ -1220,7 +1230,7 @@ commands:
       Output: Touchpoint Audit Report with scores and priority fixes
   - name: '*brand-tension'
     description: Identify and own the brand tension (two opposing forces)
-    dependency: squads/brand/tasks/brand-tension.md
+    dependency: squads/brand/tasks/movement-architecture.md#brand-tension
     execution: |
       1. Identify the two opposing forces from force categories
       2. Articulate how the brand holds both forces
@@ -1229,7 +1239,7 @@ commands:
       Output: Brand Tension Statement + Audit Matrix
   - name: '*launch-story'
     description: Create the launch narrative for a new brand or rebrand
-    dependency: squads/brand/tasks/launch-story.md
+    dependency: squads/brand/tasks/movement-architecture.md#launch-story
     execution: |
       1. Synthesize Brand Soul Canvas into launch narrative
       2. Create press-ready origin story

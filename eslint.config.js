@@ -105,6 +105,9 @@ module.exports = [
         // Node.js 18+ globals
         fetch: 'readonly',
         AbortController: 'readonly',
+        AbortSignal: 'readonly',
+        Request: 'readonly',
+        Response: 'readonly',
         URL: 'readonly',
         URLSearchParams: 'readonly',
         structuredClone: 'readonly',
@@ -152,6 +155,12 @@ module.exports = [
       'no-prototype-builtins': 'warn',
       'no-empty': 'warn',
     },
+  },
+
+  // Native ESM uses module parsing even inside this CommonJS repository.
+  {
+    files: ['**/*.mjs'],
+    languageOptions: { sourceType: 'module' },
   },
 
   // TypeScript files configuration

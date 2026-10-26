@@ -63,7 +63,7 @@ apply these methods — they are not the authors and do not speak as them.
 
 ## Tasks
 
-Seven executable tasks, one per discipline, each conforming to TASK-FORMAT-SPECIFICATION-V1
+Fifteen executable tasks, including the seven discipline entry points below, conforming to TASK-FORMAT-SPECIFICATION-V1
 (`Input`, `Output`, `Checklist`, acceptance criteria, handoff table, method attribution).
 
 | Task | Owner | Materializes | Produces |
@@ -75,6 +75,11 @@ Seven executable tasks, one per discipline, each conforming to TASK-FORMAT-SPECI
 | `tasks/run-positioning-process.md` | `@products:positioning-lead` | `*ten-step` | Positioning document, alternatives and attribute tables, category decision |
 | `tasks/run-wtp-talk.md` | `@products:pricing-strategist` | `*wtp-talk` | WTP ranges per segment, leader/filler/killer classification, build impact |
 | `tasks/design-controlled-experiment.md` | `@products:experimentation-lead` | `*design-experiment` | Pre-registered design, OEC, guardrails, power and duration, ramp plan |
+
+Eight supporting tasks complete the collection: `assess-product-risks.md`,
+`coherence-review.md`, `convert-feature-roadmap.md`, `design-assumption-test.md`,
+`map-forces-of-progress.md`, `resolve-specialist-conflict.md`,
+`run-interview-cadence.md` and `run-switch-interview.md`, all under `tasks/`.
 
 ## Workflows
 
@@ -172,7 +177,9 @@ epic — the terminal phase of every workflow hands the brief to the core agents
 | `@ux-design-expert` | Interface design and interaction detail |
 
 No routing decision inside this squad may override Agent Authority
-(`.claude/rules/agent-authority.md`).
+([Constitution, Article II](../../.aexos-core/constitution.md)). Existing host and
+project instructions continue to apply when present; Claude configuration is not
+required to use this squad through the CLI.
 
 ## Directory structure
 
@@ -182,16 +189,17 @@ squads/products/
 ├── README.md           # This file
 ├── CHANGELOG.md        # Version history
 ├── agents/             # 7 agent definitions
-├── tasks/              # 7 executable tasks
+├── tasks/              # 15 executable tasks
 ├── workflows/          # 2 multi-phase workflows
-├── checklists/         # (empty — reserved)
-├── templates/          # (empty — reserved)
-└── data/               # (empty — reserved)
+├── checklists/         # 12 review checklists
+├── templates/          # 19 artifact templates
+└── data/               # 10 reference data files
 ```
 
-`checklists/`, `templates/` and `data/` exist as directories but hold no files yet. Several agent
-definitions reference squad-local files in those directories marked `# TO BE CREATED`; those paths
-are not live and are not referenced by any task or workflow.
+The supporting checklists, templates and data files are present and referenced by
+the squad's agents, tasks and workflows. Some older agent comments still say
+`# TO BE CREATED`; consult the manifest and the actual files for the current
+inventory.
 
 ## Constitutional notes
 

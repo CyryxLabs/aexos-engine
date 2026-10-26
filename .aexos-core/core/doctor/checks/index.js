@@ -25,9 +25,11 @@ const hooksClaudeCount = require('./hooks-claude-count');
 const portDenylist = require('./port-denylist');
 const windowsNpxInstall = require('./windows-npx-install');
 const framework3wayDiff = require('./framework-3way-diff');
+const selectedHosts = require('./selected-hosts');
 
 function loadChecks() {
   return [
+    selectedHosts,
     settingsJson,
     rulesFiles,
     agentMemory,

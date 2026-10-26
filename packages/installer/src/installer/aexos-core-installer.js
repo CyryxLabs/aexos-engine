@@ -10,10 +10,43 @@
 
 const fs = require('fs-extra');
 const path = require('path');
-const ora = require('ora');
+const { execFile } = require('child_process');
+const { promisify } = require('util');
+const { createSpinner: ora } = require('../wizard/feedback');
 const { hashFile } = require('./file-hasher');
 const { loadSourceManifest, updateInstalledManifest } = require('./brownfield-upgrader');
 const { getCyryxCoreVersion, resolveCyryxCorePath } = require('../utils/package-paths');
+const { resolveNpmInvocation } = require('../wizard/pro-setup')._testing;
+
+const execFileAsync = promisify(execFile);
+
+async function installCoreDependencies(targetCyryxCore, options = {}) {
+  const resolveInvocation = options.resolveNpmInvocation || resolveNpmInvocation;
+  const execute = options.execFileAsync || execFileAsync;
+  const invocation = resolveInvocation();
+  return execute(
+    invocation.command,
+    [
+      ...invocation.prefixArgs,
+      'install',
+      '--prefix',
+      targetCyryxCore,
+      '--omit=dev',
+      '--ignore-scripts',
+      '--workspaces=false',
+      '--include-workspace-root=false',
+      '--no-audit',
+      '--no-fund',
+    ],
+    {
+      cwd: targetCyryxCore,
+      timeout: 60000,
+      maxBuffer: 1024 * 1024 * 10,
+      ...invocation.execOptions,
+      windowsHide: true,
+    },
+  );
+}
 
 /**
  * Get the path to the source .aexos-core directory in the package
@@ -427,13 +460,7 @@ async function installCyryxCore(options = {}) {
     if (await fs.pathExists(cyryxCorePackageJson)) {
       spinner.text = 'Installing .aexos-core dependencies (js-yaml, fast-glob, etc.)...';
       try {
-        const { exec } = require('child_process');
-        const { promisify } = require('util');
-        const execAsync = promisify(exec);
-        await execAsync('npm install --production --ignore-scripts', {
-          cwd: targetCyryxCore,
-          timeout: 60000,
-        });
+        await installCoreDependencies(targetCyryxCore);
         result.cyryxCoreDepsInstalled = true;
         spinner.succeed('Installed .aexos-core dependencies');
         spinner.start('Finishing installation...');
@@ -587,4 +614,7 @@ module.exports = {
   generateFileHashes,
   FOLDERS_TO_COPY,
   ROOT_FILES_TO_COPY,
+  _testing: {
+    installCoreDependencies,
+  },
 };

@@ -1,0 +1,96 @@
+name: workflow-engineering
+version: 1.0.0
+short-title: Workflow Engineering
+description: >-
+  Paid-library squad that discovers business processes and compiles them into
+  dependency maps, AEXOS Task Contract V1 artifacts, governed automation
+  candidates and an independent workflow QA verdict.
+author: Cyryx Labs LLC
+license: UNLICENSED
+slashPrefix: workflow-engineering
+tags: [workflow, process-discovery, task-contracts, automation, bpmn, qa]
+cyryx:
+  minVersion: 6.0.0
+  type: squad
+components:
+  tasks:
+    - engineer-workflow.md
+    - discover-process.md
+    - model-workflow.md
+    - compile-task-contracts.md
+    - classify-automation.md
+    - validate-workflow.md
+  agents:
+    - workflow-chief.md
+    - process-discovery-lead.md
+    - workflow-modeling-lead.md
+    - task-contract-lead.md
+    - automation-architecture-lead.md
+    - workflow-qa-lead.md
+  workflows:
+    - wf-engineer-process.yaml
+  checklists:
+    - workflow-readiness-gate.md
+  templates:
+    - process-discovery-tmpl.md
+    - workflow-map-tmpl.json
+  tools: []
+  scripts: []
+config:
+  extends: extend
+dependencies:
+  node: []
+  squads: []
+squad:
+  name: workflow-engineering
+  display_name: Workflow Engineering
+  version: 1.0.0
+  domain: Business process discovery, task decomposition and governed automation design
+  entry_agent: workflow-chief
+  boundary: Design, compilation and QA only; execution remains with governed AEXOS runtime agents.
+agents:
+  workflow-chief:
+    persona: Conductor
+    file: agents/workflow-chief.md
+    tier: 0
+    based_on: Original (Orchestrator)
+    focus: Scope, route and arbitrate the final workflow design
+  process-discovery-lead:
+    persona: Cartographer
+    file: agents/process-discovery-lead.md
+    tier: 1
+    based_on: SIPOC, value-stream mapping and evidence-based process discovery
+    focus: Trigger, outcome, actors, systems, handoffs and observed variants
+  workflow-modeling-lead:
+    persona: Graph
+    file: agents/workflow-modeling-lead.md
+    tier: 1
+    based_on: BPMN 2.0 and directed acyclic graph modeling
+    focus: Dependency graph, decision points, loops and exception paths
+  task-contract-lead:
+    persona: Atom
+    file: agents/task-contract-lead.md
+    tier: 1
+    based_on: Design by Contract and AEXOS Task Contract V1
+    focus: Atomic inputs, outputs, verification and ownership
+  automation-architecture-lead:
+    persona: Relay
+    file: agents/automation-architecture-lead.md
+    tier: 1
+    based_on: Human-in-the-loop automation and least-privilege capability design
+    focus: Eligible, governed and manual classifications with failure boundaries
+  workflow-qa-lead:
+    persona: Gauge
+    file: agents/workflow-qa-lead.md
+    tier: 2
+    based_on: Model-based testing, control-flow coverage and independent verification
+    focus: Topology, contract, exception, authority and evidence quality gate
+handoffs:
+  workflow-chief:
+    routes_to: [process-discovery-lead, workflow-modeling-lead, task-contract-lead, automation-architecture-lead, workflow-qa-lead]
+  specialists:
+    escalate_to: workflow-chief
+settings:
+  distribution: paid-library
+  execution_allowed: false
+  contract_version: 1

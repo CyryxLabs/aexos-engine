@@ -12,7 +12,7 @@ const path = require('path');
 const fs = require('fs');
 
 const { EXPECTED_RULES } = require('./checks/rules-files');
-const { EXPECTED_AGENTS } = require('./checks/agent-memory');
+const { readInstalledAgents } = require('./checks/agent-memory');
 
 /**
  * Apply fixes for WARN/FAIL results
@@ -104,6 +104,8 @@ const FIX_MAP = {
         }
       }
 
+      const remaining = EXPECTED_RULES.filter((file) => !fs.existsSync(path.join(rulesTarget, file)));
+      if (remaining.length) throw new Error(`Rules still missing after copy: ${remaining.join(', ')}. Reinstall Claude Code integration from a complete package.`);
       return `Copied ${copied} missing rules files`;
     },
   },
@@ -116,7 +118,9 @@ const FIX_MAP = {
       const agentsDir = path.join(projectRoot, '.aexos-core', 'development', 'agents');
       let created = 0;
 
-      for (const agent of EXPECTED_AGENTS) {
+      const expected = readInstalledAgents(projectRoot);
+      if (!expected.length) throw new Error('No installed agent definitions found; reinstall before creating memory stubs');
+      for (const agent of expected) {
         const memoryPath = path.join(agentsDir, agent, 'MEMORY.md');
         const agentDir = path.join(agentsDir, agent);
 
@@ -138,7 +142,7 @@ const FIX_MAP = {
       return 'Regenerate CLAUDE.md with missing sections';
     },
     async apply() {
-      return 'CLAUDE.md regeneration requires npx @aexos/core install --force';
+      throw new Error('Manual remediation required: npx @aexos/core install --force --ide claude-code');
     },
   },
 
@@ -146,27 +150,8 @@ const FIX_MAP = {
     describe() {
       return 'Regenerate settings.json with boundary deny rules';
     },
-    async apply(result, { frameworkRoot }) {
-      const generatorPath = path.join(
-        frameworkRoot,
-        'packages',
-        'installer',
-        'src',
-        'generators',
-        'generate-settings-json',
-      );
-
-      try {
-        const generator = require(generatorPath);
-        if (typeof generator.generateSettingsJson === 'function') {
-          await generator.generateSettingsJson();
-          return 'settings.json regenerated';
-        }
-      } catch {
-        // Generator not available
-      }
-
-      return 'settings.json regeneration requires npx @aexos/core install --force';
+    async apply() {
+      throw new Error('Manual remediation required: npx @aexos/core install --force --ide claude-code');
     },
   },
 };

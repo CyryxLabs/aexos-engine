@@ -103,8 +103,8 @@ describe('operation-guard', () => {
       expect(guard.classifyOperation('mcp__docker')).toBe('execute');
     });
 
-    test('classifies unknown tools as read', () => {
-      expect(guard.classifyOperation('UnknownTool')).toBe('read');
+    test('classifies unknown tools as execute without a read-only contract', () => {
+      expect(guard.classifyOperation('UnknownTool')).toBe('execute');
     });
   });
 
@@ -112,7 +112,7 @@ describe('operation-guard', () => {
     test('classifies safe commands as read', () => {
       expect(guard.classifyBashCommand('git status')).toBe('read');
       expect(guard.classifyBashCommand('ls -la')).toBe('read');
-      expect(guard.classifyBashCommand('cat file.txt')).toBe('read');
+      expect(guard.classifyBashCommand('cat file.txt')).toBe('execute');
     });
 
     test('classifies destructive commands as delete', () => {

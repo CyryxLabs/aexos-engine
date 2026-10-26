@@ -7,6 +7,9 @@
 # Grok can deduplicate multi-harness discovery instead of executing hooks twice.
 # Native authority: .grok/hooks/git-push-authority.json remains devops-only
 # for git push, pull-request publication, merge, and release operations.
+
+
+# AEXOS MANAGED START
 # AEXOS-MANAGED-START: harness
 # AEXOS × Grok Build — committed project integration
 # Project scope contributes MCP, plugin, permission, and harness configuration.
@@ -18,3 +21,4 @@
 # Native authority: .grok/hooks/git-push-authority.json remains devops-only
 # for git push, pull-request publication, merge, and release operations.
 # AEXOS-MANAGED-END: harness
+# AEXOS MANAGED END

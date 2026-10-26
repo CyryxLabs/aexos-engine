@@ -164,5 +164,6 @@ describe('dispatch-adapter (C2)', () => {
         governance: expect.objectContaining({ budgetCeilingUsd: 1 }),
       }),
     );
+    expect(JSON.stringify(result.result.governance)).not.toContain('token');
   });
 });

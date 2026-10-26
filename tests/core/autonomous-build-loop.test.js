@@ -9,6 +9,7 @@
 
 const path = require('path');
 const fs = require('fs');
+const { spawnSync } = require('child_process');
 const {
   createTempDir,
   cleanupTempDir,
@@ -89,6 +90,10 @@ function createLoop(overrides = {}) {
     maxIterations: 3,
     selfCritiqueEnabled: false,
     verificationEnabled: false,
+    executor: async (subtask) => ({
+      success: true,
+      filesModified: subtask.files || [],
+    }),
     ...overrides,
   });
 }
@@ -486,14 +491,147 @@ describe('AutonomousBuildLoop', () => {
       );
     });
 
-    test('returns success without executor (default simulation)', async () => {
-      const loop = createLoop();
+    test('fails before state initialization when no executor is configured', async () => {
+      const loop = createLoop({ executor: null });
       const plan = createTestPlan(1);
-      // No executor set - uses default simulation
+
+      await expect(loop.run('story-1', { plan, rootPath: tmpDir })).rejects.toMatchObject({
+        code: 'AUTONOMOUS_EXECUTOR_REQUIRED',
+      });
+
+      expect(BuildStateManager).not.toHaveBeenCalled();
+    });
+
+    test('rejects direct subtask execution without an executor', async () => {
+      const loop = createLoop({ executor: null });
+
+      await expect(loop.executeSubtask({ id: 'subtask-1' }, 1)).rejects.toMatchObject({
+        code: 'AUTONOMOUS_EXECUTOR_REQUIRED',
+      });
+    });
+
+    test('rejects malformed executor results instead of treating them as retryable success', async () => {
+      const loop = createLoop({ executor: async () => ({ status: 'success' }) });
+      const plan = createTestPlan(1);
+
+      const result = await loop.run('story-1', { plan, rootPath: tmpDir });
+
+      expect(result.success).toBe(false);
+      expect(result.results[0].error).toContain('boolean success');
+      expect(mockStateInstance.completeSubtask).not.toHaveBeenCalled();
+    });
+
+    test('rejects malformed filesModified evidence from a successful executor', async () => {
+      const loop = createLoop({
+        maxIterations: 1,
+        executor: async () => ({ success: true, filesModified: 'claimed.js' }),
+      });
+      const plan = createTestPlan(1);
+
+      const result = await loop.run('story-1', { plan, rootPath: tmpDir });
+
+      expect(result.success).toBe(false);
+      expect(result.results[0].error).toContain('filesModified');
+      expect(mockStateInstance.completeSubtask).not.toHaveBeenCalled();
+    });
+
+    test('records an empty file list when executor success has no modification evidence', async () => {
+      const loop = createLoop({ executor: async () => ({ success: true }) });
+      const plan = createTestPlan(1);
 
       const result = await loop.run('story-1', { plan, rootPath: tmpDir });
 
       expect(result.success).toBe(true);
+      expect(mockStateInstance.completeSubtask).toHaveBeenCalledWith(
+        'subtask-1',
+        expect.objectContaining({ filesModified: [] }),
+      );
+      expect(result.results[0].result.filesModified).toEqual([]);
+    });
+
+    test('runs required verification after executor success and rejects verification failure', async () => {
+      const loop = createLoop({
+        executor: async () => ({ success: true, filesModified: ['x.js'] }),
+        verificationEnabled: true,
+        maxIterations: 1,
+      });
+      const plan = createTestPlan(1);
+      plan.phases[0].subtasks[0].verification = { type: 'unsupported' };
+
+      const result = await loop.run('story-1', { plan, rootPath: tmpDir });
+
+      expect(result.success).toBe(false);
+      expect(result.results[0].error).toContain('Unsupported verification type');
+      expect(mockStateInstance.completeSubtask).not.toHaveBeenCalled();
+    });
+
+    test('does not accept executor success when required verification is disabled', async () => {
+      const loop = createLoop({ maxIterations: 1, verificationEnabled: false });
+      const plan = createTestPlan(1);
+      plan.phases[0].subtasks[0].verification = {
+        type: 'command',
+        command: `${process.execPath} --version`,
+      };
+
+      const result = await loop.run('story-1', { plan, rootPath: tmpDir });
+
+      expect(result.success).toBe(false);
+      expect(result.results[0].error).toContain('verification is disabled');
+      expect(mockStateInstance.completeSubtask).not.toHaveBeenCalled();
+    });
+
+    test('runs command verification in the requested execution root', async () => {
+      const marker = path.join(tmpDir, 'verify-cwd.js');
+      fs.writeFileSync(marker, 'process.exit(process.cwd() === __dirname ? 0 : 17);\n');
+      const loop = createLoop({ verificationEnabled: true });
+      const plan = createTestPlan(1);
+      plan.phases[0].subtasks[0].verification = {
+        type: 'command',
+        command: `${JSON.stringify(process.execPath)} verify-cwd.js`,
+      };
+
+      const result = await loop.run('story-1', { plan, rootPath: tmpDir });
+
+      expect(result.success).toBe(true);
+    });
+
+    test('runs test verification in the active worktree rather than process cwd', async () => {
+      const worktreeDir = path.join(tmpDir, 'worktree');
+      fs.mkdirSync(worktreeDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(worktreeDir, 'verify-worktree.js'),
+        'process.exit(process.cwd() === __dirname ? 0 : 19);\n',
+      );
+      const loop = createLoop({ verificationEnabled: true });
+      loop.worktreePath = worktreeDir;
+
+      const result = await loop.runVerification({
+        id: 'subtask-1',
+        verification: {
+          type: 'test',
+          testCommand: `${JSON.stringify(process.execPath)} verify-worktree.js`,
+        },
+      });
+
+      expect(result).toEqual({ success: true });
+    });
+
+    test('standalone CLI fails closed when no executor can be injected', () => {
+      const planPath = path.join(tmpDir, 'implementation.json');
+      fs.writeFileSync(planPath, JSON.stringify(createTestPlan(1)));
+      const cliPath = path.resolve(
+        __dirname,
+        '../../.aexos-core/core/execution/autonomous-build-loop.js',
+      );
+
+      const result = spawnSync(process.execPath, [cliPath, 'run', 'story-1', '--plan', planPath], {
+        cwd: tmpDir,
+        encoding: 'utf8',
+      });
+
+      expect(result.status).toBe(1);
+      expect(`${result.stdout}\n${result.stderr}`).toContain('executor is required');
+      expect(fs.existsSync(path.join(tmpDir, 'plan', 'build-state.json'))).toBe(false);
     });
   });
 

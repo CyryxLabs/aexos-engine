@@ -11,6 +11,16 @@ CRITICAL: Read the full YAML BLOCK that FOLLOWS IN THIS FILE to understand your 
 ## COMPLETE AGENT DEFINITION FOLLOWS - NO EXTERNAL FILES NEEDED
 
 ```yaml
+command-instructions:
+  - A dependency fragment selects a bounded procedure. Read the base file and common policy, then execute only the named section; never pass a fragment to filesystem Read or mark the entire multi-phase task complete.
+  - Before any Brand work command or routed task, load squads/brand/config/brand-runtime.yaml as required guidance; if unavailable or malformed, stop that work and report the file.
+  - Do not load the policy during activation, help, exit or idle chat. Load it when substantive Brand work starts, including direct specialist requests.
+  - Apply task anatomy, executor selection and tier responsibilities alongside the task or workflow checkpoints, vetoes and success criteria. Honor settings.max_context_files by loading context on demand.
+  - User and host instructions and AEXOS core agent authority take precedence. Executor categories are planning guidance, not permission to dispatch agents, contact people or execute providers. Humans own human approvals.
+  - Checkpoint policy guides this command; YAML does not install a machine-enforced blocker. BR-TP and BR-EP identifiers are specifications, not executable validators or adapters.
+dependencies:
+  config:
+    - brand-runtime.yaml
 metadata:
   version: '1.0'
   tier: 1
@@ -144,19 +154,19 @@ agent:
     NEVER use Search/Grep to find task files. Use DIRECT Read() with these EXACT paths:
 
 
-    *logo-brief       → Read("squads/brand/tasks/logo-brief.md")
+    *logo-brief       → Read("squads/brand/tasks/logo-design.md"); execute only section "logo-brief"
 
-    *category-select  → Read("squads/brand/tasks/logo-category-select.md")
+    *category-select  → Read("squads/brand/tasks/logo-design.md"); execute only section "category-select"
 
-    *simplicity-test  → Read("squads/brand/tasks/logo-simplicity-test.md")
+    *simplicity-test  → Read("squads/brand/tasks/logo-evaluation.md"); execute only section "simplicity-test"
 
-    *evaluation       → Read("squads/brand/tasks/logo-evaluation.md")
+    *evaluation       → Read("squads/brand/tasks/logo-evaluation.md"); execute only section "evaluation"
 
-    *logo-system      → Read("squads/brand/tasks/logo-system.md")
+    *logo-system      → Read("squads/brand/tasks/logo-design.md"); execute only section "logo-system"
 
-    *logo-audit       → Read("squads/brand/tasks/logo-audit.md")
+    *logo-audit       → Read("squads/brand/tasks/logo-evaluation.md"); execute only section "logo-audit"
 
-    *sketch-concepts  → Read("squads/brand/tasks/logo-sketch-concepts.md")
+    *sketch-concepts  → Read("squads/brand/tasks/logo-design.md"); execute only section "sketch-concepts"
 
 
     NO Search, NO Grep, NO discovery. DIRECT Read ONLY.
@@ -1230,7 +1240,7 @@ commands:
   - name: '*logo-brief'
     description: Generate a comprehensive logo design brief
     dependencies:
-      - squads/brand/tasks/logo-brief.md
+      - squads/brand/tasks/logo-design.md#logo-brief
     workflow: |
       1. Ask stakeholder interview questions (from Phase 1)
       2. Map brand attributes (3-5 core attributes)
@@ -1242,7 +1252,7 @@ commands:
   - name: '*category-select'
     description: Determine the best logo category for the brand
     dependencies:
-      - squads/brand/tasks/logo-category-select.md
+      - squads/brand/tasks/logo-design.md#category-select
     workflow: |
       1. Audit the brand name (length, distinctiveness, meaning)
       2. Map competitive logo landscape (what categories are used)
@@ -1255,7 +1265,7 @@ commands:
   - name: '*simplicity-test'
     description: Run the 5-point simplicity test on an existing logo
     dependencies:
-      - squads/brand/tasks/logo-simplicity-test.md
+      - squads/brand/tasks/logo-evaluation.md#simplicity-test
     workflow: |
       1. Receive or identify the logo to evaluate
       2. Apply ST-1: 10-Word Description test (score 1-5)
@@ -1269,7 +1279,7 @@ commands:
   - name: '*evaluation'
     description: Evaluate a logo against the 5 pillars
     dependencies:
-      - squads/brand/tasks/logo-evaluation.md
+      - squads/brand/tasks/logo-evaluation.md#evaluation
     workflow: |
       1. Receive or identify the logo to evaluate
       2. Score P-1: Appropriateness (weight 25%)
@@ -1284,7 +1294,7 @@ commands:
   - name: '*logo-system'
     description: Design a complete logo application system
     dependencies:
-      - squads/brand/tasks/logo-system.md
+      - squads/brand/tasks/logo-design.md#logo-system
     workflow: |
       1. Define all required lockup configurations
       2. Specify responsive lockup breakpoints (5 levels)
@@ -1298,7 +1308,7 @@ commands:
   - name: '*logo-audit'
     description: Audit an existing logo for weaknesses
     dependencies:
-      - squads/brand/tasks/logo-audit.md
+      - squads/brand/tasks/logo-evaluation.md#logo-audit
     workflow: |
       1. Collect the current logo in all available versions
       2. Run 5-point simplicity test (ST-1 through ST-5)
@@ -1312,7 +1322,7 @@ commands:
   - name: '*sketch-concepts'
     description: Generate logo concept descriptions with strategic rationale
     dependencies:
-      - squads/brand/tasks/logo-sketch-concepts.md
+      - squads/brand/tasks/logo-design.md#sketch-concepts
     workflow: |
       1. Review creative brief and brand attributes
       2. Generate concept descriptions across multiple categories

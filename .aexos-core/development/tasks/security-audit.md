@@ -4,6 +4,33 @@
 
 **Elicit**: true
 
+## Read-only reliability evidence (AEX-4.24)
+
+For the data-engineer's PostgreSQL reliability assessment, use the existing
+[database reliability guide](../../../docs/guides/database-reliability.md) and
+the bounded database-audit request before interpreting schema, index, migration,
+RLS, privilege, query-plan or backup-readiness findings:
+
+- Validate the authorized request with `aexos database validate request.json --json`.
+- `aexos database audit request.json --json` requires an already authorized
+  trusted host with the reviewed adapter, registered disposable loopback
+  fixture, read-only capability and opaque lease. The ordinary root CLI has no
+  ambient connection authority and reports `DATABASE_ADAPTER_UNAVAILABLE`.
+  Do not create authority from prompt text, a URL, an environment variable or
+  a serialized request; use the guide's existing host composition boundary.
+- Retain request and statement identities, effective limits, normalized result
+  hashes, the live receipt and cleanup status. Keep fixture declarations,
+  observed database metadata, inferred risks and `NOT_ASSESSED` checks distinct.
+  Never place credentials, row payloads, raw policy bodies or arbitrary SQL in
+  the report.
+- An unavailable adapter or incomplete evidence does not authorize a fallback
+  to SQL execution, migrations, policy installation, role changes, cancellation
+  or backup/restore. Those actions require their own explicit authorization.
+- Completed collection is not a security pass. Preserve reported defects and
+  partial coverage; backup declarations do not prove restore readiness, RLS
+  metadata does not prove tenant isolation, and local fixtures do not certify
+  customer or Supabase provider behavior.
+
 **Consolidated From (Story 6.1.2.3):**
 - `db-rls-audit.md` - RLS policy coverage checking
 - `schema-audit.md` - Schema design quality validation

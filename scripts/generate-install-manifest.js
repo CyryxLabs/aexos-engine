@@ -17,41 +17,7 @@ const yaml = require('js-yaml');
 const { hashFile, hashString } = require('../packages/installer/src/installer/file-hasher');
 
 // Import FOLDERS_TO_COPY from installer (same source of truth)
-const FOLDERS_TO_COPY = [
-  // v2.1 Modular Structure
-  'core',
-  'development',
-  'product',
-  'infrastructure',
-  // v2.1 New Modules (Story 6.19 - added missing folders)
-  'workflow-intelligence',
-  'monitor',
-  // v2.0 Legacy Flat Structure (backwards compatibility)
-  'agents',
-  'agent-teams',
-  'checklists',
-  'data',
-  'docs',
-  'elicitation',
-  'scripts',
-  'tasks',
-  'templates',
-  'tools',
-  'workflows',
-  // Additional directories
-  'cli',
-  'manifests',
-];
-
-const ROOT_FILES_TO_COPY = [
-  'index.js',
-  'index.esm.js',
-  'index.d.ts',
-  'core-config.yaml',
-  'package.json',
-  'user-guide.md',
-  'working-in-the-brownfield.md',
-];
+const { FOLDERS_TO_COPY, ROOT_FILES_TO_COPY } = require('../packages/installer/src/installer/aexos-core-installer');
 
 // Files/folders to exclude from manifest
 const EXCLUDE_PATTERNS = [

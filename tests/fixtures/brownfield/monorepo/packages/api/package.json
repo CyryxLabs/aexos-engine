@@ -1,0 +1,7 @@
+{
+  "name": "@fixture/api",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

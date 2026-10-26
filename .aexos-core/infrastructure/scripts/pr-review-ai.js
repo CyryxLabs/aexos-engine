@@ -13,7 +13,7 @@
  * Based on Auto-Claude's AI PR Reviewer architecture.
  */
 
-const { execSync, execFileSync } = require('child_process');
+const { execSync, execFileSync, spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const EventEmitter = require('events');
@@ -575,21 +575,20 @@ Respond with a JSON object:
   }
 
   async callClaude(prompt) {
-    return new Promise((resolve, reject) => {
-      try {
-        const result = execSync(
-          `claude --print --dangerously-skip-permissions -p "${prompt.replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/`/g, '\\`')}"`,
-          {
-            encoding: 'utf8',
-            maxBuffer: 10 * 1024 * 1024,
-            timeout: 180000,
-          },
-        );
-        resolve(result);
-      } catch (error) {
-        reject(new Error(`Claude CLI error: ${error.message}`));
-      }
+    if (typeof prompt !== 'string' || !prompt.trim()) throw new Error('Claude CLI requires a non-empty prompt');
+    const result = spawnSync('claude', ['--print'], {
+      input: prompt,
+      encoding: 'utf8',
+      shell: false,
+      windowsHide: true,
+      maxBuffer: 10 * 1024 * 1024,
+      timeout: 180000,
+      killSignal: 'SIGKILL',
     });
+    if (result.error || result.signal || result.status !== 0) {
+      throw new Error('Claude CLI error: ' + (result.error?.code || result.signal || ('exit ' + result.status)));
+    }
+    return result.stdout;
   }
 
   parseResponse(response) {

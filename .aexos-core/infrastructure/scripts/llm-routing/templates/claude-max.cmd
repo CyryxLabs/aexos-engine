@@ -23,4 +23,4 @@ echo If you see "API Usage Billing", run: claude /logout
 echo Then restart and login again with your Max account.
 echo.
 
-claude --dangerously-skip-permissions %*
+claude %*

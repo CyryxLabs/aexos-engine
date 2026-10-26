@@ -11,6 +11,9 @@
 const path = require('path');
 const fs = require('fs');
 
+const yaml = require('js-yaml');
+const { readSelection } = require('../host-selection');
+
 const name = 'core-config';
 
 const REQUIRED_SECTIONS = ['boundary', 'project', 'ide'];
@@ -29,15 +32,26 @@ async function run(context) {
 
   const content = fs.readFileSync(configPath, 'utf8');
 
-  const missingSections = REQUIRED_SECTIONS.filter(
-    (section) => !content.includes(`${section}:`),
-  );
+  let config;
+  try {
+    config = yaml.load(content);
+    readSelection(context);
+    if (!config || typeof config !== 'object' || Array.isArray(config)) throw new Error('expected an object');
+  } catch (error) {
+    return { check: name, status: 'FAIL', message: `Invalid core-config.yaml: ${error.message}`, fixCommand: null };
+  }
+  const missingSections = REQUIRED_SECTIONS.filter((section) => !Object.hasOwn(config, section));
+  const invalidSections = REQUIRED_SECTIONS.filter((section) => Object.hasOwn(config, section) &&
+    (!config[section] || typeof config[section] !== 'object' || Array.isArray(config[section])));
+  if (invalidSections.length) {
+    return { check: name, status: 'FAIL', message: `Invalid configuration sections (expected objects): ${invalidSections.join(', ')}`, fixCommand: null };
+  }
 
   if (missingSections.length === 0) {
     return {
       check: name,
       status: 'PASS',
-      message: 'Schema valid, boundary section present',
+      message: 'Required configuration sections and host selection valid',
       fixCommand: null,
     };
   }

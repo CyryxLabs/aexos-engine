@@ -1,3 +1,31 @@
+---
+contractVersion: 1
+inputs:
+  - name: story
+    type: path
+    required: true
+  - name: output
+    type: path
+    required: true
+  - name: source
+    type: path
+    required: true
+produces:
+  - name: output
+    kind: report
+    path: "{output}"
+  - name: source
+    kind: file
+    path: "{source}"
+verify:
+  - type: file-exists
+    target: "{output}"
+  - type: file-exists
+    target: "{source}"
+  - type: checklist
+    ref: selected-sdlc-phase
+---
+
 # Develop Story Task
 
 ## Purpose

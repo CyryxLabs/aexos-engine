@@ -86,15 +86,8 @@ describe('Wizard IDE Flow Integration', () => {
       expect(await fs.pathExists(path.join(testDir, '.github', 'agents'))).toBe(true);
     });
 
-    it('should complete flow for all 7 IDEs', async () => {
-      for (const relative of [
-        '.aexos-core/development/agents',
-        '.aexos-core/development/skills',
-        '.aexos-core/infrastructure/templates/grok-hooks',
-        '.aexos-core/product/templates/ide-rules',
-      ]) {
-        await fs.copy(path.join(__dirname, '..', '..', relative), path.join(testDir, relative));
-      }
+    it('should complete flow for all 7 IDEs from installed canonical sources', async () => {
+      await fs.copy(path.resolve('.aexos-core/development/agents'), path.join(testDir, '.aexos-core/development/agents'));
       const wizardState = {
         projectType: 'greenfield',
         projectName: 'all-ides-project',
@@ -106,6 +99,7 @@ describe('Wizard IDE Flow Integration', () => {
       });
 
       expect(result.success).toBe(true);
+      // 7 config files + agent files for each IDE
       expect(result.files.length).toBeGreaterThanOrEqual(7);
 
       // Verify all config files and agent folders based on IDE configuration

@@ -571,6 +571,7 @@ class MasterOrchestrator extends EventEmitter {
       ...this.executionState.epics[epicNum],
       status: EpicStatus.IN_PROGRESS,
       startedAt: new Date().toISOString(),
+      completedAt: null,
       attempts: (this.executionState.epics[epicNum]?.attempts || 0) + 1,
     };
 
@@ -592,27 +593,29 @@ class MasterOrchestrator extends EventEmitter {
         orchestrator: this,
       });
 
-      const isStubResult = result?.status === 'stub';
-      if (!result || result.success === false || isStubResult) {
+      const nonExecutionStatuses = [
+        'stub', 'simulated', 'not-executed', 'failed', 'unsupported',
+        'cancelled', 'canceled', 'skipped', 'blocked', 'timeout', 'pending',
+      ];
+      if (!result || result.success === false || result.executed === false
+        || result.simulated === true || nonExecutionStatuses.includes(result.status)) {
+        const isStubResult = result?.status === 'stub';
+        const isBlockedResult = result?.blocked === true || result?.status === 'blocked' || isStubResult;
         const resultError = isStubResult
           ? `Epic ${epicNum} returned a stub result instead of real execution evidence`
-          : result?.error || 'Executor returned no result';
-        const failedStatus = result?.blocked || isStubResult ? EpicStatus.BLOCKED : EpicStatus.FAILED;
+          : result?.error || result?.message || `Epic ${epicNum} did not execute successfully`;
         this.executionState.epics[epicNum] = {
           ...this.executionState.epics[epicNum],
-          status: failedStatus,
+          status: isBlockedResult ? EpicStatus.BLOCKED : EpicStatus.FAILED,
           completedAt: new Date().toISOString(),
           result: result || null,
           errors: [
             ...(this.executionState.epics[epicNum]?.errors || []),
-            {
-              message: resultError,
-              timestamp: new Date().toISOString(),
-            },
+            { message: resultError, timestamp: new Date().toISOString() },
           ],
         };
         await this._saveState();
-        this.emit('epicFailed', { epicNum, result });
+        this.emit('epicFailed', { epicNum, result: result || null });
         this._log(`Epic ${epicNum} did not complete: ${resultError}`, {
           level: 'error',
           icon: '❌',
@@ -622,76 +625,50 @@ class MasterOrchestrator extends EventEmitter {
           epicNum,
           result: result || null,
           error: resultError,
-          blocked: result?.blocked === true || isStubResult,
+          blocked: isBlockedResult,
           pendingRequirements: result?.pendingRequirements || (isStubResult ? ['Real executor'] : []),
         };
       }
 
-      // Evaluate quality gate (Story 0.6) - only in full pipeline mode
       let gateResult = null;
-      if (this._inFullPipeline && result && result.success !== false) {
+      if (this._inFullPipeline) {
         gateResult = await this._evaluateGate(epicNum, result);
-
-        // Store gate result if exists
-        if (gateResult) {
-          this.executionState.epics[epicNum].gateResult = gateResult;
+        if (gateResult) this.executionState.epics[epicNum].gateResult = gateResult;
+        if (gateResult && this.gateEvaluator.shouldBlock(gateResult.verdict)) {
+          this.executionState.epics[epicNum] = {
+            ...this.executionState.epics[epicNum],
+            status: EpicStatus.BLOCKED,
+            completedAt: null,
+            result,
+            gateResult,
+            errors: [
+              ...(this.executionState.epics[epicNum]?.errors || []),
+              {
+                message: `Quality gate blocked: ${gateResult.gate}`,
+                timestamp: new Date().toISOString(),
+              },
+            ],
+          };
+          this._transitionTo(OrchestratorState.BLOCKED, {
+            reason: 'gate_blocked', gate: gateResult.gate, issues: gateResult.issues,
+          });
+          await this._saveState();
+          this.emit('epicFailed', { epicNum, result, gateResult, error: 'Required quality gate rejected execution' });
+          return { success: false, epicNum, result, gateResult, blocked: true };
         }
+        if (gateResult && this.gateEvaluator.needsRevision(gateResult.verdict)) result.needsRevision = true;
       }
 
-      // A blocking gate means the epic did not complete. Persist and emit the
-      // blocked result before any completion event so resume cannot skip it.
-      if (gateResult && this._inFullPipeline && this.gateEvaluator.shouldBlock(gateResult.verdict)) {
-        this.executionState.epics[epicNum] = {
-          ...this.executionState.epics[epicNum],
-          status: EpicStatus.BLOCKED,
-          completedAt: null,
-          result,
-          gateResult,
-          errors: [
-            ...(this.executionState.epics[epicNum]?.errors || []),
-            {
-              message: `Quality gate blocked: ${gateResult.gate}`,
-              timestamp: new Date().toISOString(),
-            },
-          ],
-        };
-        this._transitionTo(OrchestratorState.BLOCKED, {
-          reason: 'gate_blocked',
-          gate: gateResult.gate,
-          issues: gateResult.issues,
-        });
-        await this._saveState();
-        this.emit('epicFailed', { epicNum, result, gateResult });
-        this._log(`Gate blocked: ${gateResult.gate}`, { level: 'warn', icon: '🚫' });
-        return { success: false, epicNum, result, gateResult, blocked: true };
-      }
-
-      // Mark as completed only after its quality gate permits completion.
       this.executionState.epics[epicNum] = {
         ...this.executionState.epics[epicNum],
         status: EpicStatus.COMPLETED,
         completedAt: new Date().toISOString(),
         result,
-        gateResult,
       };
-
-      // Save state after epic completion
       await this._saveState();
-
-      // Emit epic complete event
       this.emit('epicComplete', { epicNum, result, gateResult });
       this.onEpicComplete(epicNum, result);
-
       this._log(`Epic ${epicNum} completed successfully`, { icon: '✅' });
-
-      // Check gate verdict (only block/warn during full pipeline)
-      if (gateResult && this._inFullPipeline) {
-        if (this.gateEvaluator.needsRevision(gateResult.verdict)) {
-          this._log(`Gate needs revision: ${gateResult.gate}`, { level: 'warn', icon: '⚠️' });
-          result.needsRevision = true;
-        }
-      }
-
       return { success: true, epicNum, result, gateResult };
     } catch (error) {
       // Mark as failed
@@ -714,6 +691,8 @@ class MasterOrchestrator extends EventEmitter {
         return this.executeEpic(epicNum, options);
       }
 
+      await this._saveState();
+      this.emit('epicFailed', { epicNum, error: error.message });
       return { success: false, epicNum, error: error.message };
     } finally {
       // The epicStart/epicComplete/stateChange events emitted above are handled
@@ -1650,8 +1629,9 @@ class MasterOrchestrator extends EventEmitter {
 /**
  * Stub Epic Executor - placeholder for Story 0.3
  *
- * Provides a fail-closed executor for epics that do not yet have a real
- * implementation. A required epic cannot complete without a real executor.
+ * Provides a no-op executor for epics that do not yet have a real
+ * implementation. Returns an explicit non-execution result so the pipeline cannot
+ * continue during development.
  */
 class StubEpicExecutor {
   /**
@@ -1677,10 +1657,11 @@ class StubEpicExecutor {
     console.log(chalk.gray(`      Real executor (${this.config.executor}) not yet implemented`));
     console.log(chalk.gray('      See Story 0.3: Epic Executors'));
 
+    // A placeholder cannot certify executed work.
     return {
       success: false,
-      status: 'blocked',
-      blocked: true,
+      executed: false,
+      status: 'not-executed',
       epicNum: this.epicNum,
       error: `Real executor is unavailable for ${this.config.name}`,
       pendingRequirements: [this.config.executor],

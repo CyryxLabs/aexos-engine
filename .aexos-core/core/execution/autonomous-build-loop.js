@@ -103,6 +103,14 @@ const SubtaskResult = {
   SKIPPED: 'skipped',
 };
 
+class AutonomousBuildLoopError extends Error {
+  constructor(code, message) {
+    super(message);
+    this.name = 'AutonomousBuildLoopError';
+    this.code = code;
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════════
 //                              AUTONOMOUS BUILD LOOP CLASS
 // ═══════════════════════════════════════════════════════════════════════════════════
@@ -129,6 +137,7 @@ class AutonomousBuildLoop extends EventEmitter {
     this.recoveryTracker = null;
     this.worktreeManager = null; // Story 8.2 integration
     this.worktreePath = null; // Story 8.2 integration
+    this.executionRoot = null;
     this.startTime = null;
     this.isRunning = false;
     this.isPaused = false;
@@ -163,6 +172,9 @@ class AutonomousBuildLoop extends EventEmitter {
       throw new Error('Build loop is already running');
     }
 
+    this.assertExecutor();
+    this.executionRoot = path.resolve(options.rootPath || process.cwd());
+
     this.isRunning = true;
     this.isPaused = false;
     this.startTime = Date.now();
@@ -188,12 +200,14 @@ class AutonomousBuildLoop extends EventEmitter {
       try {
         const worktreeInfo = await this.worktreeManager.create(storyId);
         this.worktreePath = worktreeInfo.path;
+        this.executionRoot = path.resolve(this.worktreePath);
         this.log(`Created worktree at ${this.worktreePath}`, 'success');
       } catch (error) {
         // Worktree might already exist
         const existing = await this.worktreeManager.get(storyId);
         if (existing) {
           this.worktreePath = existing.path;
+          this.executionRoot = path.resolve(this.worktreePath);
           this.log(`Using existing worktree at ${this.worktreePath}`, 'info');
         } else {
           this.log(
@@ -424,7 +438,7 @@ class AutonomousBuildLoop extends EventEmitter {
           // Save checkpoint
           this.stateManager.completeSubtask(subtask.id, {
             duration,
-            filesModified: result.filesModified || subtask.files || [],
+            filesModified: result.filesModified,
             attempts: iteration,
           });
 
@@ -526,20 +540,52 @@ class AutonomousBuildLoop extends EventEmitter {
     // 9. Fix lint issues
     // 10. Verify
 
-    // For now, we provide a hook for external execution
-    if (this.config.executor) {
-      return await this.config.executor(subtask, {
-        iteration,
-        storyId: this.stateManager.storyId,
-        config: this.config,
-      });
+    this.assertExecutor();
+    const result = await this.config.executor(subtask, {
+      iteration,
+      storyId: this.stateManager?.storyId || null,
+      config: this.config,
+    });
+
+    if (
+      !result
+      || typeof result !== 'object'
+      || Array.isArray(result)
+      || typeof result.success !== 'boolean'
+    ) {
+      return {
+        success: false,
+        error: 'Executor result must declare a boolean success value',
+      };
     }
 
-    // Default: simulate execution (for testing)
-    this.log(`Executing subtask ${subtask.id} (iteration ${iteration})`, 'info');
+    if (!result.success) {
+      return result;
+    }
 
-    // Check for verification command
-    if (subtask.verification && this.config.verificationEnabled) {
+    if (
+      result.filesModified !== undefined
+      && (
+        !Array.isArray(result.filesModified)
+        || result.filesModified.some(
+          (filePath) => typeof filePath !== 'string' || !filePath.trim(),
+        )
+      )
+    ) {
+      return {
+        success: false,
+        error: 'Executor filesModified evidence must be an array of paths',
+      };
+    }
+
+    if (subtask.verification && !this.config.verificationEnabled) {
+      return {
+        success: false,
+        error: 'Required verification is disabled; subtask cannot be accepted',
+      };
+    }
+
+    if (subtask.verification) {
       const verifyResult = await this.runVerification(subtask);
       if (!verifyResult.success) {
         return {
@@ -550,9 +596,22 @@ class AutonomousBuildLoop extends EventEmitter {
     }
 
     return {
-      success: true,
-      filesModified: subtask.files || [],
+      ...result,
+      filesModified: result.filesModified || [],
     };
+  }
+
+  /**
+   * Require a callable execution boundary before any build effects occur.
+   * @private
+   */
+  assertExecutor() {
+    if (typeof this.config.executor !== 'function') {
+      throw new AutonomousBuildLoopError(
+        'AUTONOMOUS_EXECUTOR_REQUIRED',
+        'A callable autonomous build executor is required; no work was executed.',
+      );
+    }
   }
 
   /**
@@ -568,11 +627,18 @@ class AutonomousBuildLoop extends EventEmitter {
     try {
       // Different verification types
       const verification = subtask.verification;
+      const verificationRoot = path.resolve(
+        this.worktreePath || this.executionRoot || process.cwd(),
+      );
 
       if (verification.type === 'command') {
+        if (typeof verification.command !== 'string' || !verification.command.trim()) {
+          throw new Error('Command verification requires a non-empty command');
+        }
         // Run shell command
         const { execSync } = require('child_process');
         execSync(verification.command, {
+          cwd: verificationRoot,
           timeout: this.config.subtaskTimeout,
           stdio: 'pipe',
         });
@@ -580,9 +646,12 @@ class AutonomousBuildLoop extends EventEmitter {
         // Run specific test
         const { execSync } = require('child_process');
         execSync(verification.testCommand || 'npm test', {
+          cwd: verificationRoot,
           timeout: this.config.subtaskTimeout,
           stdio: 'pipe',
         });
+      } else {
+        throw new Error(`Unsupported verification type: ${verification.type || 'unknown'}`);
       }
 
       this.emit(BuildEvent.VERIFICATION_COMPLETED, {
@@ -709,6 +778,8 @@ class AutonomousBuildLoop extends EventEmitter {
     if (this.isRunning) {
       throw new Error('Build loop is already running');
     }
+
+    this.assertExecutor();
 
     // Load state
     const stateManager = new BuildStateManager(storyId, {
@@ -1058,6 +1129,7 @@ module.exports = {
   BuildEvent,
   SubtaskResult,
   DEFAULT_CONFIG,
+  AutonomousBuildLoopError,
 };
 
 // Run CLI if executed directly

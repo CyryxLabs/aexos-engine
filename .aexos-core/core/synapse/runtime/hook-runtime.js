@@ -85,9 +85,13 @@ function getStaleSessionTTL(cwd) {
  */
 function resolveRuntimeBase(cwd) {
   const projectRuntimeBase = path.join(cwd, '.aexos-core', 'core', 'synapse');
-  return fs.existsSync(projectRuntimeBase)
-    ? projectRuntimeBase
-    : path.resolve(__dirname, '..');
+  try {
+    if (!fs.lstatSync(projectRuntimeBase).isDirectory()) throw new Error('Project SYNAPSE runtime is not a directory.');
+    return projectRuntimeBase;
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+    return path.resolve(__dirname, '..');
+  }
 }
 
 /**

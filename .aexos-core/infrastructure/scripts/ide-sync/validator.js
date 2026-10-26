@@ -52,6 +52,16 @@ function walkSyncFiles(root, base) {
 }
 
 /**
+ * Normalize a relative sync path to the current platform's separator semantics.
+ * This preserves case and the complete directory hierarchy.
+ * @param {string} filePath - Relative sync path
+ * @returns {string} - Platform-normalized relative path
+ */
+function normalizeSyncRelativePath(filePath) {
+  return path.normalize(filePath);
+}
+
+/**
  * Read file content if it exists
  * @param {string} filePath - Path to read
  * @returns {string|null} - File content or null
@@ -92,12 +102,14 @@ function validateIdeSync(expectedFiles, targetDir, redirectsConfig, format) {
   };
 
   // Track expected filenames
-  const expectedFilenames = new Set(expectedFiles.map(f => f.filename));
+  const expectedFilenames = new Set(
+    expectedFiles.map(f => normalizeSyncRelativePath(f.filename)),
+  );
 
   // Add redirect filenames to expected
   const redirectFilenames = getRedirectFilenames(redirectsConfig, format);
   for (const rf of redirectFilenames) {
-    expectedFilenames.add(rf);
+    expectedFilenames.add(normalizeSyncRelativePath(rf));
   }
 
   // Check each expected file
@@ -143,7 +155,7 @@ function validateIdeSync(expectedFiles, targetDir, redirectsConfig, format) {
     const actualFiles = walkSyncFiles(targetDir, targetDir);
 
     for (const file of actualFiles) {
-      if (!expectedFilenames.has(file)) {
+      if (!expectedFilenames.has(normalizeSyncRelativePath(file))) {
         result.orphaned.push({
           filename: file,
           path: path.join(targetDir, file),

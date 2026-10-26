@@ -1,0 +1,15 @@
+{
+  "protocol": "aexos.provenance-intake/v1",
+  "storyId": "AEX-4.26",
+  "source": {
+    "repository": "https://github.com/SynkraAI/aiox-dashboard.git",
+    "commit": "577a696a80321c7e325c2359a50ce7320563a2fe",
+    "evidence": "aexos-audit/dashboard-research.md and REPORT.md E10/Wave 4",
+    "licenseDisposition": "No root license established; no upstream code, UI, assets or fixtures copied"
+  },
+  "adaptedRequirement": "Read-only correlation of story, run, task, artifact and acceptance with explicit missing evidence",
+  "localOwners": ["core/virtual-office/correlation.js", "core/execution/workflow-runner.js"],
+  "localTests": ["tests/unit/virtual-office/correlation.test.js", "tests/core/execution/workflow-runner.test.js"],
+  "fixtureAuthorship": "Independently authored local metadata fixtures",
+  "exclusions": ["Dashboard control code", "Browser task dispatch", "Job pools", "Scheduling", "Provider or release certification"]
+}

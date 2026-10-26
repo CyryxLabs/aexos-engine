@@ -11,6 +11,12 @@ const fs = require('fs');
 
 // Mock fs for controlled test scenarios
 jest.mock('fs');
+// These legacy artifact tests use path-insensitive fs mocks. Selection itself is
+// exercised with real files in tests/core/doctor/doctor-truthfulness.test.js.
+jest.mock('../../../../../.aexos-core/core/doctor/host-selection', () => ({
+  readSelection: () => null,
+  claudeApplicability: () => null,
+}));
 
 const nodeVersionCheck = require('../../../../../.aexos-core/core/doctor/checks/node-version');
 const npmPackagesCheck = require('../../../../../.aexos-core/core/doctor/checks/npm-packages');
@@ -62,15 +68,17 @@ describe('node-version check', () => {
 });
 
 describe('npm-packages check', () => {
-  it('should PASS when node_modules exists', async () => {
+  it('should PASS when declared dependencies exist', async () => {
     fs.existsSync.mockReturnValue(true);
+    fs.readFileSync.mockReturnValue(JSON.stringify({ version: '1.0.0', dependencies: { example: '*' } }));
     const result = await npmPackagesCheck.run(mockContext);
     expect(result.status).toBe('PASS');
-    expect(result.message).toContain('node_modules present');
+    expect(result.message).toContain('dependencies installed');
   });
 
-  it('should FAIL when node_modules missing', async () => {
-    fs.existsSync.mockReturnValue(false);
+  it('should FAIL when declared dependencies are missing', async () => {
+    fs.existsSync.mockImplementation((file) => file === path.join(mockContext.projectRoot, 'package.json'));
+    fs.readFileSync.mockReturnValue(JSON.stringify({ version: '1.0.0', dependencies: { example: '*' } }));
     const result = await npmPackagesCheck.run(mockContext);
     expect(result.status).toBe('FAIL');
     expect(result.fixCommand).toBe('npm install');
@@ -113,7 +121,7 @@ describe('settings-json check', () => {
     expect(result.status).toBe('WARN');
   });
 
-  it('should identify explicitly disabled framework protection as requiring a config change', async () => {
+  it('should report explicitly disabled framework protection without claiming certification or repair', async () => {
     fs.existsSync.mockReturnValue(true);
     const mockSettings = { language: 'en' };
     const coreConfig = 'boundary:\n  frameworkProtection: false\n  protected:\n    - .aexos-core/core/**';
@@ -124,9 +132,9 @@ describe('settings-json check', () => {
     });
 
     const result = await settingsJsonCheck.run(mockContext);
-    expect(result.status).toBe('WARN');
+    expect(result.status).toBe('INFO');
     expect(result.message).toContain('explicitly disabled');
-    expect(result.message).toContain('regeneration will not create');
+    expect(result.message).toContain('deny-rule enforcement is not certified');
     expect(result.fixCommand).toBeNull();
     expect(result.autoFixable).toBe(false);
   });
@@ -195,6 +203,9 @@ describe('rules-files check', () => {
 });
 
 describe('agent-memory check', () => {
+  beforeEach(() => {
+    fs.readdirSync.mockReturnValue(agentMemoryCheck.EXPECTED_AGENTS.map((name) => ({ name: name + '.md', isFile: () => true })));
+  });
   it('should PASS when all 10 MEMORY.md files exist', async () => {
     fs.existsSync.mockReturnValue(true);
     const result = await agentMemoryCheck.run(mockContext);
@@ -650,10 +661,10 @@ describe('hooks-claude-count check', () => {
 // === INS-4.8: Registry and task validation ===
 
 describe('check registry (INS-4.8)', () => {
-  it('should load 18 checks total', () => {
+  it('should load 19 checks total', () => {
     // loadChecks is the real function (not mocked) — verifies registration
     const checks = loadChecks();
-    expect(checks).toHaveLength(18);
+    expect(checks).toHaveLength(19);
   });
 
   it('should include INS-4.8 checks and CORE-SU.A4 port denylist', () => {
@@ -692,7 +703,7 @@ describe('health-check.yaml task (INS-4.8)', () => {
     expect(yaml).toContain('npx @aexos/core doctor --json');
   });
 
-  it('should have governance_map with all 18 checks', () => {
+  it('should have governance_map with all 19 checks', () => {
     const realFs = jest.requireActual('fs');
     const yaml = realFs.readFileSync(
       path.join(__dirname, '..', '..', '..', '..', '..', '.aexos-core', 'development', 'tasks', 'health-check.yaml'),

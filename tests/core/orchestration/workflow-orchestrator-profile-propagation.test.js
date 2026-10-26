@@ -4,15 +4,22 @@ const fs = require('fs-extra');
 const os = require('os');
 const path = require('path');
 
-const WorkflowOrchestrator = require('../../../.aexos-core/core/orchestration/workflow-orchestrator');
+const WorkflowOrchestrator = require(path.resolve(
+  __dirname,
+  '../../../.aexos-core/core/orchestration/workflow-orchestrator',
+));
 
 describe('WorkflowOrchestrator execution profile propagation', () => {
   let tempDir;
   let workflowPath;
+  let storyPath;
 
   beforeEach(async () => {
     tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'aexos-workflow-profile-'));
     workflowPath = path.join(tempDir, 'workflow.yaml');
+    storyPath = path.join(tempDir, 'STORY-T.1.md');
+
+    await fs.writeFile(storyPath, '# Story T.1\n\n## Status\n\nReady\n', 'utf8');
 
     await fs.writeFile(
       workflowPath,
@@ -22,14 +29,18 @@ describe('WorkflowOrchestrator execution profile propagation', () => {
         '  name: Test Workflow',
         'sequence:',
         '  - phase: 1',
+        '    id: "build"',
         '    phase_name: "Build"',
         '    agent: "dev"',
         '    action: "implement"',
-        '    task: "dev-develop-story.md"',
+        '    task: "legacy-profile-test"',
         '  - phase: 2',
+        '    id: "review"',
         '    phase_name: "Review"',
         '    agent: "qa"',
         '    action: "review"',
+        '    task: "qa-review-story"',
+        '    dependsOn: "build"',
       ].join('\n'),
       'utf8',
     );
@@ -44,6 +55,7 @@ describe('WorkflowOrchestrator execution profile propagation', () => {
     const orchestrator = new WorkflowOrchestrator(workflowPath, {
       projectRoot: tempDir,
       executionContext: 'migration',
+      budgetCeilingUsd: 1,
       dispatchSubagent,
     });
 
@@ -58,6 +70,7 @@ describe('WorkflowOrchestrator execution profile propagation', () => {
       currentPhase: 1,
       previousPhases: {},
       metadata: {},
+      storyPath,
     }));
     orchestrator.contextManager.savePhaseOutput = jest.fn(async () => {});
 
@@ -66,7 +79,7 @@ describe('WorkflowOrchestrator execution profile propagation', () => {
       phase_name: 'Build',
       agent: 'dev',
       action: 'implement',
-      task: 'dev-develop-story.md',
+      task: 'legacy-profile-test',
     });
 
     expect(dispatchSubagent).toHaveBeenCalledTimes(1);
@@ -77,5 +90,23 @@ describe('WorkflowOrchestrator execution profile propagation', () => {
     expect(payload.context.executionPolicy).toBeDefined();
     expect(payload.context.executionPolicy.max_parallel_changes).toBe(3);
     expect(payload.baseContext).toBeDefined();
+  });
+
+  it('fails loudly when no runtime or explicit legacy executor is configured', async () => {
+    const orchestrator = new WorkflowOrchestrator(workflowPath, {
+      projectRoot: tempDir,
+      executionContext: 'migration',
+    });
+    await orchestrator.loadWorkflow();
+    orchestrator.preparePhase = jest.fn(async () => ({}));
+    orchestrator.promptBuilder.buildPrompt = jest.fn(async () => 'test prompt');
+    orchestrator.contextManager.getContextForPhase = jest.fn(async () => ({}));
+
+    await expect(orchestrator._executeSinglePhase({
+      phase: 1,
+      phase_name: 'Build',
+      agent: 'dev',
+      action: 'implement',
+    })).rejects.toMatchObject({ code: 'AGENT_RUNTIME_REQUIRED' });
   });
 });

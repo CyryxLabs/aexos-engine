@@ -25,11 +25,19 @@ const yaml = require('js-yaml');
  */
 class ChecklistRunner {
   /**
-   * @param {string} projectRoot - Project root directory
+   * @param {string} projectRoot - Consumer project root directory
+   * @param {Object} options - Path options
+   * @param {string} options.frameworkRoot - AEXOS package root
    */
-  constructor(projectRoot) {
+  constructor(projectRoot, options = {}) {
     this.projectRoot = projectRoot;
-    this.checklistsPath = path.join(projectRoot, '.aexos-core', 'product', 'checklists');
+    this.frameworkRoot = path.resolve(options.frameworkRoot || projectRoot);
+    this.checklistsPath = path.join(
+      this.frameworkRoot,
+      '.aexos-core',
+      'product',
+      'checklists',
+    );
   }
 
   /**
@@ -80,11 +88,28 @@ class ChecklistRunner {
    * @returns {Promise<string|null>} Checklist content or null
    */
   async loadChecklist(checklistName) {
-    const fileName = checklistName.endsWith('.md') ? checklistName : `${checklistName}.md`;
-    const filePath = path.join(this.checklistsPath, fileName);
-
+    if (typeof checklistName !== 'string') {
+      throw Object.assign(new Error('Checklist ID must be a safe lower-kebab identifier.'), {
+        code: 'WORKFLOW_CHECKLIST_ID_INVALID',
+      });
+    }
+    const baseName = checklistName.trim().replace(/\.md$/i, '');
+    if (!/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(baseName)) {
+      throw Object.assign(new Error('Checklist ID must be a safe lower-kebab identifier.'), {
+        code: 'WORKFLOW_CHECKLIST_ID_INVALID',
+      });
+    }
+    const root = path.resolve(this.checklistsPath);
+    const filePath = path.resolve(root, `${baseName}.md`);
     if (await fs.pathExists(filePath)) {
-      return await fs.readFile(filePath, 'utf8');
+      const [realRoot, realFile] = await Promise.all([fs.realpath(root), fs.realpath(filePath)]);
+      const relative = path.relative(realRoot, realFile);
+      if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) {
+        throw Object.assign(new Error('Checklist file escapes the framework checklist root.'), {
+          code: 'WORKFLOW_CHECKLIST_PATH_OUTSIDE',
+        });
+      }
+      return await fs.readFile(realFile, 'utf8');
     }
 
     return null;

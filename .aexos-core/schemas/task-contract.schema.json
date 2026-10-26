@@ -1,0 +1,106 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aexos.cyryxlabs.com/schemas/task-contract-v1.json",
+  "title": "AEXOS Task Contract V1",
+  "description": "Machine-checkable execution boundary for an AEXOS task.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contractVersion", "inputs", "produces", "verify"],
+  "properties": {
+    "contractVersion": {
+      "const": 1
+    },
+    "inputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "type", "required"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["string", "number", "boolean", "object", "array", "path", "enum"]
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "produces": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "kind"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["file", "directory", "story", "report", "config", "state", "stdout", "event", "artifact"]
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "kind": {
+                  "enum": ["file", "directory", "story", "report", "config"]
+                }
+              }
+            },
+            "then": {
+              "required": ["path"]
+            }
+          }
+        ]
+      }
+    },
+    "verify": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["file-exists", "directory-exists", "command", "checklist", "schema", "result-status"]
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1
+          },
+          "ref": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expected": {
+            "type": ["string", "number", "boolean"]
+          }
+        },
+        "anyOf": [
+          { "required": ["target"] },
+          { "required": ["ref"] },
+          { "required": ["expected"] }
+        ]
+      }
+    }
+  }
+}

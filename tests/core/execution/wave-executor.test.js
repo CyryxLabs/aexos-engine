@@ -17,6 +17,17 @@ const WaveExecutor = require('../../../.aexos-core/core/execution/wave-executor'
 
 describe('WaveExecutor', () => {
   let executor;
+  let previousBudget;
+
+  beforeAll(() => {
+    previousBudget = process.env.AEXOS_MODEL_BUDGET_CEILING_USD;
+    process.env.AEXOS_MODEL_BUDGET_CEILING_USD = '1';
+  });
+
+  afterAll(() => {
+    if (previousBudget === undefined) delete process.env.AEXOS_MODEL_BUDGET_CEILING_USD;
+    else process.env.AEXOS_MODEL_BUDGET_CEILING_USD = previousBudget;
+  });
 
   beforeEach(() => {
     jest.resetAllMocks();
@@ -368,22 +379,16 @@ describe('WaveExecutor', () => {
     });
   });
 
-  // ── defaultExecutor ──────────────────────────────────────────────
+  // ── missing runtime ──────────────────────────────────────────────
 
-  describe('defaultExecutor', () => {
-    test('returns success with default message', async () => {
+  describe('missing runtime', () => {
+    test('rejects a non-empty workflow instead of reporting no-op success', async () => {
       jest.useRealTimers();
-      const ex = new WaveExecutor();
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      const ex = new WaveExecutor({ waveAnalyzer: null, rateLimitManager: null });
 
-      try {
-        const result = await ex.defaultExecutor({ id: 'test-task' }, {});
-
-        expect(result.success).toBe(true);
-        expect(result.output).toContain('Default executor');
-      } finally {
-        consoleSpy.mockRestore();
-      }
+      await expect(ex.executeWaves('missing-runtime', {
+        tasks: [{ id: 'test-task', description: 'must execute' }],
+      })).rejects.toMatchObject({ code: 'AGENT_RUNTIME_REQUIRED' });
     });
   });
 });

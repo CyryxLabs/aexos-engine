@@ -1,3 +1,6 @@
+const { escapePathForRegex } = require('jest-regex-util');
+const escapedJestRoot = escapePathForRegex(__dirname);
+
 module.exports = {
   testEnvironment: 'node',
   coverageDirectory: 'coverage',
@@ -21,16 +24,22 @@ module.exports = {
     '**/tests/**/*.test.js',
     '**/tests/**/*.spec.js',
     '**/.aexos-core/**/__tests__/**/*.test.js',
-    // Pro tests run via pro-integration.yml CI workflow (not in local npm test)
+    // Private runtime tests require separate provider/runtime acceptance.
     // '**/pro/**/__tests__/**/*.test.js',
   ],
 
   // Ignore patterns - exclude incompatible test frameworks
   testPathIgnorePatterns: [
+    // The separately deployed app uses Node test runner and its own required gate.
+    '<rootDir>/apps/dashboard/',
     '/node_modules/',
-    // Pro submodule tests — run via pro-integration.yml CI workflow, not local npm test
-    // Use anchored regex to only match the pro/ submodule dir, not tests/pro/
+    // Private runtime tests are not covered by public distribution-contract CI.
+    // Use anchored regex to only match the pro/ dir, not public tests/pro/.
     '<rootDir>/pro/',
+    // These two suites exercise private artifact-service source. Run them via
+    // npm run test:private-artifact-contracts; absent runtime fails that command.
+    '<rootDir>/tests/unit/licensing/paid-squad-artifact-service\\.test\\.js$',
+    '<rootDir>/tests/integration/paid-squad-artifact-http\\.test\\.js$',
     // Playwright e2e tests (use ESM imports, run with Playwright not Jest)
     'tools/quality-dashboard/tests/e2e/',
     // Windows-specific tests (only run on Windows CI)
@@ -126,6 +135,11 @@ module.exports = {
   roots: ['<rootDir>'],
   moduleDirectories: ['node_modules', '.'],
   moduleNameMapper: {
+    // Unit mocks must resolve the same package instance as framework modules
+    // when the internal runtime has its own node_modules installation.
+    ...Object.fromEntries(['fs-extra', 'js-yaml', 'execa', 'chalk', 'inquirer', 'glob'].map(
+      (name) => [`^${name}$`, require.resolve(name)],
+    )),
     '^aexos-core/(.*)$': '<rootDir>/.aexos-core/$1',
     '^@aexos-core/(.*)$': '<rootDir>/.aexos-core/$1',
   },
@@ -138,3 +152,8 @@ module.exports = {
     },
   },
 };
+
+// Rooted test-path patterns are regexes, including on Windows paths containing .codex.
+module.exports.testPathIgnorePatterns = module.exports.testPathIgnorePatterns.map(
+  (pattern) => pattern.replaceAll('<rootDir>', escapedJestRoot),
+);

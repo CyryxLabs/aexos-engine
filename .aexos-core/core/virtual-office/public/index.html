@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#050607">
+  <meta name="description" content="AEXOS Virtual Office — live, local agent observability by Cyryx Labs">
+  <title>AEXOS Virtual Office · Cyryx Labs</title>
+  <link rel="icon" href="/assets/cyryx-labs-mark-crop-v1.png" type="image/png">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="architectural-office">
+<a class="skip-link" href="#command-bridge">Skip to office</a>
+<header class="command-bar">
+  <a class="brand" href="/" aria-label="AEXOS Virtual Office home"><img src="/assets/cyryx-labs-mark-crop-v1.png" alt=""><span>CYRYX<small>LABS</small></span></a>
+  <h1 id="office-title">AEXOS VIRTUAL OFFICE</h1>
+  <div class="office-controls"><label class="search-control"><span class="visually-hidden">Search agents or roles</span><input id="agent-search" type="search" placeholder="Search agents or roles…" autocomplete="off"></label><label><span class="visually-hidden">Agent state</span><select id="status-filter"><option value="all">All states</option><option value="running">Running</option><option value="assigned">Assigned</option><option value="waiting">Waiting</option><option value="blocked">Blocked</option><option value="failed">Failed</option><option value="completed">Completed</option><option value="stale">Stale</option><option value="unobserved">Not observed</option><option value="offline">Offline</option><option value="available">Idle</option></select></label><button id="reset-view" type="button">Clear filters</button></div>
+  <div class="connection-panel" role="status"><span id="connection-dot" class="dot"></span><span id="connection-status">Connecting…</span></div>
+  <button id="ceo-presence" class="executive-button" type="button" aria-label="CEO, Cyryx Labs. Open read-only executive profile."><span class="executive-portrait"><img src="/assets/paulo-petruff-ceo-standing-v1.png" alt=""></span><span>Paulo Petruff<small>Executive profile</small></span></button>
+</header>
+<section class="host-section" aria-labelledby="hosts-title"><div class="section-heading"><h2 id="hosts-title">Execution hosts</h2><span id="host-summary" class="subtle">Waiting for host telemetry</span></div><div id="host-strip" class="host-strip"></div></section>
+<div class="app-shell">
+  <aside class="squad-rail" aria-label="Organization"><h2 class="rail-title">Squad navigator</h2><nav id="squad-navigation" aria-label="Filter by squad"></nav></aside>
+  <main class="workspace">
+    <div id="connection-notice" class="connection-notice" role="status" hidden><div><strong id="notice-title">Local collector unavailable</strong><p id="notice-copy">Start the collector with npx @aexos/core office, then retry.</p></div><button id="retry-connection" type="button">Retry connection</button></div>
+    <section class="office-stage" aria-label="Architectural office and live squad rooms">
+      <div id="spatial-viewport" class="spatial-viewport" hidden>
+        <div id="spatial-canvas-host" class="spatial-canvas-host" tabindex="0" role="region" aria-label="Navigable office. Drag to pan, scroll to zoom. In Walk mode use W A S D or arrow keys. Double-click a floor destination. Select an agent to inspect." aria-describedby="spatial-help"></div>
+        <div class="spatial-toolbar"><div><span class="eyebrow">CYRYX OFFICE</span><strong>One workspace. Every team.</strong></div><div class="spatial-camera-controls" role="group" aria-label="Camera mode"><button type="button" data-spatial-mode="overview" aria-pressed="true">Overview</button><button type="button" data-spatial-mode="walk" aria-pressed="false">Walk</button><button type="button" id="spatial-home" aria-label="Return camera and local visitor to reception">Home</button></div></div>
+        <div class="spatial-caption"><p id="spatial-status" role="status">Building your office…</p><p id="spatial-help">Drag to explore · Scroll / pinch to zoom · Select a person to inspect<br><span>Walk: W A S D / arrows · Double-click a destination · Visitor movement is local</span></p></div>
+      </div>
+      <div id="spatial-fallback" class="spatial-fallback" role="status" hidden><p id="spatial-fallback-copy"></p></div>
+      <div id="scene-viewport" class="scene-viewport" tabindex="0" aria-label="Architectural office. Use arrow keys to pan on narrow screens, or choose Agent list.">
+        <div id="architectural-scene" class="architectural-scene">
+          <img class="architectural-background" src="/assets/cyryx-office-isometric-empty-v1.png" alt="" aria-hidden="true">
+          <div class="environment-light canopy-light" aria-hidden="true"></div><div class="environment-light bridge-light" aria-hidden="true"></div>
+          <svg id="communication-links" class="communication-links" viewBox="0 0 1516 928" aria-hidden="true"></svg>
+          <div id="live-agent-markers" class="live-agent-markers"></div>
+          <div id="room-hotspots" class="room-hotspots" aria-label="Open a squad room"></div>
+          <button id="command-bridge" class="command-bridge" type="button">AEXOS COMMAND BRIDGE<span id="bridge-status">Awaiting live signals</span></button>
+        </div>
+      </div>
+      <div id="office-world" class="office-world list-view" tabindex="-1" hidden><div id="office-loading" class="empty-state" role="status">Loading the organization…</div></div>
+      <div class="scene-hud"><div><strong id="floor-title">Command campus</strong><span id="result-count" role="status">Loading the organization…</span></div><div class="view-switch" role="group" aria-label="Workspace view"><button type="button" id="spatial-view-button" data-view="spatial" aria-pressed="false" disabled>Office</button><button type="button" data-view="rooms" aria-pressed="true" hidden>Reference</button><button type="button" data-view="list" aria-pressed="false">Agent list</button><button type="button" id="open-activity">Activity</button><button type="button" id="motion-toggle" aria-pressed="false">Motion: off</button></div></div>
+    </section>
+    <aside id="signals-panel" class="intel-panel" aria-label="Agent inspector">
+          <div class="drawer-header"><span class="eyebrow">LIVE WORKSPACE</span><button id="close-inspector" type="button" aria-label="Close room inspector">Close</button></div><section id="room-roster-section" aria-labelledby="room-roster-title"><h2 id="room-roster-title">Room roster</h2><div id="room-roster" class="room-roster"></div></section><section aria-labelledby="inspector-title"><div class="section-heading"><h2 id="inspector-title">Agent work &amp; status</h2><span class="badge">Read only</span></div><div id="agent-detail" class="agent-detail"><div class="empty-detail"><span class="avatar large">AX</span><h3>A closer look</h3><p>Select anyone on the floor to inspect their work, sessions and latest signals.</p></div></div></section>
+      <section class="communication-section" aria-labelledby="messages-title"><div class="section-heading"><div><span class="eyebrow">SHARED CONTEXT</span><h2 id="messages-title">Public communication</h2></div><span class="subtle">Observed messages · delivery shown only when reported</span></div><ol role="list" id="message-timeline" class="message-timeline"><li class="empty-state">No public messages observed. Private or unavailable conversations are not shown.</li></ol></section>
+          <section class="timeline-panel" aria-labelledby="timeline-title"><div class="section-heading"><h2 id="timeline-title">Activity stream</h2><span id="event-count" class="badge">0</span></div><ol role="list" id="event-timeline" class="event-timeline"><li class="empty-state">No activity observed yet.</li></ol></section>
+        </aside>
+  </main>
+</div>
+<footer class="workspace-footer"><span><strong id="project-name">Local workspace</strong> · <span id="snapshot-time">Snapshot pending</span></span><span><span id="ambience-caption">Lighting ambience · decorative only</span> · agent markers follow telemetry</span><span class="footer-counts"><b id="metric-squads">—</b> squads / <b id="metric-agents">—</b> agents / <b id="metric-active">—</b> working</span></footer>
+<p id="live-announcer" class="visually-hidden" aria-live="polite"></p>
+<noscript>Use npx @aexos/core office status for CLI observation.</noscript>
+<script src="/scene-manifest.js" defer></script><script src="/office-navigation.js" defer></script><script src="/office-presence.js" defer></script><script src="/office-scene.js" defer></script><script src="/app.js" defer></script>
+</body></html>
+

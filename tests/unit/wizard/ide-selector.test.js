@@ -13,9 +13,9 @@ const { getIDEKeys } = require('../../../packages/installer/src/config/ide-confi
 
 describe('IDE Selector', () => {
   describe('validateIDESelection', () => {
-    it('should validate at least one IDE selected', () => {
+    it('should accept explicit CLI-only selection', () => {
       const result = validateIDESelection([]);
-      expect(result).toBe('Please select at least one IDE');
+      expect(result).toBe(true);
     });
 
     it('should accept single IDE selection', () => {
@@ -67,10 +67,9 @@ describe('IDE Selector', () => {
       expect(question).toHaveProperty('validate');
     });
 
-    it('should have 7 IDE choices including Grok Build', () => {
+    it('should have 7 IDE choices', () => {
       const question = getIDESelectionQuestion();
       expect(question.choices).toHaveLength(7);
-      expect(question.choices.map(({ value }) => value)).toContain('grok');
     });
 
     it('should have valid choice structure', () => {

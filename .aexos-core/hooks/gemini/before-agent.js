@@ -29,7 +29,7 @@ async function beforeAgent() {
       const gotchas = JSON.parse(fs.readFileSync(gotchasPath, 'utf8'));
       result.contextInjection.gotchas = gotchas.slice(0, 5); // Top 5 recent
     }
-  } catch (error) {
+  } catch (_error) {
     // Non-critical
   }
 
@@ -45,7 +45,7 @@ async function beforeAgent() {
         result.contextInjection.conventions = map.conventions;
       }
     }
-  } catch (error) {
+  } catch (_error) {
     // Non-critical
   }
 
@@ -60,7 +60,7 @@ async function beforeAgent() {
         result.contextInjection.projectConventions = importConventions[1].trim().slice(0, 500);
       }
     }
-  } catch (error) {
+  } catch (_error) {
     // Non-critical
   }
 

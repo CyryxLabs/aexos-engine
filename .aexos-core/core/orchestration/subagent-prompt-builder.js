@@ -22,11 +22,14 @@ const yaml = require('js-yaml');
  */
 class SubagentPromptBuilder {
   /**
-   * @param {string} projectRoot - Project root directory
+   * @param {string} projectRoot - Consumer project root directory
+   * @param {Object} options - Path options
+   * @param {string} options.frameworkRoot - AEXOS package root
    */
-  constructor(projectRoot) {
+  constructor(projectRoot, options = {}) {
     this.projectRoot = projectRoot;
-    this.cyryxCoreRoot = path.join(projectRoot, '.aexos-core');
+    this.frameworkRoot = path.resolve(options.frameworkRoot || projectRoot);
+    this.cyryxCoreRoot = path.join(this.frameworkRoot, '.aexos-core');
 
     // Paths to AEXOS components
     this.paths = {
@@ -35,6 +38,48 @@ class SubagentPromptBuilder {
       checklists: path.join(this.cyryxCoreRoot, 'product', 'checklists'),
       templates: path.join(this.cyryxCoreRoot, 'product', 'templates'),
     };
+  }
+
+  _unsafeReference(code, value) {
+    const error = new Error(`Unsafe framework definition reference: ${value}`);
+    error.code = code;
+    return error;
+  }
+
+  async _resolveFrameworkFile(root, value, extensions, code) {
+    if (typeof value !== 'string') throw this._unsafeReference(code, value);
+    const requested = value.trim().replace(/^\*/, '');
+    const extensionPattern = new RegExp(`(${extensions.map((ext) => ext.replace('.', '\\.')).join('|')})$`, 'i');
+    const base = requested.replace(extensionPattern, '');
+    if (!/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(base)) {
+      throw this._unsafeReference(code, value);
+    }
+    const requestedExtension = requested.slice(base.length);
+    const candidates = requestedExtension
+      ? [requestedExtension.toLowerCase()]
+      : extensions;
+    if (candidates.some((extension) => !extensions.includes(extension))) {
+      throw this._unsafeReference(code, value);
+    }
+    const absoluteRoot = path.resolve(root);
+    for (const extension of candidates) {
+      const candidate = path.resolve(absoluteRoot, `${base}${extension}`);
+      const relative = path.relative(absoluteRoot, candidate);
+      if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) {
+        throw this._unsafeReference(code, value);
+      }
+      if (!(await fs.pathExists(candidate))) continue;
+      const [realRoot, realCandidate] = await Promise.all([
+        fs.realpath(absoluteRoot),
+        fs.realpath(candidate),
+      ]);
+      const realRelative = path.relative(realRoot, realCandidate);
+      if (!realRelative || realRelative.startsWith('..') || path.isAbsolute(realRelative)) {
+        throw this._unsafeReference(code, value);
+      }
+      return realCandidate;
+    }
+    return null;
   }
 
   /**
@@ -86,18 +131,13 @@ class SubagentPromptBuilder {
    * @returns {Promise<string>} Complete agent .md file content
    */
   async loadAgentDefinition(agentId, strict = false) {
-    // Try different file naming patterns
-    const patterns = [
-      `${agentId}.md`,
-      `${agentId.replace(/-/g, '_')}.md`,
-    ];
-
-    for (const pattern of patterns) {
-      const filePath = path.join(this.paths.agents, pattern);
-      if (await fs.pathExists(filePath)) {
-        return await fs.readFile(filePath, 'utf8');
-      }
-    }
+    const filePath = await this._resolveFrameworkFile(
+      this.paths.agents,
+      agentId,
+      ['.md'],
+      'WORKFLOW_AGENT_ID_INVALID',
+    );
+    if (filePath) return await fs.readFile(filePath, 'utf8');
 
     if (strict) throw new Error(`Agent definition not found: ${agentId}`);
     // Legacy callers may request a diagnostic prompt.
@@ -111,20 +151,13 @@ class SubagentPromptBuilder {
    * @returns {Promise<string>} Complete task .md file content
    */
   async loadTaskDefinition(taskFile, options = {}) {
-    if (typeof taskFile !== 'string' || !taskFile.trim()) throw new Error('Task or workflow action is required');
-    // Ensure .md extension
-    const fileName = taskFile.endsWith('.md') ? taskFile : `${taskFile}.md`;
-    const filePath = path.join(this.paths.tasks, fileName);
-
-    if (await fs.pathExists(filePath)) {
-      return await fs.readFile(filePath, 'utf8');
-    }
-
-    // Try to find by action name (e.g., 'document-project' -> 'document-project.md')
-    const altPath = path.join(this.paths.tasks, `${taskFile.replace('*', '')}.md`);
-    if (await fs.pathExists(altPath)) {
-      return await fs.readFile(altPath, 'utf8');
-    }
+    const filePath = await this._resolveFrameworkFile(
+      this.paths.tasks,
+      taskFile,
+      ['.md'],
+      'WORKFLOW_TASK_ID_INVALID',
+    );
+    if (filePath) return await fs.readFile(filePath, 'utf8');
 
     if (options.fallbackInstructions) return `# Workflow action: ${taskFile}\n\n${options.fallbackInstructions}`;
     if (options.strict) throw new Error(`Task definition not found: ${taskFile}`);
@@ -178,12 +211,13 @@ class SubagentPromptBuilder {
    * @returns {Promise<string|null>} Checklist content or null
    */
   async loadChecklist(checklistName) {
-    const fileName = checklistName.endsWith('.md') ? checklistName : `${checklistName}.md`;
-    const filePath = path.join(this.paths.checklists, fileName);
-
-    if (await fs.pathExists(filePath)) {
-      return await fs.readFile(filePath, 'utf8');
-    }
+    const filePath = await this._resolveFrameworkFile(
+      this.paths.checklists,
+      checklistName,
+      ['.md'],
+      'WORKFLOW_CHECKLIST_ID_INVALID',
+    );
+    if (filePath) return await fs.readFile(filePath, 'utf8');
 
     return null;
   }
@@ -234,16 +268,13 @@ class SubagentPromptBuilder {
    * @returns {Promise<string|null>} Template content or null
    */
   async loadTemplate(templateName) {
-    // Try both .yaml and .md extensions
-    const extensions = ['.yaml', '.yml', '.md'];
-    const baseName = templateName.replace(/\.(yaml|yml|md)$/, '');
-
-    for (const ext of extensions) {
-      const filePath = path.join(this.paths.templates, `${baseName}${ext}`);
-      if (await fs.pathExists(filePath)) {
-        return await fs.readFile(filePath, 'utf8');
-      }
-    }
+    const filePath = await this._resolveFrameworkFile(
+      this.paths.templates,
+      templateName,
+      ['.yaml', '.yml', '.md'],
+      'WORKFLOW_TEMPLATE_ID_INVALID',
+    );
+    if (filePath) return await fs.readFile(filePath, 'utf8');
 
     return null;
   }

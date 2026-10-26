@@ -1,0 +1,33 @@
+{
+  "workflowId": "example-process",
+  "name": "Example Process",
+  "objective": "State the measurable process objective without inventing a metric",
+  "trigger": "Describe the explicit initiating event",
+  "outcome": "Describe the terminal result and its evidence",
+  "actors": [
+    { "id": "process-owner", "name": "Process Owner", "type": "human" }
+  ],
+  "systems": [],
+  "steps": [
+    {
+      "id": "review-request",
+      "name": "Review request",
+      "owner": "process-owner",
+      "kind": "manual",
+      "dependsOn": [],
+      "systems": [],
+      "capabilities": [],
+      "sideEffects": false,
+      "approvalRequired": false,
+      "inputs": [
+        { "name": "request", "type": "object", "required": true }
+      ],
+      "outputs": [
+        { "name": "review", "kind": "state" }
+      ],
+      "verify": [
+        { "type": "result-status", "expected": "reviewed" }
+      ]
+    }
+  ]
+}

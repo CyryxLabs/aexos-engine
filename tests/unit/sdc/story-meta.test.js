@@ -17,6 +17,16 @@ describe('story-meta', () => {
     expect(normalizeStatus('Draft')).toBe('Draft');
   });
 
+  it.each([
+    ['Draft — implementation and QA pending', 'Draft'],
+    ['Draft — analysis done', 'Draft'],
+    ['InProgress — not Done', 'InProgress'],
+    ['Ready for review — implementation complete', 'InReview'],
+    ['Blocked — approved design, missing provider', 'Blocked'],
+  ])('uses the leading lifecycle label in %s', (label, expected) => {
+    expect(normalizeStatus(label)).toBe(expected);
+  });
+
   it('parses table metadata and file list', () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sdc-meta-'));
     const file = path.join(dir, 'STORY-X.1.md');

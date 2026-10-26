@@ -15,7 +15,7 @@ describe('Public Pro artifact staging without private Pro content', () => {
       dependencies: { 'intentionally-unavailable-parity-fixture': '0.0.0' } });
     await fs.outputFile(path.join(root, 'package/content.md'), '# Static content fixture');
   });
-  afterEach(async () => { await fs.remove(root); });
+  afterEach(async () => { jest.restoreAllMocks(); await fs.remove(root); });
   const pack = async (files = ['package']) => {
     const file = path.join(root, 'fixture.tgz');
     await tar.c({ cwd: root, file, gzip: true }, files);
@@ -31,11 +31,11 @@ describe('Public Pro artifact staging without private Pro content', () => {
   });
   test('rejects another package identity', async () => {
     await fs.outputJson(path.join(root, 'package/package.json'), { name: '@other/package' });
-    await expect(extractProArtifactToTemp(await pack(), path.join(root, 'staging'))).rejects.toThrow('unexpected package identity');
+    await expect(extractProArtifactToTemp(await pack(), path.join(root, 'staging'))).rejects.toThrow('package identity/version');
   });
   test('rejects an alternate archive root before writing content', async () => {
     await fs.outputFile(path.join(root, 'outside.txt'), 'not part of the package');
-    await expect(extractProArtifactToTemp(await pack(['package', 'outside.txt']), path.join(root, 'staging'))).rejects.toThrow('Unsafe Pro artifact entry');
+    await expect(extractProArtifactToTemp(await pack(['package', 'outside.txt']), path.join(root, 'staging'))).rejects.toThrow('safe paths under package/');
     expect(await fs.pathExists(path.join(root, 'staging'))).toBe(false);
   });
   test('rejects a linked staging parent without writing to the external directory', async () => {
@@ -48,12 +48,46 @@ describe('Public Pro artifact staging without private Pro content', () => {
     expect(await fs.readdir(external)).toEqual(['sentinel']);
     expect(await fs.readFile(path.join(external, 'sentinel'), 'utf8')).toBe('unchanged');
   });
-  test('rejects a reused extraction with stale metadata', async () => {
+  test('rejects missing archive metadata instead of reusing stale extraction metadata', async () => {
     const staging = path.join(root, 'staging');
     await fs.outputJson(path.join(staging, 'package-root/node_modules/@aexos/pro/package.json'), { name: '@aexos/pro' });
     await fs.remove(path.join(root, 'package/package.json'));
-    await expect(extractProArtifactToTemp(await pack(), staging)).rejects.toThrow('fresh staging directory');
+    await expect(extractProArtifactToTemp(await pack(), staging)).rejects.toThrow('valid package/package.json');
+    expect(await fs.readJson(path.join(staging, 'package-root/node_modules/@aexos/pro/package.json'))).toEqual({ name: '@aexos/pro' });
     expect(await fs.pathExists(path.join(staging, 'package-root/node_modules/@aexos/pro/content.md'))).toBe(false);
+  });
+  test('uses distinct fresh extraction directories under an existing parent', async () => {
+    const staging = path.join(root, 'staging');
+    await fs.outputFile(path.join(staging, 'package-root/sentinel'), 'preserve');
+    const artifact = await pack();
+    const first = await extractProArtifactToTemp(artifact, staging);
+    const second = await extractProArtifactToTemp(artifact, staging);
+    expect(first).not.toBe(second);
+    expect(await fs.readFile(path.join(staging, 'package-root/sentinel'), 'utf8')).toBe('preserve');
+    expect(await fs.readFile(path.join(second, 'content.md'), 'utf8')).toBe('# Static content fixture');
+  });
+  test('rejects a linked ancestor above a missing staging leaf', async () => {
+    const external = path.join(root, 'external');
+    await fs.ensureDir(external);
+    await fs.writeFile(path.join(external, 'sentinel'), 'preserve');
+    const link = path.join(root, 'linked');
+    await fs.symlink(external, link, process.platform === 'win32' ? 'junction' : 'dir');
+    await expect(extractProArtifactToTemp(await pack(), path.join(link, 'missing'))).rejects.toThrow('Unsafe Pro staging parent');
+    expect(await fs.readdir(external)).toEqual(['sentinel']);
+  });
+  test('rejects a file staging parent without changing its bytes', async () => {
+    const staging = path.join(root, 'staging');
+    await fs.writeFile(staging, 'preserve');
+    await expect(extractProArtifactToTemp(await pack(), staging)).rejects.toThrow('Unsafe Pro staging parent');
+    expect(await fs.readFile(staging, 'utf8')).toBe('preserve');
+  });
+  test('reports both extraction and cleanup failure without claiming removal', async () => {
+    const artifact = await pack();
+    const staging = path.join(root, 'staging');
+    jest.spyOn(tar, 'x').mockImplementation(() => { throw new Error('fixture extraction failure'); });
+    jest.spyOn(require('node:fs/promises'), 'rm').mockRejectedValue(new Error('fixture cleanup denied'));
+    await expect(extractProArtifactToTemp(artifact, staging)).rejects.toThrow(/fixture extraction failure; staging cleanup unresolved.*fixture cleanup denied/);
+    expect((await fs.readdir(staging)).filter(name => name.startsWith('package-root-'))).toHaveLength(1);
   });
   test.each(['symbolic', 'hard'])('rejects %s links inside archives before extraction', async kind => {
     if (kind === 'symbolic') {
@@ -62,7 +96,7 @@ describe('Public Pro artifact staging without private Pro content', () => {
     } else {
       await fs.link(path.join(root, 'package/content.md'), path.join(root, 'package/linked.md'));
     }
-    await expect(extractProArtifactToTemp(await pack(), path.join(root, 'staging'))).rejects.toThrow('Unsafe Pro artifact entry');
+    await expect(extractProArtifactToTemp(await pack(), path.join(root, 'staging'))).rejects.toThrow('link or unsupported entry');
     expect(await fs.pathExists(path.join(root, 'staging'))).toBe(false);
   });
   test('direct global Windows invocation resolves the bundled npm CLI without a shell', () => {

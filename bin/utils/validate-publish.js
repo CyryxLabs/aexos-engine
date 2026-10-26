@@ -74,7 +74,7 @@ function parsePackedFiles(packOutput) {
 console.log('--- Publish Safety Gate (PRO-13.5) ---\n');
 
 try {
-  const packOutput = execSync('npm pack --dry-run --json', {
+  const packOutput = execSync('npm pack --dry-run --json --ignore-scripts', {
     encoding: 'utf8',
     cwd: PROJECT_ROOT,
     timeout: PACK_TIMEOUT_MS,
@@ -82,6 +82,14 @@ try {
   });
   const packedFiles = parsePackedFiles(packOutput);
   fileCount = packedFiles.length;
+
+  const runtimeFiles = packedFiles.filter((filePath) =>
+    /(^|\/)node_modules\/|(^|\/)producer-token$|\.office-backup(?:[.-]|$)/.test(filePath),
+  );
+  if (runtimeFiles.length) {
+    console.error(`FAIL: Public package contains ${runtimeFiles.length} local runtime/dependency files.`);
+    passed = false;
+  }
 
   if (fileCount < MIN_FILE_COUNT) {
     console.error(`FAIL: Package has only ${fileCount} files, expected >= ${MIN_FILE_COUNT}.`);
@@ -107,6 +115,22 @@ try {
   }
 } catch (err) {
   console.error(`FAIL: npm pack --dry-run failed: ${err.message}`);
+  passed = false;
+}
+
+// Check 3: Core Free allowlist and paid-squad leak prevention (AEX-3.7)
+console.log('');
+console.log('--- Core Free Package Boundary (AEX-3.7) ---\n');
+try {
+  const coreBoundaryPath = path.join(PROJECT_ROOT, 'scripts', 'validate-core-package.js');
+  execFileSync('node', [coreBoundaryPath], {
+    encoding: 'utf8',
+    cwd: PROJECT_ROOT,
+    timeout: PACK_TIMEOUT_MS,
+    stdio: 'inherit',
+  });
+} catch (_boundaryError) {
+  console.error('FAIL: Core Free package boundary validation failed');
   passed = false;
 }
 

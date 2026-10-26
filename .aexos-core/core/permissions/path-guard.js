@@ -8,17 +8,11 @@
  * @version 1.0.0
  * @story CORE-SU.A3
  *
- * ─── STANDALONE LIBRARY — NOT WIRED TO RUNTIME ENFORCEMENT ───────────────
- *
- * This module is exported from `permissions/index.js` but is NOT called by
- * `operation-guard.js`'s `guard()` path, and is NOT registered as a
- * PreToolUse hook. No write operation is validated against this guard
- * automatically today. Callers must invoke `validateWrite()` /
- * `isTraversalAttempt()` explicitly wherever path-write safety is required
- * (e.g. app code writing to disk on behalf of untrusted input).
- *
- * If/when this is wired into `OperationGuard.guard()` or a hook, remove
- * this notice and document the integration point here.
+ * Legacy lexical helper. This API alone does not mediate filesystem access.
+ * Structured AgentRuntime filesystemOperation requests dispatch through
+ * OperationGuard.dispatchFilesystem and confined-filesystem.js, which reuses
+ * this denylist and validates filesystem identities before reading a handle.
+ * Arbitrary provider subprocess I/O is not confined by these helpers.
  *
  * ─── USAGE ────────────────────────────────────────────────────────────────
  *

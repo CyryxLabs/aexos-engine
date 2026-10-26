@@ -19,6 +19,7 @@ function formatText(output, options = {}) {
   const lines = [];
 
   lines.push(`AEXOS Doctor v${output.version} — Environment Health Check`);
+  if (output.scope) lines.push(output.scope);
   lines.push('');
 
   for (const result of output.checks) {

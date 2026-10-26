@@ -24,6 +24,7 @@
 const fs = require('fs-extra');
 const path = require('path');
 const { resolveCyryxCorePath } = require('../utils/package-paths');
+const corePackageBoundary = require('../../../../.aexos-core/data/core-package-boundary.json');
 
 /**
  * Directories under `squads/` that are not squads and must not be scaffolded.
@@ -34,6 +35,7 @@ const NOT_SQUADS = new Set(['_example', '.designs']);
 
 /** A directory is a squad only if it carries a manifest. */
 const MANIFEST_NAMES = ['squad.yaml', 'config.yaml'];
+const CORE_SQUADS = Object.freeze([...corePackageBoundary.bundledSquads]);
 
 /**
  * Locate the `squads/` directory inside the installed AEXOS package.
@@ -74,11 +76,17 @@ function listSquads(sourceDir) {
  * @param {object} [options]
  * @param {string} [options.sourceDir] - Override the package squad directory.
  * @param {boolean} [options.force=false] - Replace squads that already exist.
+ * @param {string[]} [options.allowedSquads] - Explicit Core squad allowlist.
  * @param {Function} [options.onProgress] - Called with ({squad, status}).
  * @returns {Promise<{success:boolean, copied:string[], skipped:string[], errors:Array}>}
  */
 async function scaffoldCoreSquads(targetDir, options = {}) {
-  const { sourceDir = getSquadSourcePath(), force = false, onProgress = null } = options;
+  const {
+    sourceDir = getSquadSourcePath(),
+    force = false,
+    onProgress = null,
+    allowedSquads = CORE_SQUADS,
+  } = options;
 
   const result = { success: false, copied: [], skipped: [], errors: [] };
 
@@ -89,7 +97,8 @@ async function scaffoldCoreSquads(targetDir, options = {}) {
     return result;
   }
 
-  const squads = listSquads(sourceDir);
+  const allowed = new Set(allowedSquads);
+  const squads = listSquads(sourceDir).filter((squad) => allowed.has(squad));
   if (squads.length === 0) {
     result.success = true;
     return result;
@@ -168,4 +177,5 @@ module.exports = {
   getSquadSourcePath,
   listSquads,
   NOT_SQUADS,
+  CORE_SQUADS,
 };

@@ -1,0 +1,15 @@
+{
+  "story": "AEX-4.27",
+  "implementation": "Independently authored archive and installed payload verifier using existing tar, Ajv, installer copy lists and Core Free boundary.",
+  "sources": [
+    ".aexos-core/data/core-package-boundary.json",
+    "packages/installer/src/installer/aexos-core-installer.js",
+    "docs/legal/license-clarification.md"
+  ],
+  "upstreamCodeImported": false,
+  "evidenceLimits": [
+    "Inert archive and copied npm-layout fixtures are not actual installation acceptance",
+    "License and provenance hashes are inventory evidence, not a legal audit",
+    "No paid activation, native host, provider or five-repository parity claim"
+  ]
+}

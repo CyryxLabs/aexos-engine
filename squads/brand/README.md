@@ -45,6 +45,7 @@ Build brands with authority, emotional resonance, memorability, and premium perc
 | `naming-exercise` | alexandra-watkins | SMILE/SCRATCH naming process |
 | `visual-identity-brief` | michael-johnson | Typography, color, identity system |
 | `logo-evaluation` | sagi-haviv | 5-pillar logo evaluation |
+| `logo-design` | sagi-haviv | Logo brief, category decision, responsive system and concept specifications |
 | `brand-book-creation` | michael-johnson | Complete brand guidelines |
 | `brand-audit` | brand-chief | 6-dimension brand audit |
 | `brand-touchpoint-audit` | emily-heyward | Touchpoint coherence analysis |
@@ -157,6 +158,7 @@ squads/brand/
 │   ├── brand-diagnosis.md
 │   ├── brand-touchpoint-audit.md
 │   ├── coherence-check.md
+│   ├── logo-design.md
 │   ├── logo-evaluation.md
 │   ├── movement-architecture.md
 │   ├── naming-exercise.md
@@ -174,6 +176,67 @@ squads/brand/
 ---
 
 **Built with strategy first, identity second. Every output distinctive, emotionally powerful, and designed for long-term brand equity.**
+
+## Command-time policy
+
+Every Brand work entry, including direct specialist requests, requires
+`config/brand-runtime.yaml`. Agent command instructions load it when work starts,
+not during activation, help, exit or idle chat. Tasks and workflows reference the
+same file; `squad.yaml` remains the discovery and roster authority. Follow the
+existing phase routing, checkpoints, vetoes and success criteria. User/host
+instructions and core agent authority take precedence; humans retain human
+approvals. Executor categories guide planning and do not authorize dispatch,
+external messages or provider execution.
+
+The seven policy blocks were preserved from `SynkraAI/aiox-squads` commit
+`66118db856ef655b8cf5ba44eda963ad4d0b1d78`, `squads/brand/config.yaml`
+(SHA-256 `5c8342cceac0b91a8dd89e24b5c20a2da6047679b961b81a20ef52bd7a67185b`).
+The local policy retains those values; its reference `pack.author` is adapted to
+Cyryx Labs AEXOS (file SHA-256
+`dc0bfb69500462f898d4b814ca54580b5f468f11a19de29ff953bd975d1a8fda`).
+Canonical ownership/license metadata remains in the manifest. `BR-TP-001` and
+`BR-EP-*` are specification identifiers, not executable validators or adapters;
+the empty pattern library does not supply implementations.
+
+Run `node scripts/validate-squads.js` from the AEXOS repository to check the
+concrete task fields, executor references, tiers and policy dependencies.
+This validates source content and declared command guidance. It does not prove
+that a native host loaded the policy, enforce runtime checkpoints, or certify
+provider execution. Those require separate execution evidence.
+
+## Specialist command procedures
+
+Load the policy and the base task file, then execute only the named section.
+The section anchor identifies a procedure; it is not part of a filesystem Read
+path. Completing a section does not complete the full multi-phase task.
+
+| Agent | Command | Task section |
+| --- | --- | --- |
+| Sagi | `*logo-brief` | [logo-brief](tasks/logo-design.md#logo-brief) |
+| Sagi | `*category-select` | [category-select](tasks/logo-design.md#category-select) |
+| Sagi | `*logo-system` | [logo-system](tasks/logo-design.md#logo-system) |
+| Sagi | `*sketch-concepts` | [sketch-concepts](tasks/logo-design.md#sketch-concepts) |
+| Sagi | `*simplicity-test` | [simplicity-test](tasks/logo-evaluation.md#simplicity-test) |
+| Sagi | `*evaluation` | [evaluation](tasks/logo-evaluation.md#evaluation) |
+| Sagi | `*logo-audit` | [logo-audit](tasks/logo-evaluation.md#logo-audit) |
+| Alexandra | `*creative-brief` | [creative-brief](tasks/naming-exercise.md#creative-brief) |
+| Alexandra | `*name-storm` | [name-storm](tasks/naming-exercise.md#name-storm) |
+| Alexandra | `*smile-test` | [smile-test](tasks/naming-exercise.md#smile-test) |
+| Alexandra | `*scratch-test` | [scratch-test](tasks/naming-exercise.md#scratch-test) |
+| Alexandra | `*tagline` | [tagline](tasks/naming-exercise.md#tagline) |
+| Alexandra | `*name-audit` | [name-audit](tasks/naming-exercise.md#name-audit) |
+| Emily | `*obsessed` | [obsessed](tasks/movement-architecture.md#obsessed) |
+| Emily | `*emotional-hook` | [emotional-hook](tasks/movement-architecture.md#emotional-hook) |
+| Emily | `*brand-narrative` | [brand-narrative](tasks/movement-architecture.md#brand-narrative) |
+| Emily | `*brand-soul` | [brand-soul](tasks/movement-architecture.md#brand-soul) |
+| Emily | `*brand-tension` | [brand-tension](tasks/movement-architecture.md#brand-tension) |
+| Emily | `*launch-story` | [launch-story](tasks/movement-architecture.md#launch-story) |
+| Emily | `*touchpoint-audit` | [touchpoint-audit](tasks/brand-touchpoint-audit.md#touchpoint-audit) |
+
+Command sections state their own inputs, score scales, deliverables and evidence
+requirements. Legacy full-task scales remain explicitly separate. Missing
+customer observations, artwork tests or legal clearance remain unverified;
+design judgments and draft specifications do not establish those facts.
 
 _Version: 1.0.0_
 _Compatible with: AEXOS v4+_

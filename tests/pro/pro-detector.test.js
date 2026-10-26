@@ -49,6 +49,11 @@ describe('pro-detector', () => {
   });
 
   describe('module exports', () => {
+    it('reuses the standalone installer metadata predicate without a second implementation', () => {
+      const metadata = require('../../packages/installer/src/utils/pro-package-metadata');
+      expect(isImplementedPackage).toBe(metadata.isImplementedPackage);
+    });
+
     it('should export all expected functions', () => {
       expect(typeof isProAvailable).toBe('function');
       expect(typeof loadProModule).toBe('function');

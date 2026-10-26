@@ -42,10 +42,14 @@ function getUserProfileQuestion() {
         name:
           colors.highlight(`🟢 ${t('modoAssistido')}`) +
           colors.dim(` (${t('recommended')})`),
+        short: t('modoAssistido'),
+        description: t('modoAssistidoHint'),
         value: 'bob',
       },
       {
         name: `🔵 ${t('modoAvancado')}`,
+        short: t('modoAvancado'),
+        description: t('modoAvancadoHint'),
         value: 'advanced',
       },
     ],
@@ -67,10 +71,14 @@ function getProjectTypeQuestion() {
     choices: [
       {
         name: colors.highlight(t('greenfield')) + colors.dim(` (${t('greenfieldDesc')})`),
+        short: t('greenfield'),
+        description: t('greenfieldDesc'),
         value: 'greenfield',
       },
       {
         name: t('brownfield') + colors.dim(` (${t('brownfieldDesc')})`),
+        short: t('brownfield'),
+        description: t('brownfieldDesc'),
         value: 'brownfield',
       },
     ],
@@ -344,7 +352,32 @@ function getQuestionById(questionId) {
   return questionMap[questionId] || null;
 }
 
+function getReviewQuestion() {
+  return {
+    type: 'list', name: 'reviewAction', message: 'Ready to install?',
+    choices: [
+      { name: 'Install with these choices', value: 'install', description: 'Apply the configuration shown in the review above.' },
+      { name: 'Edit choices', value: 'edit', description: 'Return to the choices; your current selections are retained.' },
+      { name: 'Cancel', value: 'cancel', description: 'Exit before writing framework or host configuration files.' },
+    ], default: 'install',
+  };
+}
+
+function withQuestionDefaults(questions, previous = {}) {
+  return questions.map((question) => {
+    if (!Object.prototype.hasOwnProperty.call(previous, question.name)) return question;
+    const value = previous[question.name];
+    return {
+      ...question,
+      default: value,
+      ...(question.type === 'checkbox' ? { choices: question.choices.map((choice) => ({ ...choice, checked: value.includes(choice.value) })) } : {}),
+    };
+  });
+}
+
 module.exports = {
+  getReviewQuestion,
+  withQuestionDefaults,
   getLanguageQuestion,
   getUserProfileQuestion,
   getProjectTypeQuestion,

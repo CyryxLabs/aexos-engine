@@ -34,6 +34,17 @@ const NOOP_ANALYZER = { analyze: jest.fn().mockReturnValue({ waves: [] }) };
 
 describe('WaveExecutor', () => {
   let executor;
+  let previousBudget;
+
+  beforeAll(() => {
+    previousBudget = process.env.AEXOS_MODEL_BUDGET_CEILING_USD;
+    process.env.AEXOS_MODEL_BUDGET_CEILING_USD = '1';
+  });
+
+  afterAll(() => {
+    if (previousBudget === undefined) delete process.env.AEXOS_MODEL_BUDGET_CEILING_USD;
+    else process.env.AEXOS_MODEL_BUDGET_CEILING_USD = previousBudget;
+  });
 
   afterEach(() => {
     if (executor) {
@@ -389,13 +400,16 @@ describe('WaveExecutor', () => {
       expect(tracker.getByName('task_started')[0].data.taskId).toBe('emit-task');
     });
 
-    test('should use default executor when no taskExecutor provided', async () => {
-      executor = new WaveExecutor({ taskExecutor: null });
+    test('should reject non-empty execution when no runtime is provided', async () => {
+      executor = new WaveExecutor({
+        taskExecutor: null,
+        waveAnalyzer: null,
+        rateLimitManager: null,
+      });
 
-      const task = createMockTask({ id: 'default-task' });
-      const result = await executor.executeTaskWithTimeout(task, {});
-
-      expect(result.success).toBe(true);
+      await expect(executor.executeWaves('missing-runtime', {
+        tasks: [createMockTask({ id: 'default-task' })],
+      })).rejects.toMatchObject({ code: 'AGENT_RUNTIME_REQUIRED' });
     });
 
     test('should use rate limit manager when available', async () => {

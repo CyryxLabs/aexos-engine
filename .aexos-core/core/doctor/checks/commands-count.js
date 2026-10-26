@@ -11,6 +11,8 @@
 const path = require('path');
 const fs = require('fs');
 
+const { claudeApplicability } = require('../host-selection');
+
 const name = 'commands-count';
 
 /**
@@ -39,6 +41,9 @@ function countMdFiles(dir) {
 }
 
 async function run(context) {
+  const applicability = claudeApplicability(context, name);
+  if (applicability) return applicability;
+
   const commandsDir = path.join(context.projectRoot, '.claude', 'commands');
 
   if (!fs.existsSync(commandsDir)) {

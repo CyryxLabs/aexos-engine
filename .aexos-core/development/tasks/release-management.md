@@ -5,45 +5,32 @@ agent: github-devops
 category: devops
 complexity: high
 tools:
-  - github-cli # Create releases, tags, manage artifacts
-  - semantic-release # Automate versioning and changelog
+  - github-cli
 checklists:
   - github-devops-checklist.md
 ---
 
 # Manage Software Releases
 
-> **AUTHORITATIVE SOURCE:** [`docs/guides/release-procedure.md`](../../../docs/guides/release-procedure.md)
->
-> This task wraps the canonical release SOP. **Open it first**, follow its checklist top-to-bottom. The SOP captures pre-flight checks, 4-site version bump coordination, branch protection bypass dance (modern ruleset + legacy branch protection — both must be relaxed and restored atomically with `trap EXIT` + sanitized payloads), tag-driven npm publish trigger, post-publish verification, known CI quirks, and rollback steps.
->
-> This shorter task remains because some agent workflows still reference the `release-management` id, but the content of record lives in the SOP. **Do not duplicate the procedure here** — that creates drift between two sources of truth.
+The authoritative procedure is [Release procedure — @aexos/core](../../../docs/guides/release-procedure.md). Follow its current checklist and the repository Constitution. This task provides routing only; transaction details remain in the SOP.
 
-## When this task fires
+## Scope
 
-- `@devops` is asked to cut a new release (any package or coordinated set)
-- Hotfix release after an incident
-- Periodic minor/major release planning
+Use for an authorized package release or coordinated package set. DevOps owns GitHub and registry writes. Preserve the shared dirty checkout and review an isolated exact candidate. Do not infer a version, package set, channel, destination or publisher strategy from a historical release.
 
-## Scope split with `publish-npm` task
+## Execution
 
-| Task | When to use |
-|---|---|
-| `release-management` (this file) | Full release lifecycle: planning a version, coordinating changelog, deciding bump type, creating the release narrative, follow-ups across multiple packages |
-| `publish-npm` | Tactical npm-only publish step inside the broader release (also wraps the same SOP) |
+1. Inspect current repository identity, default-branch protection, open PR/check state, registry versions and publisher trust. Historical observations must be refreshed.
+2. Record the intended merge set and explicit version/channel decision. Coordinate applicable manifests, dependencies, lockfile and changelog.
+3. Complete the exact candidate quality gates and independent review, then normal protected PR review and merge. Keep required protections active.
+4. Invoke only `.github/workflows/npm-publish.yml` manual `prepare` for the exact approved source. Review its immutable locator and actual sealed archives.
+5. After candidate and publisher prerequisites are satisfied, invoke manual `publish` once against that reviewed locator and the selected authentication strategy.
+6. Verify npm/GitHub identities and archive integrity, then run a fresh registry-installed init and Doctor acceptance as defined in the SOP. Retain the actual terminal receipt.
 
-Both delegate to the same `docs/guides/release-procedure.md`. The split is preserved so different `@devops` workflows can pick the right entry point semantically.
+Legacy tag/release event writers are retired. Semantic-release commands produce proposals only. Publishing a package directory, replacing unknown effects or changing protections is not an alternative route.
 
-## TL;DR (full detail in the SOP)
+## Failure handling
 
-1. **Decide bump type** by inspecting commits since the last tag (`git log v<last>..HEAD --oneline`). Patch for bug fixes only. Minor for additive features. Major for breaking changes (rare for `@aexos/core`).
-2. **Pre-flight:** lint, full test suite, registry tokens fresh (`gh secret list -R CyryxLabs/AEXOS` — `NPM_TOKEN_AEXOS` and `NPM_TOKEN`).
-3. **Coordinate version across 4 sites** (root `package.json`, `compat/aexos-core/package.json` and its `@aexos/core` dep, `packages/installer/package.json`, refresh `package-lock.json`) + `CHANGELOG.md` entry under `## [X.Y.Z] - YYYY-MM-DD` (Keep-a-Changelog).
-4. **Branch + PR + bypass + merge** following the SOP's atomic block (snapshot ruleset + legacy protection, sanitize payloads via jq, `set -e` + `trap EXIT` to guarantee restore even on failure, merge with `--admin`, validate diff=0 vs original snapshots).
-5. **Tag + push** triggers `.github/workflows/npm-publish.yml` — `git tag -a -m "<notes>" vX.Y.Z origin/main` then `git push origin vX.Y.Z`. (Options before the tag name; `origin/main` is the ref being tagged.)
-6. **Post-publish verification** — every package visible at the expected version, `dist-tags.latest` updated, artifact integrity confirmed by `npm pack` + grep for the fix.
-7. **Rollback ready** — deprecate (don't unpublish) + `npm dist-tag add` previous version as latest, then open incident and follow the SOP from the top for the corrective fix.
+Preserve the source, candidate, intent and evidence. Stop promotion on mismatched or unknown outcomes, inspect actual provider state, and use the SOP recovery contract. A green subprocess or missing output cannot establish successful publication. Do not use a tag or publication as a diagnostic.
 
-## Historical context
-
-The prior version of this file (pre-2026-05-17) contained a 700+ line inline procedure that grew organically across releases and never captured the gotchas that bit later: two-system branch protection (`gh pr merge --admin` bypasses neither alone), the `publish_legacy_cyryx_core` race against the scoped publish, npm CDN propagation timing for the legacy compat wrapper smoke test, and the Windows path escape in `node -e` over Git Bash. After three regressions in a single 30-day window — each fix landing as a one-off patch — the canonical procedure was consolidated into `docs/guides/release-procedure.md` so every release goes through one validated checklist instead of recreating institutional memory each time.
+The predecessor repository and its old PR/run identities remain historical; the supported controller validates the exact current repository identity. Paid-provider cycles, native-host production promotion and web deployment keep their own applicable acceptance requirements.

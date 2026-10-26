@@ -10,7 +10,7 @@
     "src/"
   ],
   "dependencies": {
-    "@aexos/core": "^1.0.0",
+    "@aexos/core": "^6.0.0",
     "@aexos/installer": "^1.0.0",
     "open": "^10.0.0"
   },

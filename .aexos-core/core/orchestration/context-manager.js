@@ -51,18 +51,21 @@ class ContextManager {
    * @param {string} workflowId - Unique workflow identifier
    * @param {string} projectRoot - Project root directory
    */
-  constructor(workflowId, projectRoot) {
+  constructor(workflowId, projectRoot, options = {}) {
     this.workflowId = workflowId;
     this.projectRoot = projectRoot;
 
     // State file path
-    this.stateDir = path.join(projectRoot, '.aexos', 'workflow-state');
+    this.stateDir = options.stateRoot
+      ? path.resolve(options.stateRoot)
+      : path.join(projectRoot, '.aexos', 'workflow-state');
     this.statePath = path.join(this.stateDir, `${workflowId}.json`);
     this.handoffDir = path.join(this.stateDir, 'handoffs');
     this.confidenceDir = path.join(this.stateDir, 'confidence');
 
     // In-memory cache
     this._stateCache = null;
+    this._mutationQueue = Promise.resolve();
   }
 
   /**
@@ -145,24 +148,35 @@ class ContextManager {
    * @param {Object} output - Phase output data
    */
   async savePhaseOutput(phaseNum, output, options = {}) {
-    const state = await this.loadState();
-    const completedAt = new Date().toISOString();
-    state.currentPhase = phaseNum;
-    state.status = 'in_progress';
-    const handoff = this._buildHandoffPackage(phaseNum, output, state, options, completedAt);
+    return this._enqueueMutation(async () => {
+      const state = await this.loadState();
+      const completedAt = new Date().toISOString();
+      const isTerminalFailure = state.status === 'failed';
 
-    state.phases[phaseNum] = {
-      ...output,
-      completedAt,
-      handoff,
-    };
-    state.metadata = state.metadata || {};
-    state.metadata.delivery_confidence = this._calculateDeliveryConfidence(state);
+      if (!isTerminalFailure) {
+        state.currentPhase = phaseNum;
+        state.status = 'in_progress';
+      }
+      const handoff = isTerminalFailure
+        ? null
+        : this._buildHandoffPackage(phaseNum, output, state, options, completedAt);
 
-    this._stateCache = state;
-    await this._saveState();
-    await this._saveHandoffFile(handoff);
-    await this._saveConfidenceFile(state.metadata.delivery_confidence);
+      state.phases[phaseNum] = {
+        ...output,
+        completedAt,
+        handoff,
+        ...(isTerminalFailure ? { blockedByWorkflowFailure: true } : {}),
+      };
+      state.metadata = state.metadata || {};
+      state.metadata.delivery_confidence = this._calculateDeliveryConfidence(state);
+
+      this._stateCache = state;
+      await this._saveState();
+      if (handoff) {
+        await this._saveHandoffFile(handoff);
+      }
+      await this._saveConfidenceFile(state.metadata.delivery_confidence);
+    });
   }
 
   /**
@@ -223,11 +237,14 @@ class ContextManager {
    * Mark workflow as completed
    */
   async markCompleted() {
-    const state = await this.loadState();
-    state.status = 'completed';
-    state.completedAt = new Date().toISOString();
-    this._stateCache = state;
-    await this._saveState();
+    return this._enqueueMutation(async () => {
+      const state = await this.loadState();
+      if (state.status === 'failed') return;
+      state.status = 'completed';
+      state.completedAt = new Date().toISOString();
+      this._stateCache = state;
+      await this._saveState();
+    });
   }
 
   /**
@@ -236,13 +253,50 @@ class ContextManager {
    * @param {number} failedPhase - Phase that failed
    */
   async markFailed(error, failedPhase) {
-    const state = await this.loadState();
-    state.status = 'failed';
-    state.error = error;
-    state.failedPhase = failedPhase;
-    state.failedAt = new Date().toISOString();
-    this._stateCache = state;
-    await this._saveState();
+    return this._enqueueMutation(async () => {
+      const state = await this.loadState();
+      for (const phase of Object.values(state.phases || {})) {
+        if (phase?.handoff) {
+          phase.blockedHandoff = phase.handoff;
+          phase.handoff = null;
+          phase.blockedByWorkflowFailure = true;
+        }
+      }
+      state.status = 'failed';
+      state.error = error;
+      state.failedPhase = failedPhase;
+      state.failedAt = new Date().toISOString();
+      this._stateCache = state;
+      await this._saveState();
+      await this._removeWorkflowHandoffFiles();
+    });
+  }
+
+  /**
+   * Serialize state mutations so parallel phases cannot overwrite terminal state.
+   * @private
+   */
+  _enqueueMutation(operation) {
+    const mutation = this._mutationQueue.then(operation, operation);
+    this._mutationQueue = mutation.catch(() => {});
+    return mutation;
+  }
+
+  /**
+   * Remove dispatchable handoff artifacts after terminal workflow failure.
+   * Diagnostic handoff content remains preserved in state as blockedHandoff.
+   * @private
+   */
+  async _removeWorkflowHandoffFiles() {
+    if (!(await fs.pathExists(this.handoffDir))) return;
+    const prefix = `${this.workflowId}-phase-`;
+    const entries = await fs.readdir(this.handoffDir);
+    const handoffFiles = entries.filter(
+      (entry) => entry.startsWith(prefix) && entry.endsWith('.handoff.json'),
+    );
+    await Promise.all(
+      handoffFiles.map((entry) => fs.remove(path.join(this.handoffDir, entry))),
+    );
   }
 
   /**

@@ -1,4 +1,4 @@
-// Wizard test - uses describe due to file dependencies
+// Deterministic question definitions run in the default unit suite.
 /**
  * Questions Test Suite
  * 
@@ -79,16 +79,16 @@ describe('questions', () => {
     test('bob choice includes assisted mode indicator', () => {
       const question = getUserProfileQuestion();
 
-      // First choice should be bob (Modo Assistido)
-      expect(question.choices[0].name).toContain('🟢');
+      expect(question.choices[0].name).toMatch(/Assisted Mode/);
+      expect(question.choices[0].short).toBe('Assisted Mode');
       expect(question.choices[0].value).toBe('bob');
     });
 
     test('advanced choice includes advanced mode indicator', () => {
       const question = getUserProfileQuestion();
 
-      // Second choice should be advanced (Modo Avançado)
-      expect(question.choices[1].name).toContain('🔵');
+      expect(question.choices[1].name).toMatch(/Advanced Mode/);
+      expect(question.choices[1].short).toBe('Advanced Mode');
       expect(question.choices[1].value).toBe('advanced');
     });
 
@@ -99,11 +99,11 @@ describe('questions', () => {
       expect(question.default).toBe(1);
     });
 
-    test('bob choice is marked as recommended', () => {
+    test('profile descriptions distinguish guidance from direct control', () => {
       const question = getUserProfileQuestion();
 
-      // Bob choice should include recommended indicator
-      expect(question.choices[0].name.toLowerCase()).toMatch(/recommend|recomend/);
+      expect(question.choices[0].description).toMatch(/Bob.*validation/);
+      expect(question.choices[1].description).toMatch(/direct access to all agents/);
     });
   });
 
@@ -169,7 +169,7 @@ describe('questions', () => {
       expect(Array.isArray(questions)).toBe(true);
     });
 
-    test('includes project type question', () => {
+    test('asks language before project type, IDEs and tech preset', () => {
       const questions = buildQuestionSequence();
       expect(questions).toHaveLength(4);
       expect(questions.map((question) => question.name)).toEqual([
@@ -186,20 +186,13 @@ describe('questions', () => {
       expect(Array.isArray(questions)).toBe(true);
     });
 
-    test('future: conditional questions based on context', () => {
-      // This test documents future behavior for Stories 1.3-1.6
-      // When implemented, questions should vary based on context.projectType
+    test('keeps the approved minimal sequence for both project contexts', () => {
       const contextGreenfield = { projectType: 'greenfield' };
       const contextBrownfield = { projectType: 'brownfield' };
 
-      // Currently same length; tech preset is always selected explicitly.
-      expect(buildQuestionSequence(contextGreenfield)).toHaveLength(4);
-      expect(buildQuestionSequence(contextBrownfield)).toHaveLength(4);
-
-      // Future: lengths may differ based on project type
-      // expect(buildQuestionSequence(contextGreenfield).length).not.toBe(
-      //   buildQuestionSequence(contextBrownfield).length
-      // );
+      const expectedOrder = ['language', 'projectType', 'selectedIDEs', 'selectedTechPreset'];
+      expect(buildQuestionSequence(contextGreenfield).map(question => question.name)).toEqual(expectedOrder);
+      expect(buildQuestionSequence(contextBrownfield).map(question => question.name)).toEqual(expectedOrder);
     });
   });
 
@@ -232,15 +225,17 @@ describe('questions', () => {
     test('choices have descriptive names', () => {
       const question = getProjectTypeQuestion();
       
-      expect(question.choices[0].name).toContain('Greenfield');
-      expect(question.choices[1].name).toContain('Brownfield');
+      expect(question.choices[0]).toMatchObject({ value: 'greenfield', short: 'Greenfield' });
+      expect(question.choices[1]).toMatchObject({ value: 'brownfield', short: 'Brownfield' });
+      expect(question.choices[0].name).toMatch(/^Greenfield\b.*new project from scratch/);
+      expect(question.choices[1].name).toMatch(/^Brownfield\b.*existing project/);
     });
 
     test('choices include helpful descriptions', () => {
       const question = getProjectTypeQuestion();
       
-      expect(question.choices[0].name).toContain('new project');
-      expect(question.choices[1].name).toContain('existing project');
+      expect(question.choices[0].description).toMatch(/new project from scratch/);
+      expect(question.choices[1].description).toMatch(/existing project/);
     });
   });
 });

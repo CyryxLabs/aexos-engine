@@ -27,10 +27,12 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-// Keep this generator usable in clean package/install smoke tests before
-// third-party dependencies are installed.
+// Keep this generator usable in clean package/install smoke tests before third-party dependencies are installed.
 fs.ensureDirSync = (dirPath) => fs.mkdirSync(dirPath, { recursive: true });
 fs.removeSync = (targetPath) => fs.rmSync(targetPath, { recursive: true, force: true });
+const os = require('os');
+const { applyProjection } = require('./managed-projection');
+const { hookConfiguration } = require('../../../core/virtual-office/host-hooks');
 
 const {
   parseAllAgents,
@@ -978,7 +980,16 @@ function mergeGrokRules(existingContent, generatedContent) {
 function buildRulesMarkdown(projectRoot = process.cwd()) {
   const template = path.join(projectRoot, GROK_RULES_TEMPLATE);
   if (!fs.existsSync(template)) {
-    throw new Error(`Canonical Grok rules template not found: ${template}`);
+    return `# AEXOS × Grok — Compact Rules
+
+<!-- AEXOS-MANAGED-START: core -->
+Full constitution: \`.aexos-core/constitution.md\`.
+
+- Preserve agent authority and the story lifecycle.
+- Run \`npm run lint && npm run typecheck && npm test\` before completion.
+- Keep machine-specific absolute paths out of committed files.
+<!-- AEXOS-MANAGED-END: core -->
+`;
   }
   const content = fs.readFileSync(template, 'utf8');
   if (getManagedRuleSections(content).size === 0) {
@@ -1315,6 +1326,7 @@ function syncGrokHarnessFiles(projectRoot, grokRoot, options = {}) {
   const written = [];
   const sourceDir = options.hookSourceDir || getCanonicalGrokHookSourceDir(projectRoot);
   const missing = GROK_HOOK_SOURCE_FILES.filter((fileName) => !fs.existsSync(path.join(sourceDir, fileName)));
+  if (missing.length === GROK_HOOK_SOURCE_FILES.length) return written;
   if (missing.length > 0) throw new Error(`Missing canonical Grok hook sources: ${missing.join(', ')}`);
   const hooksDir = resolveUnder(grokRoot, 'hooks');
   const files = GROK_HOOK_SOURCE_FILES.map((fileName) => ({
@@ -1341,24 +1353,11 @@ function syncGrokHarnessFiles(projectRoot, grokRoot, options = {}) {
 
 // ─── Sync ───────────────────────────────────────────────────────────────────
 
-function syncGrok(options = {}) {
-  const resolved = resolveOptions(options);
-  if (!fs.existsSync(resolved.sourceDir)) {
-    throw new Error(
-      `Agent source dir not found: ${resolved.sourceDir}. Run the generator from the project root or pass sourceDir.`,
-    );
-  }
-  const agents = [];
-  for (const parsed of parseAllAgents(resolved.sourceDir)) {
-    if (!parsed.error || parsed.error === 'YAML parse failed, using fallback extraction') {
-      agents.push(parsed);
-      if (parsed.error && !resolved.quiet) {
-        console.warn(`⚠️  Agent ${parsed.filename}: ${parsed.error}`);
-      }
-    } else if (!resolved.quiet) {
-      console.warn(`⚠️  Agent ${parsed.filename}: ${parsed.error} — skipped`);
-    }
-  }
+function generateGrok(options = {}) {
+  const resolved = { ...getDefaultOptions(), ...options };
+  const agents = parseAllAgents(resolved.sourceDir).filter(
+    (a) => !a.error || a.error === 'YAML parse failed, using fallback extraction',
+  );
 
   const written = [];
   const grok = resolved.grokRoot;
@@ -1479,10 +1478,26 @@ ${wf.body}
   const rulesPath = resolveUnder(targets.rules, 'aexos-core.md');
   const generatedRules = buildRulesMarkdown(resolved.projectRoot);
   const existingRules = fs.existsSync(rulesPath) ? fs.readFileSync(rulesPath, 'utf8') : '';
+  const generatedPaths = new Set(written.map((filePath) => path.resolve(filePath)));
   const extras = [
     { path: rulesPath, content: mergeGrokRules(existingRules, generatedRules) },
     { path: resolveUnder(grok, 'README.md'), content: buildReadme() },
+    { path: resolveUnder(grok, 'hooks', 'aexos-office.json'), content: JSON.stringify(hookConfiguration(resolved.projectRoot, 'grok'), null, 2) + '\n' },
   ];
+  const configPath = resolveUnder(grok, 'config.toml');
+  if (!generatedPaths.has(path.resolve(configPath))) {
+    extras.push({ path: configPath, content: '# AEXOS project integrations. Native Grok permission and folder trust remain authoritative.\n' });
+    generatedPaths.add(path.resolve(configPath));
+  }
+  for (const id of [...agents.filter((agent) => AGENT_PROFILES[agent.id]).map((agent) => getSkillId(agent.id)), ...WORKFLOW_SKILLS.map((skill) => skill.name)]) {
+    const alias = id.replace(/^aexos-/, '');
+    if (alias === id || !SAFE_SKILL_ID_RE.test(alias)) continue;
+    const aliasPath = resolveUnder(grok, 'skills', alias, 'SKILL.md');
+    if (generatedPaths.has(path.resolve(aliasPath))) continue;
+    extras.push({ path: aliasPath,
+      content: `---\nname: ${alias}\ndescription: AEXOS alias for ${id}.\n---\n\nRead and follow .grok/skills/${id}/SKILL.md. Preserve its authority and approval requirements.\n` });
+    generatedPaths.add(path.resolve(aliasPath));
+  }
   for (const file of extras) {
     if (!resolved.dryRun) {
       fs.ensureDirSync(path.dirname(file.path));
@@ -1509,6 +1524,50 @@ ${wf.body}
     removed,
     preserved,
   };
+}
+
+function syncGrok(options = {}) {
+  const projectRoot = path.resolve(options.projectRoot || process.cwd());
+  const grokRoot = path.resolve(options.grokRoot || path.join(projectRoot, '.grok'));
+  const sourceDir = path.resolve(options.sourceDir || path.join(projectRoot, '.aexos-core', 'development', 'agents'));
+  if (!fs.existsSync(sourceDir)) throw new Error(`Agent source dir not found: ${sourceDir}`);
+  const legacyManifestPath = path.join(grokRoot, MANAGED_MANIFEST_FILENAME);
+  const legacyPrevious = readManagedManifest(legacyManifestPath, { quiet: options.quiet });
+  const staging = fs.mkdtempSync(path.join(os.tmpdir(), 'aexos-grok-stage-'));
+  if (path.dirname(staging) !== path.resolve(os.tmpdir()) ||
+      !path.basename(staging).startsWith('aexos-grok-stage-')) {
+    throw new Error('Unsafe Grok staging path');
+  }
+  try {
+    const generated = generateGrok({ ...options, projectRoot, sourceDir, grokRoot: staging, dryRun: false });
+    if (!generated.agents) throw new Error('No supported canonical agents found for Grok projection');
+    const stagedLegacyManifest = path.join(staging, MANAGED_MANIFEST_FILENAME);
+    const legacyCurrent = readManagedManifest(stagedLegacyManifest, { quiet: options.quiet });
+    const artifacts = generated.written
+      .filter((file) => path.resolve(file) !== path.resolve(stagedLegacyManifest))
+      .map((file) => ({ path: path.relative(staging, file).split(path.sep).join('/'), content: fs.readFileSync(file, 'utf8') }));
+    const applied = applyProjection(grokRoot, artifacts, options);
+    const legacyPreserved = [];
+    const legacyRemoved = options.dryRun || !legacyPrevious || !legacyCurrent
+      ? [] : removeStaleManagedFiles(grokRoot, legacyPrevious, legacyCurrent, legacyPreserved);
+    if (!options.dryRun) {
+      fs.ensureDirSync(grokRoot);
+      fs.copyFileSync(stagedLegacyManifest, legacyManifestPath);
+    }
+    return {
+      ...generated,
+      ...applied,
+      written: [...applied.written, legacyManifestPath],
+      removed: [...applied.removed.map((relative) => path.join(grokRoot, relative)), ...legacyRemoved],
+      preserved: [...applied.preserved.map((relative) => path.join(grokRoot, relative)), ...legacyPreserved],
+      grokRoot,
+      dryRun: Boolean(options.dryRun),
+      files: applied.written.length + 1,
+      nativeVerified: false,
+    };
+  } finally {
+    fs.rmSync(staging, { recursive: true, force: true });
+  }
 }
 
 function parseArgs(argv = process.argv.slice(2)) {

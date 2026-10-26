@@ -13,6 +13,11 @@ const yaml = require('js-yaml');
 const { generateCoreConfig } = require('../../packages/installer/src/config/templates/core-config-template');
 
 describe('core-config-template', () => {
+  test.each([{ selectedIDEs: [] }, { selectedIDEs: ['codex'] }, { selectedIDEs: ['gemini', 'claude-code'] }])('records exact selected hosts $selectedIDEs', ({ selectedIDEs }) => {
+    const parsed = yaml.load(generateCoreConfig({ selectedIDEs }));
+    expect(parsed.ide.selected).toEqual(selectedIDEs);
+    expect(parsed.ide.configs.vscode).toBe(false);
+  });
   describe('ACT-12: language removed from core-config', () => {
     test('should NOT include language field in generated config', () => {
       const output = generateCoreConfig();

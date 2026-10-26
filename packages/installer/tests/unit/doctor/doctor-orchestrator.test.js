@@ -47,10 +47,10 @@ describe('Doctor Orchestrator', () => {
     });
   });
 
-  describe('18 checks (AC2 + INS-4.8 + CORE-SU.A4)', () => {
-    it('should run exactly 18 checks', async () => {
+  describe('19 checks (AC2 + INS-4.8 + CORE-SU.A4)', () => {
+    it('should run exactly 19 checks', async () => {
       const result = await runDoctorChecks({ projectRoot });
-      expect(result.data.checks).toHaveLength(18);
+      expect(result.data.checks).toHaveLength(19);
     });
 
     it('should return valid status for each check', async () => {
@@ -90,10 +90,10 @@ describe('Doctor Orchestrator', () => {
   });
 
   describe('summary (AC3)', () => {
-    it('should have pass/warn/fail/info counts that sum to 18', async () => {
+    it('should have pass/warn/fail/info counts that sum to 19', async () => {
       const result = await runDoctorChecks({ projectRoot });
       const { pass, warn, fail, info } = result.data.summary;
-      expect(pass + warn + fail + info).toBe(18);
+      expect(pass + warn + fail + info).toBe(19);
     });
 
     it('should include Summary line in text output', async () => {

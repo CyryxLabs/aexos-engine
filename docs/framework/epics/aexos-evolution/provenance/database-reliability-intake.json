@@ -1,0 +1,96 @@
+{
+  "protocol": "aexos.provenance-intake/v1",
+  "story": "AEX-4.24",
+  "recordedAt": "2026-10-10T00:00:00.000Z",
+  "records": [
+    {
+      "repository": "rakolen/aiox-advanced-brain",
+      "pin": "05fe6c6180f52ce77c437dc1f6176bd03a257a59",
+      "sources": [
+        "aexos-audit/squads-brain.md lines 8, 100, 115 and 170-174",
+        "aexos-audit/sources/aiox-advanced-brain/squads/db-sage/README.md lines 46-60",
+        "aexos-audit/sources/aiox-advanced-brain/squads/db-sage/ARCHITECTURE.md",
+        "aexos-audit/sources/aiox-advanced-brain/squads/db-sage/tasks/db-explain.md",
+        "aexos-audit/sources/aiox-advanced-brain/squads/db-sage/tasks/db-rls-audit.md",
+        "aexos-audit/sources/aiox-advanced-brain/squads/db-sage/scripts/database-operations/constraint-validator.sh",
+        "aexos-audit/sources/aiox-advanced-brain/squads/db-sage/scripts/database-operations/permission-auditor.sh",
+        "aexos-audit/sources/aiox-advanced-brain/squads/db-sage/scripts/database-operations/backup-manager.sh"
+      ],
+      "license": "Requirement inspiration only; no upstream source, script, fixture, prompt, or persona imported.",
+      "selectedRequirements": [
+        "bounded PostgreSQL reliability evidence",
+        "read-only statement and capability boundaries",
+        "explicit unsupported provider behavior"
+      ],
+      "excludedAssets": [
+        "mutating migration scripts",
+        "RLS installation",
+        "query termination",
+        "backup and restore operations",
+        "upstream implementation",
+        "personas"
+      ],
+      "importedCode": false
+    },
+    {
+      "repository": "CyryxLabs/AEXOS",
+      "pin": "local independently authored AEX-4.24 preparation",
+      "sources": [
+        "STORY-AEX-4.24-READ-ONLY-DATABASE-RELIABILITY.md",
+        "database-4-24-design.md"
+      ],
+      "localOwner": "AEXOS database reliability",
+      "localImplementationPaths": [
+        ".aexos-core/core/database-reliability/",
+        ".aexos-core/cli/commands/database/index.js",
+        "docs/guides/database-reliability.md"
+      ],
+      "independentlyAuthoredFixtures": [
+        "tests/fixtures/database-reliability/clean-observation.json",
+        "tests/fixtures/database-reliability/seeded-observation.json"
+      ],
+      "acceptanceTests": [
+        "tests/unit/database-reliability/contract.test.js",
+        "tests/unit/database-reliability/catalog.test.js",
+        "tests/unit/database-reliability/audit.test.js"
+      ],
+      "importedCode": false
+    }
+  ],
+  "implementationLog": [
+    {
+      "decision": "REUSE",
+      "searched": [
+        ".aexos-core/core/execution/durable-evidence.js",
+        ".aexos-core/core/permissions/confined-filesystem.js",
+        ".aexos-core/cli/commands/research/index.js"
+      ],
+      "result": "Reused stable canonical digest conventions, bounded ordinary-read expectations, and Commander leaf-command structure. No output writer or new execution ledger was added."
+    },
+    {
+      "decision": "ADAPT",
+      "searched": [
+        ".aexos-core/core/code-intel/brownfield/contract.js",
+        ".aexos-core/core/code-intel/brownfield/evidence.js",
+        ".aexos-core/core/code-intel/providers/typescript-snapshot-provider.js",
+        ".aexos-core/core/workflow-engineering/sop/contract.js"
+      ],
+      "result": "Adapted closed-object validation, finite policy ceilings, the existing recognizable-secret pattern policy, typed hash references, deterministic sorting, explicit partial coverage, and unverified source labeling for the database fixture domain. No arbitrary-secret detection claim is made."
+    },
+    {
+      "decision": "CREATE",
+      "searched": [
+        ".aexos-core/core/database-reliability/",
+        ".aexos-core/cli/commands/",
+        "tests/unit/database-reliability/",
+        "tests/fixtures/database-reliability/"
+      ],
+      "result": "No existing bounded database reliability contract, template-only classifier, fixture observation analyzer, unavailable adapter seam, leaf command, or matching fixture controls existed. Created only AEX-4.24-owned files."
+    }
+  ],
+  "limitations": [
+    "No database connection or driver is present.",
+    "Fixtures are declarations and cannot satisfy real disposable PostgreSQL acceptance.",
+    "Read-only server enforcement, provider behavior, RLS semantics, tenant isolation, backup restoration, installed delivery, and independent QA remain unverified."
+  ]
+}

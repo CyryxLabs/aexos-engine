@@ -35,7 +35,7 @@ async function sessionStart() {
         lastUpdated: codebaseMap.metadata?.lastUpdated,
       };
     }
-  } catch (error) {
+  } catch (_error) {
     // Non-critical, continue
   }
 
@@ -48,7 +48,7 @@ async function sessionStart() {
         result.contextInjection.activeStories = stories.length;
       }
     }
-  } catch (error) {
+  } catch (_error) {
     // Non-critical
   }
 

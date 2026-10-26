@@ -1,3 +1,22 @@
+---
+contractVersion: 1
+inputs:
+  - name: scope
+    type: enum
+    required: false
+    description: Artifact scope to analyze
+  - name: storyId
+    type: string
+    required: false
+    description: Optional story identifier
+produces:
+  - name: analysis_report
+    kind: stdout
+verify:
+  - type: result-status
+    expected: success
+---
+
 # Cross-Artifact Analysis Task
 
 > **Command:** `*analyze`

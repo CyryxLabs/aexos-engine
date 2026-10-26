@@ -1,10 +1,11 @@
 /**
- * Guards that the squads actually reach an installed project.
+ * Guards that only Core Free squads reach an installed project.
  *
  * They did not. `squads/` was absent from package.json `files`, so nothing under
  * it was ever published; and `installCyryxCore` walks `.aexos-core` folders
  * only, so even an unpacked copy would not have been placed into a project.
- * Every squad AEXOS ships existed in this repository and in no install of it.
+ * AEX-3.7 narrows that corrected path to the Security squad; domain squads are
+ * now paid artifacts and must not be present in the Core tarball or scaffolder.
  *
  * Neither half fails loudly. A missing `files` entry produces a smaller tarball,
  * not an error; a scaffolder that is never called produces a project with no
@@ -29,29 +30,26 @@ const {
   scaffoldCoreSquads,
   listSquads,
   NOT_SQUADS,
+  CORE_SQUADS,
 } = require(path.join(REPO_ROOT, 'packages/installer/src/installer/squad-scaffolder.js'));
 const { generateSquadRegistry } = require(
   path.join(REPO_ROOT, 'scripts/generate-squad-registry.js'),
 );
 
-/** Squads on disk, by the same rule the scaffolder uses. */
-const shipped = listSquads(SQUADS_DIR);
+/** Squads intentionally bundled by the Core Free boundary. */
+const shipped = [...CORE_SQUADS];
 
 describe('squad packaging', () => {
-  test('the repository has squads to ship', () => {
-    expect(shipped.length).toBeGreaterThan(0);
+  test('the repository contains every declared Core squad', () => {
+    const available = listSquads(SQUADS_DIR);
+    expect(shipped).toEqual(['security']);
+    expect(shipped.every((squad) => available.includes(squad))).toBe(true);
   });
 
-  test('package.json publishes squads/', () => {
+  test('package.json publishes only the Security squad source', () => {
     const pkg = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'package.json'), 'utf8'));
-    const publishes = (pkg.files || []).some((f) => f.replace(/\/$/, '') === 'squads');
-    if (!publishes) {
-      throw new Error(
-        'package.json "files" does not include "squads/", so no squad is published to npm ' +
-          'and no installed project can ever receive one.',
-      );
-    }
-    expect(publishes).toBe(true);
+    expect(pkg.files).toContain('squads/security/');
+    expect(pkg.files).not.toContain('squads/');
   });
 
   test('the installer wires the scaffolder into the install flow', () => {
@@ -76,7 +74,7 @@ describe('installing into a project', () => {
     fs.rmSync(project, { recursive: true, force: true });
   });
 
-  test('every shipped squad lands with its agent definitions', async () => {
+  test('only the Core allowlist lands with its agent definitions', async () => {
     const result = await scaffoldCoreSquads(project, { sourceDir: SQUADS_DIR });
 
     expect(result.errors).toEqual([]);
@@ -89,6 +87,8 @@ describe('installing into a project', () => {
       const agents = fs.readdirSync(agentsDir).filter((f) => f.endsWith('.md'));
       expect(agents.length).toBeGreaterThan(0);
     }
+    expect(fs.existsSync(path.join(project, 'squads', 'workflow-engineering'))).toBe(false);
+    expect(fs.existsSync(path.join(project, 'squads', 'marketing'))).toBe(false);
   });
 
   test('the orchestrator can route to them afterwards', async () => {

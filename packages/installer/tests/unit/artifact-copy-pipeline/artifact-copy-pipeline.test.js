@@ -7,6 +7,7 @@ const os = require('os');
 
 const {
   copySkillFiles,
+  cleanLegacyGenericAexosSkills,
   copyExtraCommandFiles,
   copyClaudeHooksFolder,
   createClaudeSettingsLocal,
@@ -127,6 +128,97 @@ describe('artifact-copy-pipeline (Story INS-4.3)', () => {
         expect(content).toBe('# v2');
       } finally {
         cleanup(sourceRoot);
+        cleanup(targetRoot);
+      }
+    });
+  });
+
+  describe('cleanLegacyGenericAexosSkills', () => {
+    test('removes only the duplicate generic AEXOS namespace', async () => {
+      const targetRoot = createTempDir();
+
+      try {
+        const legacyRoot = path.join(targetRoot, '.agents', 'skills', 'AEXOS');
+        const coreSkill = path.join(legacyRoot, 'agents', 'dev');
+        const squadSkill = path.join(legacyRoot, 'squads', 'marketing', 'marketing-chief');
+        const preservedSkill = path.join(targetRoot, '.agents', 'skills', 'user-workflow');
+        fs.mkdirSync(coreSkill, { recursive: true });
+        fs.mkdirSync(squadSkill, { recursive: true });
+        fs.mkdirSync(preservedSkill, { recursive: true });
+        fs.writeFileSync(path.join(coreSkill, 'SKILL.md'), '# duplicate core', 'utf8');
+        fs.writeFileSync(path.join(squadSkill, 'SKILL.md'), '# duplicate squad', 'utf8');
+        fs.writeFileSync(path.join(preservedSkill, 'SKILL.md'), '# keep me', 'utf8');
+
+        const result = await cleanLegacyGenericAexosSkills(targetRoot);
+
+        expect(result).toEqual({ removed: 2, skipped: false });
+        expect(fs.existsSync(legacyRoot)).toBe(false);
+        expect(fs.existsSync(path.join(preservedSkill, 'SKILL.md'))).toBe(true);
+      } finally {
+        cleanup(targetRoot);
+      }
+    });
+
+    test('is idempotent when the legacy namespace is absent', async () => {
+      const targetRoot = createTempDir();
+
+      try {
+        await expect(cleanLegacyGenericAexosSkills(targetRoot)).resolves.toEqual({
+          removed: 0,
+          skipped: true,
+        });
+      } finally {
+        cleanup(targetRoot);
+      }
+    });
+
+    test('leaves one discoverable activation for every project-local skill name', async () => {
+      const targetRoot = createTempDir();
+
+      try {
+        const canonicalSkill = path.join(targetRoot, '.codex', 'skills', 'aexos-dev');
+        const legacySkill = path.join(targetRoot, '.agents', 'skills', 'AEXOS', 'agents', 'dev');
+        const workflowSkill = path.join(targetRoot, '.agents', 'skills', 'develop-story');
+        fs.mkdirSync(canonicalSkill, { recursive: true });
+        fs.mkdirSync(legacySkill, { recursive: true });
+        fs.mkdirSync(workflowSkill, { recursive: true });
+        fs.writeFileSync(
+          path.join(canonicalSkill, 'SKILL.md'),
+          '---\nname: aexos-dev\n---\n# Canonical developer',
+          'utf8',
+        );
+        fs.writeFileSync(
+          path.join(legacySkill, 'SKILL.md'),
+          '---\nname: aexos-dev\n---\n# Legacy duplicate',
+          'utf8',
+        );
+        fs.writeFileSync(
+          path.join(workflowSkill, 'SKILL.md'),
+          '---\nname: develop-story\n---\n# Preserved workflow',
+          'utf8',
+        );
+
+        await cleanLegacyGenericAexosSkills(targetRoot);
+
+        const skillFiles = [];
+        const visit = (directory) => {
+          if (!fs.existsSync(directory)) return;
+          for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+            const entryPath = path.join(directory, entry.name);
+            if (entry.isDirectory()) visit(entryPath);
+            else if (entry.name === 'SKILL.md') skillFiles.push(entryPath);
+          }
+        };
+        visit(path.join(targetRoot, '.codex', 'skills'));
+        visit(path.join(targetRoot, '.agents', 'skills'));
+        const names = skillFiles.map((skillFile) => (
+          fs.readFileSync(skillFile, 'utf8').match(/^name:\s*(.+)$/m)?.[1]?.trim()
+        ));
+
+        expect(names).toEqual(expect.arrayContaining(['aexos-dev', 'develop-story']));
+        expect(names.filter(Boolean)).toHaveLength(new Set(names.filter(Boolean)).size);
+        expect(fs.existsSync(path.join(workflowSkill, 'SKILL.md'))).toBe(true);
+      } finally {
         cleanup(targetRoot);
       }
     });

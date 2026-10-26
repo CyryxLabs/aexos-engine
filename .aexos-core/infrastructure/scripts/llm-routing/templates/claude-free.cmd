@@ -73,8 +73,6 @@ echo.
 endlocal & set "ANTHROPIC_BASE_URL=https://api.deepseek.com/anthropic" & set "ANTHROPIC_API_KEY=%DEEPSEEK_API_KEY%" & set "ANTHROPIC_MODEL=deepseek-chat" & set "API_TIMEOUT_MS=600000"
 
 >&2 echo.
->&2 echo [93mWARNING: Running with --dangerously-skip-permissions (no confirmation prompts)[0m
->&2 echo [93mOnly use in trusted repositories/environments.[0m
 >&2 echo.
 
-claude --dangerously-skip-permissions %*
+claude %*

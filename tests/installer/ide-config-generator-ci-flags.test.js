@@ -22,6 +22,12 @@
 
 const path = require('path');
 const inquirer = require('inquirer');
+const { promptPlainQuestions } = require('../../packages/installer/src/wizard/install-experience');
+
+jest.mock('../../packages/installer/src/wizard/install-experience', () => ({
+  ...jest.requireActual('../../packages/installer/src/wizard/install-experience'),
+  promptPlainQuestions: jest.fn(),
+}));
 
 const ideConfigGenerator = require('../../packages/installer/src/wizard/ide-config-generator');
 const { isNonInteractive } = ideConfigGenerator._testing;
@@ -96,6 +102,7 @@ describe('promptFileExists() — non-interactive default-choice (#739 Bug 1)', (
 
   beforeEach(() => {
     promptSpy = jest.spyOn(inquirer, 'prompt');
+    promptPlainQuestions.mockReset();
     originalIsTTY = process.stdout.isTTY;
     // Snapshot env so we can restore — and explicitly neutralize all the
     // non-interactive signals so each test measures one signal in isolation.
@@ -103,6 +110,10 @@ describe('promptFileExists() — non-interactive default-choice (#739 Bug 1)', (
     process.stdout.isTTY = true;
     delete process.env.CI;
     delete process.env.AEXOS_NON_INTERACTIVE;
+    // This fixture models an enhanced terminal. Plain-capability cases below
+    // select the numbered adapter explicitly instead of opening real stdin.
+    delete process.env.NO_COLOR;
+    process.env.TERM = 'xterm';
   });
 
   afterEach(() => {
@@ -180,6 +191,24 @@ describe('promptFileExists() — non-interactive default-choice (#739 Bug 1)', (
 
     expect(promptSpy).toHaveBeenCalledTimes(1);
     expect(action).toBe('overwrite');
+    expect(promptPlainQuestions).not.toHaveBeenCalled();
+  });
+
+  it.each(['NO_COLOR', 'TERM=dumb'])('preserves interactive choice through the plain adapter for %s', async (mode) => {
+    if (mode === 'NO_COLOR') process.env.NO_COLOR = '1';
+    else process.env.TERM = 'dumb';
+    promptPlainQuestions.mockResolvedValue({ action: 'skip' });
+
+    const action = await promptFileExists('/tmp/CLAUDE.md', { projectType: 'BROWNFIELD' });
+
+    expect(action).toBe('skip');
+    expect(promptSpy).not.toHaveBeenCalled();
+    expect(promptPlainQuestions).toHaveBeenCalledWith([
+      expect.objectContaining({
+        name: 'action', type: 'list', default: 'merge',
+        choices: expect.arrayContaining([expect.objectContaining({ value: 'skip' })]),
+      }),
+    ]);
   });
 
   // Regression guard for the bug CodeRabbit caught on PR #750:

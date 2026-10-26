@@ -1,0 +1,153 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aexos.cyryxlabs.com/schemas/local-plan-run-v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "runVersion",
+    "workflow",
+    "story",
+    "journey",
+    "phases"
+  ],
+  "properties": {
+    "runVersion": {
+      "const": 1
+    },
+    "workflow": {
+      "const": "story-development-cycle"
+    },
+    "story": {
+      "type": "string",
+      "minLength": 1
+    },
+    "journey": {
+      "enum": [
+        "greenfield",
+        "brownfield",
+        "defect"
+      ]
+    },
+    "phases": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "inputs",
+          "operations",
+          "checks"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "inputs": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "operations": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 32,
+            "items": {
+              "type": "object",
+              "required": [
+                "operation",
+                "target"
+              ],
+              "properties": {
+                "operation": {
+                  "enum": [
+                    "read",
+                    "guarded-create",
+                    "guarded-recoverable-replace"
+                  ]
+                },
+                "target": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 1024
+                }
+              }
+            }
+          },
+          "checks": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 64,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "type",
+                "stage",
+                "target",
+                "sha256"
+              ],
+              "properties": {
+                "type": {
+                  "enum": [
+                    "utf8-sha256",
+                    "node-test"
+                  ]
+                },
+                "stage": {
+                  "enum": [
+                    "before",
+                    "after"
+                  ]
+                },
+                "target": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 1024
+                },
+                "sha256": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "expectedExit": {
+                  "enum": [
+                    0,
+                    1
+                  ]
+                },
+                "expectedTests": { "type": "integer", "minimum": 1, "maximum": 10000 },
+                "testNames": { "type": "array", "minItems": 1, "maxItems": 100, "uniqueItems": true,
+                  "items": { "type": "string", "minLength": 1, "maxLength": 200 } }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "type": {
+                        "const": "node-test"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "expectedExit", "expectedTests", "testNames"
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          "estimatedCostUsd": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      }
+    }
+  }
+}

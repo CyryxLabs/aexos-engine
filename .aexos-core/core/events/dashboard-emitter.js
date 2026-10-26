@@ -16,9 +16,11 @@
 const { randomUUID } = require('crypto');
 const fs = require('fs-extra');
 const path = require('path');
+const { normalizeEvent } = require('../virtual-office/event-normalizer');
+const { projectIdentity, producerToken, confinedPath } = require('../virtual-office/host-bridge');
 const { DashboardEventType } = require('./types');
 
-const MONITOR_SERVER_URL = process.env.AEXOS_MONITOR_URL || 'http://localhost:4001/events';
+const MONITOR_SERVER_URL = process.env.AEXOS_MONITOR_URL || 'http://127.0.0.1:4001/events';
 const EMIT_TIMEOUT_MS = 500;
 
 /**
@@ -126,6 +128,9 @@ class DashboardEmitter {
       id: randomUUID(),
       type,
       timestamp: Date.now(),
+      host: process.env.AEXOS_HOST || (process.env.CLAUDE_CODE_SESSION_ID ? 'claude-code' : 'cli'),
+      projectId: projectIdentity(this.projectRoot),
+      evidence: 'runtime',
       session_id: this.sessionId,
       cyryx_agent: this.currentAgent || undefined,
       cyryx_story_id: this.currentStoryId || undefined,
@@ -133,9 +138,11 @@ class DashboardEmitter {
     };
 
     // Try HTTP POST first, non-blocking
-    this._postEvent(event).catch(() => {
+    let safeEvent;
+    try { safeEvent = normalizeEvent(event); } catch (_error) { return; }
+    this._postEvent(safeEvent).catch(() => {
       // Fallback to file on failure
-      this._writeToFile(event).catch(() => {
+      this._writeToFile(safeEvent).catch(() => {
         // Silent failure - never interrupt CLI
       });
     });
@@ -169,6 +176,31 @@ class DashboardEmitter {
       reason,
     });
     this.setAgent(null);
+  }
+
+  /**
+   * Emit an explicitly public collaboration message for the local office.
+   *
+   * Callers must pass only content already approved for operator-visible
+   * observability. Raw prompts, model context and tool output are not accepted
+   * by this semantic event contract.
+   *
+   * @param {string} message - Operator-visible collaboration message.
+   * @param {Object} [context] - Optional meeting correlation context.
+   * @param {string} [context.agentId] - Speaking agent override.
+   * @param {string} [context.storyId] - Story or project correlation.
+   * @param {string} [context.runId] - Parallel run correlation.
+   * @param {string} [context.sessionId] - Session correlation.
+   * @returns {Promise<void>}
+   */
+  async emitCollaborationMessage(message, context = {}) {
+    await this.emit(DashboardEventType.AGENT_COLLABORATION_MESSAGE, {
+      agentId: context.agentId || this.currentAgent,
+      storyId: context.storyId || this.currentStoryId,
+      run_id: context.runId,
+      session_id: context.sessionId || this.sessionId,
+      public_message: message,
+    });
   }
 
   /**
@@ -348,17 +380,9 @@ class DashboardEmitter {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${producerToken(this.projectRoot) || ''}`,
         },
-        body: JSON.stringify({
-          type: event.type,
-          timestamp: event.timestamp,
-          data: {
-            ...event.data,
-            session_id: event.session_id,
-            cyryx_agent: event.cyryx_agent,
-            cyryx_story_id: event.cyryx_story_id,
-          },
-        }),
+        body: JSON.stringify(event),
         signal: controller.signal,
       });
 
@@ -379,7 +403,11 @@ class DashboardEmitter {
    */
   async _writeToFile(event) {
     try {
+      confinedPath(this.projectRoot, 'events.jsonl');
       await fs.ensureDir(path.dirname(this.fallbackPath));
+      if (await fs.pathExists(this.fallbackPath) && (await fs.stat(this.fallbackPath)).size > 4194304) {
+        await fs.writeFile(this.fallbackPath, '');
+      }
       const line = JSON.stringify(event) + '\n';
       await fs.appendFile(this.fallbackPath, line);
     } catch {

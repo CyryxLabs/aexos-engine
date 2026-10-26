@@ -296,7 +296,7 @@ dependencies:
     - incident-command-roles.yaml # What each role holds and must not hold, command handoff protocol, mitigation sequencing, stand-down record, recurrence and near miss
     - ops-routing-matrix.yaml # Authority determination table and the boundary with @devops
   reference_files:
-    - .claude/CLAUDE.md # EXISTS - AEXOS project instructions and agent roster
+    - .aexos-core/constitution.md # Canonical AEXOS governance for every CLI host
     - .aexos-core/core-config.yaml # EXISTS - framework configuration
     - .aexos-core/data/entity-registry.yaml # EXISTS - entity and agent registry
   tools:

@@ -23,7 +23,6 @@
  */
 
 const fs = require('fs');
-const fsPromises = require('fs').promises;
 const path = require('path');
 
 // ═══════════════════════════════════════════════════════════════════════════════════
@@ -232,6 +231,14 @@ class CodebaseMapper {
    * @param {boolean} [options.quiet] - Suppress output
    */
   constructor(rootPath, options = {}) {
+    this.snapshotMode = options.snapshotFs !== undefined;
+    if (this.snapshotMode && (!options.snapshotFs || typeof options.snapshotFs.existsSync !== 'function'
+      || ['readdir', 'stat', 'readFile'].some(name => typeof options.snapshotFs.promises?.[name] !== 'function'))) {
+      throw new TypeError('Snapshot mapper requires a complete read-only filesystem view.');
+    }
+    this.fs = options.snapshotFs || fs;
+    this.fsPromises = this.fs.promises;
+    this.clock = options.clock || (() => new Date());
     this.rootPath = rootPath || process.cwd();
     this.maxDepth = options.maxDepth || CONFIG.defaultMaxDepth;
     this.excludeDirs = [...CONFIG.excludeDirs, ...(options.excludeDirs || [])];
@@ -284,7 +291,7 @@ class CodebaseMapper {
     }
 
     try {
-      const entries = await fsPromises.readdir(dirPath, { withFileTypes: true });
+      const entries = await this.fsPromises.readdir(dirPath, { withFileTypes: true });
 
       for (const entry of entries) {
         const fullPath = path.join(dirPath, entry.name);
@@ -327,7 +334,7 @@ class CodebaseMapper {
    * @private
    */
   async _analyzeFile(fullPath, relativePath) {
-    const stats = await fsPromises.stat(fullPath);
+    const stats = await this.fsPromises.stat(fullPath);
     const ext = path.extname(fullPath).toLowerCase();
 
     const fileInfo = {
@@ -340,7 +347,7 @@ class CodebaseMapper {
     // Only read code files for pattern analysis
     if (CONFIG.codeExtensions.includes(ext) && stats.size < 500000) {
       try {
-        const content = await fsPromises.readFile(fullPath, 'utf-8');
+        const content = await this.fsPromises.readFile(fullPath, 'utf-8');
         fileInfo.lineCount = content.split('\n').length;
         fileInfo.hasTests = /\.(test|spec)\.(js|ts|jsx|tsx)$/.test(relativePath);
         fileInfo.isComponent = /\.(jsx|tsx|vue|svelte)$/.test(ext);
@@ -454,7 +461,7 @@ class CodebaseMapper {
 
       try {
         const fullPath = path.join(this.rootPath, filePath);
-        const content = await fsPromises.readFile(fullPath, 'utf-8');
+        const content = await this.fsPromises.readFile(fullPath, 'utf-8');
 
         // Detect state management
         if (!patterns.stateManagement) {
@@ -734,7 +741,7 @@ class CodebaseMapper {
     const pkgPath = path.join(this.rootPath, 'package.json');
 
     try {
-      const content = await fsPromises.readFile(pkgPath, 'utf-8');
+      const content = await this.fsPromises.readFile(pkgPath, 'utf-8');
       const pkg = JSON.parse(content);
 
       this._dependencies = {
@@ -745,13 +752,13 @@ class CodebaseMapper {
       };
 
       // Detect package manager
-      if (fs.existsSync(path.join(this.rootPath, 'pnpm-lock.yaml'))) {
+      if (this.fs.existsSync(path.join(this.rootPath, 'pnpm-lock.yaml'))) {
         this._dependencies.packageManager = 'pnpm';
-      } else if (fs.existsSync(path.join(this.rootPath, 'yarn.lock'))) {
+      } else if (this.fs.existsSync(path.join(this.rootPath, 'yarn.lock'))) {
         this._dependencies.packageManager = 'yarn';
-      } else if (fs.existsSync(path.join(this.rootPath, 'package-lock.json'))) {
+      } else if (this.fs.existsSync(path.join(this.rootPath, 'package-lock.json'))) {
         this._dependencies.packageManager = 'npm';
-      } else if (fs.existsSync(path.join(this.rootPath, 'bun.lockb'))) {
+      } else if (this.fs.existsSync(path.join(this.rootPath, 'bun.lockb'))) {
         this._dependencies.packageManager = 'bun';
       }
 
@@ -852,9 +859,9 @@ class CodebaseMapper {
 
     for (const indicator of serviceIndicators) {
       const dirPath = path.join(this.rootPath, indicator.dir);
-      if (fs.existsSync(dirPath)) {
+      if (this.fs.existsSync(dirPath)) {
         try {
-          const entries = await fsPromises.readdir(dirPath, { withFileTypes: true });
+          const entries = await this.fsPromises.readdir(dirPath, { withFileTypes: true });
 
           for (const entry of entries) {
             if (entry.isDirectory() && !entry.name.startsWith('.')) {
@@ -896,14 +903,14 @@ class CodebaseMapper {
         const basePath = workspace.replace('/*', '');
         const wsPath = path.join(this.rootPath, basePath);
 
-        if (fs.existsSync(wsPath)) {
+        if (this.fs.existsSync(wsPath)) {
           try {
-            const entries = await fsPromises.readdir(wsPath, { withFileTypes: true });
+            const entries = await this.fsPromises.readdir(wsPath, { withFileTypes: true });
             for (const entry of entries) {
               if (entry.isDirectory() && !entry.name.startsWith('.')) {
                 const pkgJsonPath = path.join(wsPath, entry.name, 'package.json');
-                if (fs.existsSync(pkgJsonPath)) {
-                  const pkgContent = JSON.parse(await fsPromises.readFile(pkgJsonPath, 'utf-8'));
+                if (this.fs.existsSync(pkgJsonPath)) {
+                  const pkgContent = JSON.parse(await this.fsPromises.readFile(pkgJsonPath, 'utf-8'));
                   services.push({
                     name: pkgContent.name || entry.name,
                     type: 'workspace',
@@ -934,7 +941,7 @@ class CodebaseMapper {
 
     for (const entry of entrypoints) {
       const filePath = path.join(dirPath, entry);
-      if (fs.existsSync(filePath)) {
+      if (this.fs.existsSync(filePath)) {
         return path.relative(this.rootPath, filePath);
       }
     }
@@ -942,7 +949,7 @@ class CodebaseMapper {
     // Check for src/index
     for (const entry of entrypoints) {
       const filePath = path.join(dirPath, 'src', entry);
-      if (fs.existsSync(filePath)) {
+      if (this.fs.existsSync(filePath)) {
         return path.relative(this.rootPath, filePath);
       }
     }
@@ -956,9 +963,9 @@ class CodebaseMapper {
    */
   async _getServiceDependencies(dirPath) {
     const pkgPath = path.join(dirPath, 'package.json');
-    if (fs.existsSync(pkgPath)) {
+    if (this.fs.existsSync(pkgPath)) {
       try {
-        const content = await fsPromises.readFile(pkgPath, 'utf-8');
+        const content = await this.fsPromises.readFile(pkgPath, 'utf-8');
         const pkg = JSON.parse(content);
         return Object.keys(pkg.dependencies || {});
       } catch {
@@ -987,9 +994,9 @@ class CodebaseMapper {
     // Get project name from package.json or directory
     let projectName = path.basename(this.rootPath);
     const pkgPath = path.join(this.rootPath, 'package.json');
-    if (fs.existsSync(pkgPath)) {
+    if (this.fs.existsSync(pkgPath)) {
       try {
-        const pkg = JSON.parse(await fsPromises.readFile(pkgPath, 'utf-8'));
+        const pkg = JSON.parse(await this.fsPromises.readFile(pkgPath, 'utf-8'));
         projectName = pkg.name || projectName;
       } catch {
         // Use directory name
@@ -998,7 +1005,7 @@ class CodebaseMapper {
 
     const map = {
       project: projectName,
-      mappedAt: new Date().toISOString(),
+      mappedAt: this.clock().toISOString(),
       version: CONFIG.schemaVersion,
 
       structure: this._simplifyStructure(this._structure),
@@ -1068,16 +1075,17 @@ class CodebaseMapper {
    * @returns {Promise<string>} - Path to saved file
    */
   async saveMap(outputPath) {
+    if (this.snapshotMode) throw Object.assign(new Error('Snapshot mapper cannot publish files.'), { code: 'SNAPSHOT_READ_ONLY' });
     const map = await this.generateMap();
     const savePath = outputPath || path.join(this.rootPath, CONFIG.outputPath);
 
     // Ensure directory exists
     const dir = path.dirname(savePath);
-    if (!fs.existsSync(dir)) {
-      await fsPromises.mkdir(dir, { recursive: true });
+    if (!this.fs.existsSync(dir)) {
+      await this.fsPromises.mkdir(dir, { recursive: true });
     }
 
-    await fsPromises.writeFile(savePath, JSON.stringify(map, null, 2), 'utf-8');
+    await this.fsPromises.writeFile(savePath, JSON.stringify(map, null, 2), 'utf-8');
 
     if (!this.quiet) {
       console.log(`\nCodebase map saved to: ${savePath}`);
@@ -1101,11 +1109,11 @@ class CodebaseMapper {
   async diff() {
     const existingPath = path.join(this.rootPath, CONFIG.outputPath);
 
-    if (!fs.existsSync(existingPath)) {
+    if (!this.fs.existsSync(existingPath)) {
       return { error: 'No existing map found', newMap: true };
     }
 
-    const existingContent = await fsPromises.readFile(existingPath, 'utf-8');
+    const existingContent = await this.fsPromises.readFile(existingPath, 'utf-8');
     const existingMap = JSON.parse(existingContent);
     const newMap = await this.generateMap();
 

@@ -31,7 +31,7 @@ describe('Doctor IDE host awareness', () => {
     const results = await statuses();
     expect(results.map((result) => result.status)).toEqual(['INFO', 'INFO', 'INFO']);
     for (const result of results) {
-      expect(result.message).toMatch(/Claude Code is explicitly disabled.*codex/i);
+      expect(result.message).toMatch(/Claude Code is not selected.*codex/i);
       expect(result.fixCommand).toBeNull();
     }
   });
