@@ -15,8 +15,11 @@ function timestamp(value, now) { integer(value, 1); if (value > now + LIMITS.fut
 function member(value, values) { if (!values.includes(value)) throw new Error('INVALID_ENUM'); }
 function identifier(value, nullable = false) { if (!(nullable && value === null) && (typeof value !== 'string' || !HASH.test(value))) throw new Error('INVALID_IDENTIFIER'); }
 export function validateEnvelope(value, catalogKeys, now = Date.now()) {
-  exact(value, ['schemaVersion', 'projectId', 'epoch', 'sequence', 'observedAt', 'sessions', 'events', 'omitted']);
-  if (value.schemaVersion !== 1 || typeof value.projectId !== 'string' || typeof value.epoch !== 'string' || !UUID.test(value.projectId) || !UUID.test(value.epoch)) throw new Error('INVALID_BINDING');
+  const fields = ['schemaVersion', 'projectId', 'epoch', 'sequence', 'observedAt', 'sessions', 'events', 'omitted'];
+  if (value?.schemaVersion === 2) fields.push('identityEpoch');
+  exact(value, fields);
+  if (![1, 2].includes(value.schemaVersion) || typeof value.projectId !== 'string' || typeof value.epoch !== 'string' || !UUID.test(value.projectId) || !UUID.test(value.epoch)
+      || (value.schemaVersion === 2 && (typeof value.identityEpoch !== 'string' || !UUID.test(value.identityEpoch)))) throw new Error('INVALID_BINDING');
   integer(value.sequence, 1); timestamp(value.observedAt, now);
   exact(value.omitted, ['sessions', 'events']); integer(value.omitted.sessions); integer(value.omitted.events);
   const agent = (key) => { if (key !== null && !catalogKeys.has(key)) throw new Error('UNKNOWN_CATALOG_AGENT'); };

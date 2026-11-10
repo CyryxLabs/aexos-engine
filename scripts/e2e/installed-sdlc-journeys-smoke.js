@@ -10,8 +10,8 @@ const path = require('path');
 
 const repoRoot = path.resolve(__dirname, '..', '..');
 const { createLocalPlanFixture } = require(path.resolve(
-  repoRoot,
-  'tests/helpers/local-plan-fixture',
+  __dirname,
+  'helpers/local-plan-fixture',
 ));
 const packageName = require(path.resolve(repoRoot, 'package.json')).name;
 const packageParts = packageName.split('/');
@@ -27,6 +27,12 @@ const DEFAULT_CASES = [
 
 function sha256(value) {
   return crypto.createHash('sha256').update(value).digest('hex');
+}
+
+function nativeCandidateEligibility({ platform, architecture, release }) {
+  // Match the reviewed experimental adapter; this is not production admission.
+  return platform === 'win32' && architecture === 'x64' && release === '10.0.26300'
+    ? 'experimental-windows-native-candidate' : 'ineligible-native-environment';
 }
 
 function run(command, args, options = {}) {
@@ -56,6 +62,8 @@ function parseArguments(argv) {
     else throw new Error(`Unknown argument: ${argv[index]}`);
   }
   if (!options.evidenceDir) throw new Error('--evidence-dir is required.');
+  if (options.cases.length === 0) throw new Error('A nonempty installed journey case selection is required.');
+  if (new Set(options.cases).size !== options.cases.length) throw new Error('Duplicate installed journey cases are not allowed.');
   const unknown = options.cases.find((item) => !DEFAULT_CASES.includes(item));
   if (unknown) throw new Error(`Unknown installed journey case: ${unknown}`);
   return options;
@@ -362,10 +370,8 @@ function main(argv = process.argv.slice(2)) {
     generatedAt: new Date().toISOString(),
     evidenceRoot,
     candidate: { path: candidate.tgzPath, sha256: candidate.tgzSha256, bytes: candidate.bytes },
-    environment: { platform: process.platform, release: os.release(), node: process.version },
-    eligibility: process.platform === 'win32' && os.release() === '10.0.26200'
-      ? 'experimental-windows-native-candidate'
-      : 'ineligible-native-environment',
+    environment: { platform: process.platform, architecture: process.arch, release: os.release(), node: process.version },
+    eligibility: nativeCandidateEligibility({ platform: process.platform, architecture: process.arch, release: os.release() }),
     limitations: [
       'Deterministic local plan fixture; no AI generation or provider proof.',
       'Experimental newly-created protected-file candidate only; ordinary inherited-ACL coverage is not claimed.',
@@ -403,6 +409,7 @@ module.exports = {
   installCandidate,
   installedPayloadHashes,
   main,
+  nativeCandidateEligibility,
   packCandidate,
   parseArguments,
 };

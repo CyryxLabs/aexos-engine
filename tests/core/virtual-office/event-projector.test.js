@@ -117,6 +117,24 @@ describe('Virtual Office event projection', () => {
     }).state).toBe('waiting');
   });
 
+  it('does not treat a Codex turn ending as proof of task success', () => {
+    const event = normalizeEvent({ type: 'CommandComplete', host: 'codex',
+      evidence: 'local-session-log', agentId: 'dev', sessionId: 'session-1', runId: 'turn-1' });
+    expect(event.state).toBe('available');
+    expect(event.data.success).toBeUndefined();
+    const projector = new VirtualOfficeProjector(catalog());
+    projector.apply(event);
+    expect(projector.getSnapshot().events[0].state).toBe('available');
+  });
+
+  it.each([
+    [{ host: 'codex', evidence: 'local-session-log', success: true }, 'completed'],
+    [{ host: 'codex', evidence: 'local-session-log', success: false }, 'failed'],
+    [{ host: 'cli', evidence: 'runtime' }, 'completed'],
+  ])('preserves completion semantics for other outcomes and sources', (data, state) => {
+    expect(normalizeEvent({ type: 'CommandComplete', ...data }).state).toBe(state);
+  });
+
   it('accepts the nested envelope emitted by DashboardEmitter', () => {
     const normalized = normalizeEvent({
       type: 'CommandStart',

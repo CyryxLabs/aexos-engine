@@ -56,6 +56,7 @@ let initialActivation = consumeActivationFragment(window.location.hash, () => {
 const dashboardState = window.AexosDashboardState;
 const tokenMemory = dashboardState.tokenMemory();
 let connectCommand = '';
+let baseConnectCommand = '';
 const appState = {
   snapshot: null, selectedAgentKey: null, squad: 'all', host: 'all', status: 'all',
   search: '', view: 'rooms', connected: false, executive: false, retry: null, showAllRooms: false,
@@ -574,8 +575,9 @@ function clearPrivateState() {
   appState.snapshot = null; appState.projects = []; appState.projectId = null;
   appState.session = null; appState.catalog = null; appState.pollInFlight = false;
   appState.selectedAgentKey = null; appState.executive = false;
-  tokenMemory.clear(); connectCommand = ''; element('ingest-token').textContent = ''; element('connect-command').textContent = '';
-  element('token-reveal').hidden = true; element('project-setup').hidden = true;
+  tokenMemory.clear(); connectCommand = ''; baseConnectCommand = ''; element('ingest-token').textContent = ''; element('connect-command').textContent = '';
+  element('observe-codex').checked = false;
+  element('token-reveal').hidden = true; setupDialog.close(false);
   element('cloud-controls').hidden = true; setConnection(false, 'Signed out');
   ['squad-navigation', 'host-strip', 'live-agent-markers', 'room-hotspots', 'room-roster', 'event-timeline', 'message-timeline', 'office-world'].forEach((id) => element(id).replaceChildren());
   element('communication-links').replaceChildren(); element('signals-panel').hidden = true;
@@ -591,6 +593,12 @@ function setOfficeAvailable(available) {
   if (available) surface.removeAttribute('aria-hidden');
   else surface.setAttribute('aria-hidden', 'true');
 }
+
+const setupDialog = dashboardState.createSetupDialog({
+  dialog: element('project-setup'), document, setOfficeAvailable,
+  canRestore: () => Boolean(appState.session && document.body.dataset.authState === 'authenticated' && element('auth-gate').hidden),
+  fallback: () => element('project-select'),
+});
 
 function showLogin(message = '') {
   clearActivationState();
@@ -650,20 +658,31 @@ function renderProjects() {
 }
 
 function clearTokenReveal() {
-  tokenMemory.clear(); connectCommand = ''; element('ingest-token').textContent = ''; element('connect-command').textContent = '';
+  tokenMemory.clear(); connectCommand = ''; baseConnectCommand = ''; element('ingest-token').textContent = ''; element('connect-command').textContent = '';
+  element('observe-codex').checked = false;
   element('copy-status').textContent = ''; element('token-reveal').hidden = true;
-  element('project-setup').hidden = appState.projects.length > 0;
   element('project-form').hidden = appState.projects.length > 0;
+  if (appState.projects.length) setupDialog.close();
+  else setupDialog.open(element('project-label'));
 }
 
-function revealBinding(body) {
+function revealBinding(body, trigger) {
   const binding = dashboardState.binding(body);
-  tokenMemory.set(binding.ingestToken); connectCommand = binding.command;
+  tokenMemory.set(binding.ingestToken); baseConnectCommand = binding.command;
+  element('observe-codex').checked = false;
+  connectCommand = dashboardState.observationCommand(baseConnectCommand, false);
   element('ingest-token').textContent = tokenMemory.read(); element('connect-command').textContent = connectCommand;
   element('project-form').hidden = true; element('token-reveal').hidden = false;
-  element('project-setup').hidden = false; element('copy-status').textContent = '';
-  element('copy-token').focus();
+  element('copy-status').textContent = '';
+  setupDialog.open(element('project-setup').querySelector('.setup-card'), trigger);
 }
+
+element('observe-codex').addEventListener('change', () => {
+  if (!baseConnectCommand) return;
+  connectCommand = dashboardState.observationCommand(baseConnectCommand, element('observe-codex').checked);
+  element('connect-command').textContent = connectCommand;
+  element('copy-status').textContent = '';
+});
 
 function schedulePoll(delay = POLL_INTERVAL_MS) {
   window.clearTimeout(appState.retry);
@@ -702,7 +721,7 @@ async function loadAuthenticatedWorkspace() {
   document.body.dataset.authState = 'authenticated'; element('auth-gate').hidden = true; setOfficeAvailable(true);
   renderProjects();
   if (!appState.projectId) {
-    element('project-form').hidden = false; element('project-setup').hidden = false;
+    element('project-form').hidden = false; setupDialog.open(element('project-label'));
     setConnection(false, 'No project connected');
   } else {
     startOfficeConnection();
@@ -759,6 +778,7 @@ element('logout').addEventListener('click', async () => {
   showLogin(warning);
 });
 element('project-select').addEventListener('change', (event) => {
+  clearTokenReveal();
   appState.generation += 1; appState.projectId = event.target.value; appState.snapshot = null; setConnection(false, 'Connecting…'); startOfficeConnection();
 });
 element('project-form').addEventListener('submit', async (event) => {
@@ -770,18 +790,19 @@ element('project-form').addEventListener('submit', async (event) => {
     if (generation !== appState.generation) return;
     if (!body?.project?.id || !body.project.label) throw new Error('Invalid project response');
     appState.projects.push(body.project); appState.projectId = body.project.id; renderProjects(); revealBinding(body); startOfficeConnection();
-  } catch { element('setup-error').textContent = 'The project could not be created. Check the label and try again.'; element('setup-error').hidden = false; }
+  } catch { element('setup-error').textContent = 'The project could not be created. Check the label and try again.'; element('setup-error').hidden = false; element('setup-error').focus(); }
   finally { submit.disabled = false; }
 });
-element('rotate-token').addEventListener('click', async () => {
+element('rotate-token').addEventListener('click', async (event) => {
   if (!appState.projectId) return;
+  const trigger = event.currentTarget;
   const generation = appState.generation;
   element('setup-error').hidden = true;
   try {
     const body = await requestJson(`/api/projects/${encodeURIComponent(appState.projectId)}/token`, { method: 'POST', body: '{}' });
     if (generation !== appState.generation) return;
-    revealBinding(body);
-  } catch { element('project-setup').hidden = false; element('setup-error').textContent = 'A new token could not be issued. Try again.'; element('setup-error').hidden = false; }
+    revealBinding(body, trigger);
+  } catch { element('setup-error').textContent = 'A new token could not be issued. Try again.'; element('setup-error').hidden = false; setupDialog.open(element('setup-error'), trigger); }
 });
 element('copy-token').addEventListener('click', async () => {
   if (!tokenMemory.read()) return;
@@ -794,7 +815,10 @@ element('copy-command').addEventListener('click', async () => {
   catch { element('copy-status').textContent = 'Copy was blocked. Select the connection command and copy it manually.'; }
 });
 element('clear-token').addEventListener('click', clearTokenReveal);
-element('close-setup').addEventListener('click', () => { if (appState.projects.length) element('project-setup').hidden = true; });
+element('close-setup').addEventListener('click', () => { if (appState.projects.length) clearTokenReveal(); });
+element('project-setup').addEventListener('keydown', (event) => {
+  setupDialog.handleKeyDown(event, () => { if (appState.projects.length) clearTokenReveal(); });
+});
 element('ceo-presence').addEventListener('click', () => {
   appState.executive = true; openInspector(); element('signals-panel').classList.add('has-selection'); renderDetail();
   element('signals-panel').scrollIntoView({ block: 'nearest' });
@@ -803,7 +827,7 @@ element('ceo-presence').addEventListener('click', () => {
 });
 window.addEventListener('offline', () => setConnection(false, 'Browser offline'));
 window.addEventListener('online', startOfficeConnection);
-window.addEventListener('beforeunload', () => { spatialController?.dispose(); window.clearTimeout(appState.retry); window.clearInterval(communicationRefreshTimer); tokenMemory.clear(); connectCommand = ''; });
+window.addEventListener('beforeunload', () => { spatialController?.dispose(); window.clearTimeout(appState.retry); window.clearInterval(communicationRefreshTimer); tokenMemory.clear(); connectCommand = ''; baseConnectCommand = ''; });
 element('signals-panel').hidden = true;
 element('motion-toggle').addEventListener('click', toggleMotion);
 motionQuery.addEventListener?.('change', updateMotionPreference);

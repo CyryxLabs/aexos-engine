@@ -19,7 +19,11 @@ const { createGreetingProject } = require('../helpers/isolated-greeting-project'
 const greetingScript = path.resolve(__dirname, '../../.aexos-core/development/scripts/generate-greeting.js');
 const util = require('util');
 const runNode = util.promisify(execFile);
-const execPromise = agent => runNode(process.execPath, [greetingScript, agent], { cwd: process.cwd(), windowsHide: true, timeout: 5000 });
+const execPromise = agent => runNode(process.execPath, [greetingScript, agent], {
+  cwd: process.cwd(), windowsHide: true, timeout: 5000,
+  // The disposable consumer must not scan an unrelated ancestor Git worktree.
+  env: { ...process.env, GIT_CEILING_DIRECTORIES: path.dirname(process.cwd()) },
+});
 
 const TEST_AGENTS = ['qa', 'dev', 'pm'];
 const PERFORMANCE_TARGET_MS = 150;

@@ -3,6 +3,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { spawnSync } = require('child_process');
 
 const harness = require(path.resolve(
   __dirname,
@@ -22,6 +23,50 @@ describe('installed SDLC journey harness', () => {
 
   afterEach(() => {
     fs.rmSync(root, { recursive: true, force: true });
+  });
+
+  test('admits the exact current native candidate without declaring production support', () => {
+    expect(harness.nativeCandidateEligibility({ platform: 'win32', architecture: 'x64', release: '10.0.26300' }))
+      .toBe('experimental-windows-native-candidate');
+    const permissions = path.resolve(__dirname, '../../.aexos-core/core/permissions');
+    const adapter = fs.readFileSync(path.join(permissions, 'windows-publication-adapter.js'), 'utf8');
+    const launcher = fs.readFileSync(path.join(permissions, 'windows-publication-launcher.ps1'), 'utf8');
+    expect(adapter).toContain("os.release() !== '10.0.26300'");
+    expect(launcher).toContain('10.0.26300.0');
+    for (const name of ['windows-publication-finite-relay.cs', 'windows-publication-protected-relay.cs',
+      'windows-publication-protected-relay-base.cs']) {
+      const relay = fs.readFileSync(path.join(permissions, name), 'utf8');
+      const releases = [...relay.matchAll(/"release"\)\s*==\s*"([^"]+)"/g)].map((match) => match[1]);
+      expect(releases).toEqual(['10.0.26300']);
+    }
+    expect(require(path.join(permissions, 'native-publication-support')).PRODUCTION_SUPPORT_ALLOWLIST).toEqual([]);
+  });
+
+  test.each([
+    ['win32', 'x64', '10.0.26200'], ['win32', 'arm64', '10.0.26300'],
+    ['win32', 'ia32', '10.0.26300'], ['linux', 'x64', '10.0.26300'],
+    ['darwin', 'x64', '10.0.26300'], ['win32', 'x64', '10.0.26301'],
+  ])('rejects an unqualified candidate %s/%s/%s', (platform, architecture, release) => {
+    expect(harness.nativeCandidateEligibility({ platform, architecture, release }))
+      .toBe('ineligible-native-environment');
+  });
+
+  test('loads the distributed qualification harness without the repository test corpus', () => {
+    const staging = path.join(root, 'installed');
+    const scripts = path.join(staging, 'scripts', 'e2e');
+    fs.mkdirSync(scripts, { recursive: true });
+    const original = path.resolve(__dirname, '../../scripts/e2e/installed-sdlc-journeys-smoke.js');
+    const copied = path.join(scripts, 'installed-sdlc-journeys-smoke.js');
+    fs.copyFileSync(original, copied);
+    const helpers = path.resolve(path.dirname(original), 'helpers');
+    if (fs.existsSync(helpers)) fs.cpSync(helpers, path.join(scripts, 'helpers'), { recursive: true });
+    fs.writeFileSync(path.join(staging, 'package.json'), JSON.stringify({ name: '@aexos/core' }));
+    const probe = spawnSync(process.execPath, ['-e', 'const h=require(process.argv[1]);process.stdout.write(JSON.stringify(h.DEFAULT_CASES));', copied],
+      { cwd: staging, env: { ...process.env, NODE_PATH: '' }, encoding: 'utf8', timeout: 10000, windowsHide: true });
+    expect({ error: probe.error?.code, status: probe.status, stderr: probe.stderr })
+      .toEqual({ error: undefined, status: 0, stderr: '' });
+    expect(JSON.parse(probe.stdout)).toContain('brownfield');
+    expect(fs.existsSync(path.join(staging, 'tests'))).toBe(false);
   });
 
   test('fixture publishes meaningful story and implementation plan artifacts', () => {
@@ -79,6 +124,11 @@ describe('installed SDLC journey harness', () => {
     });
     expect(() => harness.parseArguments(['--evidence-dir', evidenceDir, '--cases', 'invented']))
       .toThrow('Unknown installed journey case');
+  });
+
+  test.each(['', ' , ', 'greenfield,greenfield'])('rejects empty or repeated qualification cases: %s', (cases) => {
+    expect(() => harness.parseArguments(['--evidence-dir', path.join(root, 'evidence'), '--cases', cases]))
+      .toThrow(/nonempty|Duplicate/);
   });
 
   test('refuses to replace a retained candidate before invoking npm', () => {

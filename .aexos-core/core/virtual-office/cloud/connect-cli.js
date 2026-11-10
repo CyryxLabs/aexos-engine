@@ -5,7 +5,7 @@ const readline = require('readline');
 const { Writable } = require('stream');
 const { createCloudBridge } = require('./bridge');
 
-const HELP = 'aexos office connect --project-root <path> --project-id <uuid> --epoch <uuid> --ingest-url <https-url> --origin <https-origin> [--port <port>] [--observe-codex]\nSet AEXOS_DASHBOARD_INGEST_TOKEN for this process, or enter the token at the hidden prompt. The token is never stored.';
+const HELP = 'aexos office connect --project-root <path> --project-id <uuid> --epoch <uuid> [--identity-epoch <uuid>] --ingest-url <https-url> --origin <https-origin> [--port <port>] [--observe-codex]\nSet AEXOS_DASHBOARD_INGEST_TOKEN for this process, or enter the token at the hidden prompt. The token is never stored.';
 
 function parse(args) {
   const options = {};
@@ -13,7 +13,7 @@ function parse(args) {
     const flag = args[i];
     if (flag === '--help' || flag === '-h') return { help: true };
     if (flag === '--observe-codex') { options.observeCodex = true; continue; }
-    const fields = { '--project-root': 'projectRoot', '--project-id': 'projectId', '--epoch': 'epoch', '--ingest-url': 'endpoint', '--origin': 'approvedOrigin', '--port': 'port' };
+    const fields = { '--project-root': 'projectRoot', '--project-id': 'projectId', '--epoch': 'epoch', '--identity-epoch': 'identityEpoch', '--ingest-url': 'endpoint', '--origin': 'approvedOrigin', '--port': 'port' };
     if (!fields[flag] || !args[i + 1] || args[i + 1].startsWith('-')) throw new Error('INVALID_CONNECT_OPTION');
     if (Object.hasOwn(options, fields[flag])) throw new Error('DUPLICATE_CONNECT_OPTION');
     options[fields[flag]] = args[++i];

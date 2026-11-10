@@ -71,6 +71,7 @@
   function binding(body) {
     const project = body?.project;
     if (!project || !UUID.test(project.id) || !UUID.test(project.epoch) || body.epoch !== project.epoch
+        || (body.identityEpoch !== undefined && (typeof body.identityEpoch !== 'string' || !UUID.test(body.identityEpoch)))
         || typeof project.label !== 'string' || !project.label.trim() || project.label.length > 80
         || typeof body.ingestToken !== 'string' || !body.ingestToken || typeof body.expiresAt !== 'string'
         || !Number.isFinite(Date.parse(body.expiresAt))) throw new Error('Invalid connection binding');
@@ -79,9 +80,55 @@
     if (ingest.protocol !== 'https:' || origin.protocol !== 'https:' || ingest.origin !== origin.origin
         || body.origin !== origin.origin || ingest.username || ingest.password || ingest.hash
         || /[\s"'`;$|&<>]/.test(body.ingestUrl) || /[\s"'`;$|&<>]/.test(body.origin)) throw new Error('Invalid connection binding');
-    const command = `aexos office connect --project-root <your-project-path> --project-id ${project.id} --epoch ${project.epoch} --ingest-url ${body.ingestUrl} --origin ${body.origin}`;
+    const identity = body.identityEpoch ? ` --identity-epoch ${body.identityEpoch}` : '';
+    const command = `aexos office connect --project-root . --project-id ${project.id} --epoch ${project.epoch}${identity} --ingest-url ${body.ingestUrl} --origin ${body.origin}`;
     return Object.freeze({ project, ingestToken: body.ingestToken, command, expiresAt: body.expiresAt || null });
   }
 
-  return Object.freeze({ binding, connection, projects, snapshot, tokenMemory });
+  function observationCommand(command, observeCodex) {
+    if (typeof command !== 'string' || typeof observeCodex !== 'boolean') throw new Error('Invalid connection option');
+    return observeCodex ? `${command} --observe-codex` : command;
+  }
+
+  function createSetupDialog({ dialog, document, setOfficeAvailable, canRestore, fallback }) {
+    let returnFocus = null;
+    function open(initialFocus, trigger) {
+      if (dialog.hidden) returnFocus = trigger || document.activeElement;
+      setOfficeAvailable(false);
+      dialog.hidden = false;
+      initialFocus.focus();
+    }
+    function close(restoreFocus = true) {
+      dialog.hidden = true;
+      const available = Boolean(canRestore());
+      setOfficeAvailable(available);
+      if (restoreFocus && available) {
+        const target = returnFocus?.isConnected && !returnFocus.closest('[hidden], [inert]') ? returnFocus : fallback();
+        target?.focus();
+      }
+      returnFocus = null;
+    }
+    function trapTab(event) {
+      if (dialog.hidden || event.key !== 'Tab') return;
+      const focusable = [...dialog.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')]
+        .filter((item) => !item.closest('[hidden], [inert]') && item.getClientRects().length > 0);
+      if (!focusable.length) { event.preventDefault(); return; }
+      const first = focusable[0]; const last = focusable[focusable.length - 1];
+      if (event.shiftKey && (document.activeElement === first || !focusable.includes(document.activeElement))) {
+        event.preventDefault(); last.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !focusable.includes(document.activeElement))) {
+        event.preventDefault(); first.focus();
+      }
+    }
+    function handleKeyDown(event, onEscape) {
+      if (dialog.hidden) return;
+      if (event.key === 'Escape') {
+        event.preventDefault(); event.stopPropagation(); onEscape(); return;
+      }
+      trapTab(event);
+    }
+    return Object.freeze({ open, close, handleKeyDown, trapTab });
+  }
+
+  return Object.freeze({ binding, connection, createSetupDialog, observationCommand, projects, snapshot, tokenMemory });
 }));

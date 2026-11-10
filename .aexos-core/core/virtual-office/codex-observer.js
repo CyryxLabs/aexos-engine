@@ -3,7 +3,8 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { createHash } = require('crypto');
+const { createHash, randomBytes } = require('crypto');
+const lockfile = require('proper-lockfile');
 const { confinedPath, projectIdentity, submitEvent } = require('./host-bridge');
 
 const LIMITS = Object.freeze({ files: 64, entries: 2048, directories: 128, bytes: 1048576,
@@ -54,19 +55,29 @@ class CodexSessionObserver {
     this.sessionsRoot = path.resolve(options.sessionsRoot || path.join(process.env.CODEX_HOME || path.join(os.homedir(), '.codex'), 'sessions'));
     if (options.sessionId !== undefined && !identity(options.sessionId)) throw new Error('Invalid Codex session filter');
     this.options = { ...options, agentId: options.agentId?.replace(/^@/, '') };
-    this.checkpoint = confinedPath(projectRoot, 'codex-observer.json');
     this.binding = digest(JSON.stringify([projectIdentity(projectRoot), this.sessionsRoot, options.sessionId || null, this.options.agentId || null]));
+    this.checkpoint = confinedPath(this.projectRoot, `codex-observer-${this.binding}.json`);
     this.cursors = {};
     this.timer = null;
     this.nextFile = 0;
     this.work = null;
     this.status = { status: 'stopped', observed: 0, evidence: 'local-session-log' };
-    if (fs.existsSync(this.checkpoint) && fs.statSync(this.checkpoint).size <= 262144) {
-      try {
-        const saved = JSON.parse(fs.readFileSync(this.checkpoint, 'utf8'));
+  }
+
+  loadCheckpoint() {
+    // A previously constructed observer may have been overtaken by another process.
+    // Reload only while holding scan ownership, including after a failed checkpoint.
+    this.cursors = {};
+    try {
+      // The legacy file is shared by all configurations. Read it only when
+      // there is no dedicated checkpoint and its binding matches exactly.
+      const source = fs.existsSync(this.checkpoint)
+        ? this.checkpoint : confinedPath(this.projectRoot, 'codex-observer.json');
+      if (fs.existsSync(source) && fs.statSync(source).size <= 262144) {
+        const saved = JSON.parse(fs.readFileSync(source, 'utf8'));
         if (saved.binding === this.binding && saved.cursors && typeof saved.cursors === 'object') this.cursors = saved.cursors;
-      } catch (_error) { /* Invalid checkpoints cause bounded replay, never new liveness timestamps. */ }
-    }
+      }
+    } catch (_error) { /* Invalid checkpoints cause bounded replay, never new liveness timestamps. */ }
   }
 
   async readFile(file, remaining) {
@@ -169,12 +180,16 @@ class CodexSessionObserver {
         if (!type) continue;
         const timestamp = Date.parse(record.timestamp);
         if (!Number.isFinite(timestamp) || timestamp <= 0 || timestamp > Date.now() + 60000) continue;
-        const event = { id: digest(`${this.options.agentId || ''}:${payload.id}:${cursor.turnId}:${type}:${timestamp}:${identity(data.call_id) || ''}`),
-          type, timestamp, host: 'codex', evidence: 'local-session-log', originator,
-          sessionId: payload.id, runId: cursor.turnId, agentId: this.options.agentId,
-          toolName, ...(type === 'CommandComplete' ? { success: true } : {}) };
+        const agentId = this.options.agentId;
+        const event = { id: digest(`${agentId || ''}:${payload.id}:${cursor.turnId}:${type}:${timestamp}:${identity(data.call_id) || ''}`),
+          // An operator-supplied agent applies to the observer, not to a verified turn.
+          type, timestamp, host: 'codex', evidence: agentId ? 'manual' : 'local-session-log', originator,
+          sessionId: payload.id, runId: cursor.turnId, agentId,
+          toolName };
         try {
+          if (this.lockFailure) throw this.lockFailure;
           const result = await (this.options.submit || submitEvent)(this.projectRoot, event, { url: this.options.url, timeoutMs: 500 });
+          if (this.lockFailure) throw this.lockFailure;
           if (!result.accepted) throw new Error('Observation not accepted');
           this.status.observed += 1;
         } catch (_error) {
@@ -197,7 +212,17 @@ class CodexSessionObserver {
     this.work = (async () => {
       this.status.status = 'observing';
       this.cycleRecords = 0;
+      this.lockFailure = null;
+      let release;
+      let temporary;
       try {
+        const checkpoint = confinedPath(this.projectRoot, `codex-observer-${this.binding}.json`);
+        const lockPath = confinedPath(this.projectRoot, `codex-observer-${this.binding}.json.lock`);
+        fs.mkdirSync(path.dirname(checkpoint), { recursive: true });
+        release = await lockfile.lock(checkpoint, { realpath: false, lockfilePath: lockPath,
+          stale: 10000, update: 2000, retries: 0,
+          onCompromised: (error) => { this.lockFailure = error; } });
+        this.loadCheckpoint();
         let ancestor = this.sessionsRoot;
         while (true) {
           if (fs.lstatSync(ancestor).isSymbolicLink()) throw new Error('Linked sessions root');
@@ -212,6 +237,7 @@ class CodexSessionObserver {
         const files = [...discovered.slice(start), ...discovered.slice(0, start)];
         let processed = 0;
         for (const file of files) {
+          if (this.lockFailure) throw this.lockFailure;
           if (remaining <= LIMITS.recordBytes) break;
           processed += 1;
           remaining -= await this.readFile(file, remaining - LIMITS.recordBytes);
@@ -219,12 +245,21 @@ class CodexSessionObserver {
         }
         this.nextFile = discovered.length ? (start + processed) % discovered.length : 0;
         this.cursors = Object.fromEntries(Object.entries(this.cursors).slice(-LIMITS.files));
-        const checkpoint = confinedPath(this.projectRoot, 'codex-observer.json');
-        const temporary = confinedPath(this.projectRoot, `codex-observer-${process.pid}.tmp`);
-        fs.mkdirSync(path.dirname(checkpoint), { recursive: true });
-        fs.writeFileSync(temporary, JSON.stringify({ binding: this.binding, cursors: this.cursors }));
+        if (this.lockFailure) throw this.lockFailure;
+        temporary = confinedPath(this.projectRoot, `codex-observer-${process.pid}-${randomBytes(8).toString('hex')}.tmp`);
+        fs.writeFileSync(temporary, JSON.stringify({ binding: this.binding, cursors: this.cursors }), { flag: 'wx', mode: 0o600 });
+        confinedPath(this.projectRoot, path.basename(checkpoint));
         fs.renameSync(temporary, checkpoint);
-      } catch (_error) { this.status.status = 'unavailable'; }
+        temporary = null;
+      } catch (error) { this.status.status = !release && error.code === 'ELOCKED' ? 'busy' : 'unavailable'; }
+      finally {
+        if (temporary) {
+          try { fs.unlinkSync(temporary); } catch (_error) { /* A failed write never advances the checkpoint. */ }
+        }
+        if (release) {
+          try { await release(); } catch (_error) { this.status.status = 'unavailable'; }
+        }
+      }
       return { ...this.status };
     })();
     try { return await this.work; } finally { this.work = null; }

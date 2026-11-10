@@ -10,6 +10,8 @@ create table public.aexos_projects (
   owner_id uuid not null references auth.users(id) on delete cascade,
   label text not null check (length(label) between 1 and 64 and label !~ '[[:cntrl:]]'),
   epoch uuid not null default gen_random_uuid(),
+  identity_epoch uuid not null default gen_random_uuid(),
+  minimum_schema_version integer not null default 2 check (minimum_schema_version in (1,2)),
   created_at timestamptz not null default now()
 );
 create index aexos_projects_owner on public.aexos_projects(owner_id);
@@ -91,14 +93,16 @@ begin
     if (select count(*) from public.aexos_projects where owner_id=auth.uid()) >= 100 then raise exception 'PROJECT_LIMIT' using errcode='22023'; end if;
     insert into public.aexos_projects(owner_id,label) values(auth.uid(),btrim(p_label)) returning * into v_project;
   else
-    select * into v_project from public.aexos_projects where id=p_project and owner_id=auth.uid() for update;
+    -- Rotation changes no key columns. Keep foreign-key KEY SHARE available
+    -- to an ingest that already holds the token row, avoiding a lock cycle.
+    select * into v_project from public.aexos_projects where id=p_project and owner_id=auth.uid() for no key update;
     if not found then raise exception 'PROJECT_NOT_FOUND' using errcode='42501'; end if;
-    update public.aexos_projects set epoch=gen_random_uuid() where id=p_project returning * into v_project;
+    update public.aexos_projects set epoch=gen_random_uuid(),minimum_schema_version=2 where id=p_project returning * into v_project;
   end if;
   v_token := translate(rtrim(encode(extensions.gen_random_bytes(32),'base64'),'='),'+/','-_');
   insert into aexos_private.tokens(project_id,token_hash,expires_at) values(v_project.id,encode(extensions.digest(v_token,'sha256'),'hex'),now()+interval '30 days')
     on conflict(project_id) do update set token_hash=excluded.token_hash,expires_at=excluded.expires_at,last_ingest_at=null,last_sequence=0;
-  return jsonb_build_object('id',v_project.id,'label',v_project.label,'epoch',v_project.epoch,'token',v_token,'expiresAt',now()+interval '30 days');
+  return jsonb_build_object('id',v_project.id,'label',v_project.label,'epoch',v_project.epoch,'identityEpoch',v_project.identity_epoch,'token',v_token,'expiresAt',now()+interval '30 days');
 end;
 $$;
 revoke all on function aexos_private.manage_project(text,uuid) from public,anon;
@@ -117,9 +121,12 @@ begin
   select * into v_token from aexos_private.tokens where token_hash=p_token_hash for update;
   if not found or v_token.expires_at<=v_now then raise exception 'INGEST_DENIED' using errcode='28000'; end if;
   select * into v_project from public.aexos_projects where id=v_token.project_id;
-  if p_payload->>'projectId'<>v_project.id::text or p_payload->>'epoch'<>v_project.epoch::text then raise exception 'INGEST_DENIED' using errcode='28000'; end if;
+  if (p_payload->>'projectId') is distinct from v_project.id::text or (p_payload->>'epoch') is distinct from v_project.epoch::text then raise exception 'INGEST_DENIED' using errcode='28000'; end if;
+  if (p_payload->>'schemaVersion') is distinct from '1' and (p_payload->>'schemaVersion') is distinct from '2' then raise exception 'INGEST_DENIED' using errcode='28000'; end if;
+  if (p_payload->>'schemaVersion') is distinct from '2' and v_project.minimum_schema_version=2 then raise exception 'INGEST_DENIED' using errcode='28000'; end if;
+  if (p_payload->>'schemaVersion')='2' and (p_payload->>'identityEpoch') is distinct from v_project.identity_epoch::text then raise exception 'INGEST_DENIED' using errcode='28000'; end if;
   v_sequence := (p_payload->>'sequence')::bigint;
-  if v_sequence<=v_token.last_sequence then raise exception 'OLD_SEQUENCE' using errcode='22023'; end if;
+  if v_sequence<=v_token.last_sequence then raise exception 'OLD_SEQUENCE' using errcode='22023', detail=v_token.last_sequence::text; end if;
   if v_token.last_ingest_at is not null and v_now-v_token.last_ingest_at<interval '4 seconds' then raise exception 'RATE_LIMIT' using errcode='P0001'; end if;
   if octet_length(p_payload::text)>262144 or jsonb_array_length(p_payload->'events')>200 or jsonb_array_length(p_payload->'sessions')>200 then raise exception 'ROW_LIMIT' using errcode='22023'; end if;
   update aexos_private.tokens set last_sequence=v_sequence,last_ingest_at=v_now where project_id=v_project.id;

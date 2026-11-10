@@ -113,6 +113,7 @@ function createHandler(config = process.env, dependencies = {}) {
         if (rotate && !UUID.test(rotate[1])) return send(400, { error: 'INVALID_PROJECT' });
         const result = await api('/rest/v1/rpc/aexos_manage_project', auth.token, { method: 'POST', body: JSON.stringify({ p_label: rotate ? null : input.label, p_project: rotate ? rotate[1] : null }) });
         return send(200, { project: { id: result.id, label: result.label, epoch: result.epoch }, ingestToken: result.token, epoch: result.epoch,
+          ...(result.identityEpoch ? { identityEpoch: result.identityEpoch } : {}),
           ingestUrl: new URL('/functions/v1/aexos-telemetry/ingest', base).href, origin: base.origin, expiresAt: result.expiresAt });
       }
       if (route === '/api/snapshot' && request.method === 'GET') {

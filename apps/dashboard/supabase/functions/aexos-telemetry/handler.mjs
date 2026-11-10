@@ -39,7 +39,14 @@ export function createIngestHandler({ supabaseUrl, serviceKey, catalogKeys, fetc
       if (!response.ok) {
         const error = await response.json().catch(() => ({}));
         if (error.message === 'RATE_LIMIT') return json(429, { error: 'RATE_LIMITED' });
-        if (error.message === 'OLD_SEQUENCE') return json(409, { error: 'OLD_SEQUENCE' });
+        if (error.message === 'OLD_SEQUENCE') {
+          // The database checks token, project and epoch before producing this
+          // numeric detail. Never forward arbitrary database error details.
+          const raw = error.details;
+          const lastSequence = typeof raw === 'string' && /^(0|[1-9][0-9]{0,15})$/.test(raw) ? Number(raw) : null;
+          return json(409, Number.isSafeInteger(lastSequence) && lastSequence >= payload.sequence && lastSequence < Number.MAX_SAFE_INTEGER
+            ? { error: 'OLD_SEQUENCE', lastSequence } : { error: 'OLD_SEQUENCE' });
+        }
         return json(response.status >= 500 ? 503 : 401, { error: 'INGEST_DENIED' });
       }
       return json(200, { accepted: true, sequence: payload.sequence });

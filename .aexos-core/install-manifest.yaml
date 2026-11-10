@@ -8,7 +8,7 @@
 # - File types for categorization
 #
 version: 6.0.0
-generated_at: "2026-10-26T19:39:28.036Z"
+generated_at: "2026-11-06T18:38:51.751Z"
 generator: scripts/generate-install-manifest.js
 file_count: 1340
 files:
@@ -1257,9 +1257,9 @@ files:
     type: core
     size: 17259
   - path: core/permissions/native-publication-support.js
-    hash: sha256:4e890120b1ffcb930e2816ff1633f4166485f1a03d17bbc5032bec74260d7136
+    hash: sha256:9ba31b2190d836b3967aba6bfe3b5894d8c5be3abdcfe52506156197aa72d74e
     type: core
-    size: 4403
+    size: 5488
   - path: core/permissions/operation-guard.js
     hash: sha256:a3e3be97a03100c4d32e8eaf20dbd9c3c245cb6f23852e47b664b3d70126cae0
     type: core
@@ -1679,27 +1679,27 @@ files:
   - path: core/virtual-office/cli.js
     hash: sha256:75459950d39f6010793899822c1d6b3942f724e19bd115657c41d444ef5ed401
     type: core
-    size: 9335
+    size: 9073
   - path: core/virtual-office/cloud/bridge.js
-    hash: sha256:9a0aa8c25e4d8f7fb077fb7860018dd6f2d5a628b2dc716a590d65b6e061bcdb
+    hash: sha256:64e54224cb4be1f45c897fa47567429a117d768c8948f8695f7ff813cd07e95b
     type: core
-    size: 4671
+    size: 6992
   - path: core/virtual-office/cloud/catalog-keys.json
     hash: sha256:daf2f313679fb673a2706cfb740eb7f8843ffe7c895d2a33740fc8a6f29b6e21
     type: core
     size: 5349
   - path: core/virtual-office/cloud/connect-cli.js
-    hash: sha256:99ea35f4077e5d653ff51ab75f09468b776d0a4e6878296057e480624da030d7
+    hash: sha256:c8ccc42b2ac274efeeffaae43c84fe5dca6da39950d2e55aa8bf8fbd96e45375
     type: core
-    size: 3609
+    size: 3672
   - path: core/virtual-office/cloud/schema.mjs
-    hash: sha256:2bbb656b14a3a886a84b60818c6236317954c58c5c912579c96d779c0b204bd7
+    hash: sha256:83aa43fbc51431af6149c06c86ba228b7ebd8b99c31070e52db67a97dda702d9
     type: core
-    size: 3577
+    size: 3795
   - path: core/virtual-office/codex-observer.js
-    hash: sha256:2e4ef206afb5cd3db76b6e4a2c6b54e6143cea39db80e103e4ccc82402c29dd7
+    hash: sha256:afac118c77254c67c4591c3cc570f8c246d6407aa143d5a82de668614649fc54
     type: core
-    size: 13002
+    size: 14525
   - path: core/virtual-office/config-loader.js
     hash: sha256:8f40cd69136c28fa43cebd49e3a6145387cc2e7f07d53fd45dfafbccc66f5b17
     type: core
@@ -1713,9 +1713,9 @@ files:
     type: core
     size: 14726
   - path: core/virtual-office/event-normalizer.js
-    hash: sha256:067046561a151a135a8ff1d3ef862978a146601c32fecec1735248ef811b8752
+    hash: sha256:6a8ce17f80bc906bedd561c4c19762ab06c6b4c74b5b5ffcfc69111e433e558b
     type: core
-    size: 7468
+    size: 7904
   - path: core/virtual-office/host-bridge.js
     hash: sha256:1c8501808a0c57dbf0d85932ebde76abbd5a8e726e993edab2f9089736c063f7
     type: core
@@ -1867,7 +1867,7 @@ files:
   - path: core/virtual-office/server.js
     hash: sha256:57e6f95aa535edb695ec1f86fcac44c92e0aca62f2185dff4d39f3d05d1d2bdb
     type: core
-    size: 16944
+    size: 16535
   - path: core/virtual-office/state-projector.js
     hash: sha256:43b7b204194bd6f69b5d04177d669a8ee001ca9ed224261b1988a48edcf33ece
     type: core
@@ -4333,9 +4333,9 @@ files:
     type: template
     size: 5561
   - path: infrastructure/tests/project-status-loader.test.js
-    hash: sha256:d86d0e405f5782cc91b6c348e383685d39fe10dd387e3ebd4083bfc9e6c99ee0
+    hash: sha256:70d6f17923a26bffb3e5d53a7d04a3b6fd905a6ed42cb13333fb78377a3a4cc0
     type: infrastructure
-    size: 19198
+    size: 19628
   - path: infrastructure/tests/regression-suite-v2.md
     hash: sha256:b343f2d03a33d6529354f31155fc69c9aeb191d55c93f68f9b0c6be01894c425
     type: infrastructure

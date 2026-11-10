@@ -10,6 +10,7 @@ const yaml = require('js-yaml');
 const execa = require('execa');
 const { ProjectStatusLoader } = require('../scripts/project-status-loader');
 const execSync = childProcess.execSync;
+const execFileSync = childProcess.execFileSync;
 
 describe('ProjectStatusLoader', () => {
   let loader;
@@ -27,6 +28,9 @@ describe('ProjectStatusLoader', () => {
     jest.spyOn(childProcess, 'execSync').mockImplementation((command, options) => (
       execSync(command, { ...options, env: process.env })
     ));
+    jest.spyOn(childProcess, 'execFileSync').mockImplementation((file, args, options) => (
+      execFileSync(file, args, { ...options, env: process.env })
+    ));
     loader = new ProjectStatusLoader(testRoot);
     cacheFile = path.join(testRoot, '.aexos', 'project-status.yaml');
   });
@@ -39,6 +43,7 @@ describe('ProjectStatusLoader', () => {
       // Ignore cleanup errors
     } finally {
       childProcess.execSync.mockRestore();
+      childProcess.execFileSync.mockRestore();
       if (previousGitCeiling === undefined) delete process.env.GIT_CEILING_DIRECTORIES;
       else process.env.GIT_CEILING_DIRECTORIES = previousGitCeiling;
     }
@@ -57,6 +62,10 @@ describe('ProjectStatusLoader', () => {
       // testRoot already created by mkdtemp in beforeEach
       const isGit = await loader.isGitRepository();
       expect(isGit).toBe(false);
+    });
+
+    it('does not inherit an ancestor Git fingerprint outside the fixture boundary', async () => {
+      expect(await loader.getGitStateFingerprint()).toBeNull();
     });
 
     it('should return true for git repository', async () => {

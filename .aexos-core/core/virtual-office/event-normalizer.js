@@ -88,6 +88,11 @@ function deriveState(type, data) {
     case 'CommandError':
       return 'failed';
     case 'CommandComplete':
+      // Codex's session log records the end of a turn, not its outcome.
+      if (data.host === 'codex' && (data.evidence === 'local-session-log'
+        || (data.evidence === 'manual' && ['CodexDesktop', 'Codex Desktop', 'codex_cli_rs', 'codex_exec', 'codex_vscode', 'codex-cli'].includes(data.originator)))
+        && data.success === undefined) return 'available';
+      return data.success === false ? 'failed' : 'completed';
     case 'BobAgentCompleted':
       return data.success === false ? 'failed' : 'completed';
     case 'SessionStart':

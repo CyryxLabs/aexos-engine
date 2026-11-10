@@ -86,6 +86,10 @@ describe('npm package generated-file boundary', () => {
       const npmEnvironment = {
         ...process.env,
         npm_config_cache: path.join(fixture, '.npm-cache'),
+        // This local archive fixture needs lifecycle hooks, but no registry access.
+        // A fresh cache otherwise triggers npm's unrelated update notification check.
+        npm_config_offline: 'true',
+        npm_config_update_notifier: 'false',
       };
       const output = runNpm(['pack', '--json', '--pack-destination', artifactDir], {
         cwd: fixture,

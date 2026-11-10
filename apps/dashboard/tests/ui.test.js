@@ -79,9 +79,56 @@ test('connection guidance keeps the token out of the non-secret command', () => 
     ingestToken: 'secret-token', epoch: OTHER_PROJECT_ID,
     ingestUrl: 'https://dashboard.example/api/ingest', origin: 'https://dashboard.example', expiresAt: '2026-10-27T00:00:00.000Z',
   });
-  assert.equal(binding.command, `aexos office connect --project-root <your-project-path> --project-id ${PROJECT_ID} --epoch ${OTHER_PROJECT_ID} --ingest-url https://dashboard.example/api/ingest --origin https://dashboard.example`);
+  assert.equal(binding.command, `aexos office connect --project-root . --project-id ${PROJECT_ID} --epoch ${OTHER_PROJECT_ID} --ingest-url https://dashboard.example/api/ingest --origin https://dashboard.example`);
   assert.doesNotMatch(binding.command, /secret-token|--token|--ingest-token/);
+  const input = { project: { id: PROJECT_ID, label: 'Primary', epoch: OTHER_PROJECT_ID }, ingestToken: 'secret-token', epoch: OTHER_PROJECT_ID,
+    identityEpoch: PROJECT_ID, ingestUrl: 'https://dashboard.example/api/ingest', origin: 'https://dashboard.example', expiresAt: '2026-10-27T00:00:00.000Z' };
+  assert.match(state.binding(input).command, new RegExp(`--identity-epoch ${PROJECT_ID}`));
+  for (const command of [binding.command, state.binding(input).command]) {
+    assert.equal(state.observationCommand(command, false), command);
+    assert.equal(state.observationCommand(command, true), `${command} --observe-codex`);
+    assert.doesNotMatch(state.observationCommand(command, true), /secret-token|--token|--ingest-token/);
+  }
+  assert.throws(() => state.observationCommand(binding.command, 'yes'), /Invalid connection option/);
+  assert.throws(() => state.binding({ ...input, identityEpoch: 'bad' }), /Invalid connection binding/);
   assert.throws(() => state.binding({ project: { id: PROJECT_ID, epoch: OTHER_PROJECT_ID }, ingestToken: 'x', epoch: OTHER_PROJECT_ID, ingestUrl: 'http://dashboard.example/api/ingest', origin: 'http://dashboard.example' }), /Invalid connection binding/);
+});
+
+test('setup dialog keeps focus within it and restores focus only while authenticated', () => {
+  const document = { activeElement: null };
+  function control() {
+    return { isConnected: true, closest: () => null, getClientRects: () => [1], focus() { document.activeElement = this; } };
+  }
+  const trigger = control(); const first = control(); const last = control(); const fallback = control();
+  const dialog = { hidden: true, querySelectorAll: () => [first, last] };
+  const office = { available: true }; let authenticated = true;
+  const modal = state.createSetupDialog({ dialog, document,
+    setOfficeAvailable: (available) => { office.available = available; },
+    canRestore: () => authenticated, fallback: () => fallback });
+  trigger.focus(); modal.open(first, trigger);
+  assert.equal(dialog.hidden, false); assert.equal(office.available, false); assert.equal(document.activeElement, first);
+  let escapePrevented = false; let escapeStopped = false; let closed = false;
+  const escapeEvent = () => ({ key: 'Escape', preventDefault() { escapePrevented = true; }, stopPropagation() { escapeStopped = true; } });
+  modal.handleKeyDown(escapeEvent(), () => {});
+  assert.equal(escapePrevented, true); assert.equal(escapeStopped, true);
+  assert.equal(dialog.hidden, false); assert.equal(document.activeElement, first);
+  escapePrevented = false; escapeStopped = false;
+  modal.handleKeyDown(escapeEvent(), () => { closed = true; modal.close(); });
+  assert.equal(escapePrevented, true); assert.equal(escapeStopped, true); assert.equal(closed, true);
+  assert.equal(dialog.hidden, true); assert.equal(document.activeElement, trigger);
+  modal.open(first, trigger);
+  let prevented = false;
+  modal.trapTab({ key: 'Tab', shiftKey: true, preventDefault() { prevented = true; } });
+  assert.equal(prevented, true); assert.equal(document.activeElement, last);
+  prevented = false;
+  modal.trapTab({ key: 'Tab', shiftKey: false, preventDefault() { prevented = true; } });
+  assert.equal(prevented, true); assert.equal(document.activeElement, first);
+  modal.close();
+  assert.equal(dialog.hidden, true); assert.equal(office.available, true); assert.equal(document.activeElement, trigger);
+  trigger.focus(); modal.open(first, trigger); authenticated = false; modal.close();
+  assert.equal(office.available, false); assert.notEqual(document.activeElement, trigger);
+  authenticated = true; trigger.isConnected = false; modal.open(first, trigger); modal.close();
+  assert.equal(document.activeElement, fallback);
 });
 
 test('UI binds only authenticated read/setup routes and bounded polling', () => {
@@ -101,7 +148,14 @@ test('UI binds only authenticated read/setup routes and bounded polling', () => 
 
 test('authentication and setup controls are accessible and token display is explicit', () => {
   const html = read('index.html');
-  for (const id of ['login-form', 'login-email', 'login-password', 'activation-form', 'activation-password', 'activation-confirm', 'activation-abort', 'project-select', 'project-form', 'token-reveal', 'connect-command', 'copy-command', 'copy-token', 'clear-token', 'close-setup', 'logout']) assert.ok(html.includes(`id="${id}"`), id);
+  for (const id of ['login-form', 'login-email', 'login-password', 'activation-form', 'activation-password', 'activation-confirm', 'activation-abort', 'project-select', 'project-form', 'token-reveal', 'observe-codex', 'observe-codex-help', 'connect-command', 'copy-command', 'copy-token', 'clear-token', 'close-setup', 'logout']) assert.ok(html.includes(`id="${id}"`), id);
+  assert.match(html, /id="observe-codex" type="checkbox" aria-describedby="observe-codex-help"/);
+  assert.match(html, /class="setup-card" role="region" aria-labelledby="setup-title" tabindex="0"/);
+  assert.match(html, /id="project-setup" class="setup-layer" role="dialog" aria-modal="true" aria-labelledby="setup-title"/);
+  assert.match(read('styles.css'), /\.setup-card\s*\{[^}]*max-height:\s*calc\(100dvh - 48px\)[^}]*overflow-y:\s*auto/);
+  assert.match(html, /does not prove which AEXOS agent performed a turn/);
+  assert.match(html, /Searches local Codex session metadata to find sessions belonging to this project/);
+  assert.match(html, /closing this screen clears it/);
   assert.match(html, /role="alert"/);
   assert.match(html, /aria-live="polite"/);
   assert.match(read('styles.css'), /prefers-reduced-motion: reduce/);
@@ -110,6 +164,10 @@ test('authentication and setup controls are accessible and token display is expl
   const css = read('styles.css');
   assert.match(css, /\.architectural-office #auth-title[^}]*font-size: clamp\(26px,4vw,36px\)[^}]*line-height: 1\.2/);
   const source = read('app.js');
+  assert.match(source, /element\('observe-codex'\)\.addEventListener\('change'/);
+  assert.match(source, /element\('observe-codex'\)\.checked = false/);
+  assert.match(source, /element\('project-select'\)\.addEventListener\('change', \(event\) => \{\s*clearTokenReveal\(\);/);
+  assert.match(source, /element\('close-setup'\)\.addEventListener\('click', \(\) => \{ if \(appState\.projects\.length\) clearTokenReveal\(\);/);
   assert.match(source, /surface\.inert = !available/);
   assert.match(source, /setOfficeAvailable\(false\)/);
   assert.match(source, /setOfficeAvailable\(true\)/);

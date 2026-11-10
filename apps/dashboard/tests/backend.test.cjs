@@ -45,6 +45,22 @@ test('private reads require verified live user identity and clear stale cookies'
   const revoked = await request('/api/snapshot?projectId=' + PROJECT, { headers: { Cookie: COOKIE + '=signed.jwt.token' } });
   assert.equal(revoked.status, 401); assert.match(revoked.headers.get('set-cookie'), /Max-Age=0/); assert.equal(calls, 2);
 });
+test('authenticated project provisioning passes the stable identity without exposing it as a token', async (t) => {
+  const request = await server(t, async (url) => {
+    const route = new URL(url).pathname;
+    if (route === '/auth/v1/user') return json({ id: PROJECT, is_anonymous: false });
+    if (route.endsWith('aexos_session_live')) return json(true);
+    if (route.endsWith('aexos_manage_project')) return json({ id: PROJECT, label: 'Work', epoch: EPOCH,
+      identityEpoch: PROJECT, token: 'A'.repeat(43), expiresAt: '2030-01-01T00:00:00.000Z' });
+    throw new Error('Unexpected route');
+  });
+  const result = await request('/api/projects', { method: 'POST', headers: { Origin: request.origin,
+    Cookie: COOKIE + '=signed.jwt.token', 'Content-Type': 'application/json' }, body: '{"label":"Work"}' });
+  assert.equal(result.status, 200);
+  const bodyValue = await result.json();
+  assert.equal(bodyValue.identityEpoch, PROJECT);
+  assert.equal(bodyValue.ingestToken, 'A'.repeat(43));
+});
 test('mutations reject missing or foreign origin before authentication or persistence', async (t) => {
   let calls = 0; const request = await server(t, async () => { calls++; return json({}); });
   for (const route of ['/api/login', '/api/activate']) {

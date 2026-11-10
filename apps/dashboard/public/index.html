@@ -31,14 +31,14 @@
     <p id="auth-error" class="form-error" role="alert" hidden></p>
   </section>
 </main>
-<section id="project-setup" class="setup-layer" aria-labelledby="setup-title" hidden>
-  <div class="setup-card">
+<section id="project-setup" class="setup-layer" role="dialog" aria-modal="true" aria-labelledby="setup-title" hidden>
+  <div class="setup-card" role="region" aria-labelledby="setup-title" tabindex="0">
     <button id="close-setup" class="setup-close" type="button" aria-label="Close project setup" hidden>Close</button>
     <p class="eyebrow">PROJECT CONNECTION</p><h2 id="setup-title">Connect a local AEXOS project</h2>
-    <p class="setup-copy">Create a private project binding, run the non-secret command, then enter the one-time token only when the CLI asks in its hidden prompt. The website cannot execute work.</p>
+    <p class="setup-copy">Create a private project binding. In a terminal, change to the project folder before running the non-secret command, then enter the one-time token only when the CLI asks in its hidden prompt. The website cannot execute work.</p>
     <form id="project-form" class="setup-form"><label>Project label<input id="project-label" name="label" maxlength="64" required placeholder="Primary workspace"></label><button type="submit">Create project</button></form>
-    <section id="token-reveal" class="token-reveal" hidden aria-labelledby="token-title"><h3 id="token-title">Start the local connection</h3><p>Copy and run this non-secret command. Then paste the token below only into the CLI's hidden prompt. The token is kept in process memory and will not be shown again.</p><output id="connect-command" class="connect-command"></output><button id="copy-command" type="button">Copy connection command</button><p class="token-label">One-time ingest token</p><output id="ingest-token" class="token-value"></output><div><button id="copy-token" type="button">Copy token</button><button id="clear-token" type="button">Clear token</button></div><p id="copy-status" role="status"></p></section>
-    <p id="setup-error" class="form-error" role="alert" hidden></p>
+    <section id="token-reveal" class="token-reveal" hidden aria-labelledby="token-title"><h3 id="token-title">Start the local connection</h3><p>Copy and run this non-secret command. Then paste the token below only into the CLI's hidden prompt. The token is kept in process memory; closing this screen clears it. If needed again, issue a new token.</p><label class="observe-option"><input id="observe-codex" type="checkbox" aria-describedby="observe-codex-help"> Observe local Codex activity</label><p id="observe-codex-help">Searches local Codex session metadata to find sessions belonging to this project, then sends metadata only from matching sessions. It does not prove which AEXOS agent performed a turn.</p><output id="connect-command" class="connect-command"></output><button id="copy-command" type="button">Copy connection command</button><p class="token-label">One-time ingest token</p><output id="ingest-token" class="token-value"></output><div><button id="copy-token" type="button">Copy token</button><button id="clear-token" type="button">Clear token</button></div><p id="copy-status" role="status"></p></section>
+    <p id="setup-error" class="form-error" role="alert" tabindex="-1" hidden></p>
   </div>
 </section>
 <div id="office-surface" inert aria-hidden="true">

@@ -10,12 +10,38 @@ const { sha256 } = require(path.resolve(__dirname, 'guarded-publication-protocol
 const PRODUCTION_SUPPORT_ALLOWLIST = Object.freeze([]);
 const LAUNCHER = path.resolve(__dirname, 'windows-publication-launcher.ps1');
 const SOURCE = path.resolve(__dirname, 'windows-publication-helper.cs');
+const MANAGED_EXECUTABLE = path.join(os.homedir(), '.aexos/runtimes/powershell/7.6.5/win-x64/pwsh.exe');
 const EXECUTABLES = Object.freeze(['C:\\Program Files\\PowerShell\\7\\pwsh.exe',
   path.join(os.homedir(), '.cache/codex-runtimes/codex-primary-runtime/dependencies/native/powershell/pwsh.exe')]);
 const authorizations = new WeakMap();
 
+function selectNativeExecutable() {
+  let managedStat;
+  try { managedStat = fs.lstatSync(MANAGED_EXECUTABLE); }
+  catch (error) {
+    if (error.code !== 'ENOENT') throw new Error('UNTRUSTED_HELPER');
+  }
+  if (!managedStat) return EXECUTABLES.find((filename) => fs.existsSync(filename));
+  if (!managedStat.isFile() || managedStat.isSymbolicLink() || managedStat.nlink !== 1) {
+    throw new Error('UNTRUSTED_HELPER');
+  }
+  // An existing managed runtime must fail closed on aliases, never select a fallback.
+  try {
+    let current = MANAGED_EXECUTABLE;
+    while (true) {
+      if (fs.realpathSync.native(current) !== path.resolve(current)) throw new Error('UNTRUSTED_HELPER');
+      const parent = path.dirname(current);
+      if (parent === current) break;
+      current = parent;
+      const stat = fs.lstatSync(current);
+      if (!stat.isDirectory() || stat.isSymbolicLink()) throw new Error('UNTRUSTED_HELPER');
+    }
+  } catch { throw new Error('UNTRUSTED_HELPER'); }
+  return MANAGED_EXECUTABLE;
+}
+
 function inspectNativeCandidateIdentity() {
-  const executable = EXECUTABLES.find((filename) => fs.existsSync(filename));
+  const executable = selectNativeExecutable();
   if (!executable) throw new Error('NATIVE_PREREQUISITE_UNAVAILABLE');
   for (const filename of [executable, LAUNCHER, SOURCE]) {
     const stat = fs.lstatSync(filename);
